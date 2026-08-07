@@ -5,6 +5,7 @@ from .numeric_validator import is_positive_decimal, is_positive_integer, is_valu
 from .load_data import (
     print_all_records,
     print_records,
+    get_all_records,
     create_new_record,
     update_records,
     delete_record,

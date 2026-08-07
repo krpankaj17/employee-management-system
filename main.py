@@ -1,6 +1,10 @@
+import math
+
 import questionary
 
 import utils
+
+PAGE_SIZE = 10
 
 
 def ask_name(default=""):
@@ -76,8 +80,57 @@ def ask_optional_number(prompt_text, is_decimal=False):
         print("Invalid number, leave blank to skip this filter.")
 
 
+def show_paginated(data, title, empty_message="No records found.", page_size=PAGE_SIZE):
+    """Prints `data` one page at a time, with a Next/Previous/Exit prompt
+    between pages. Falls back to a single plain listing if everything fits
+    on one page."""
+    if not data:
+        print(empty_message)
+        return
+
+    total = len(data)
+    total_pages = math.ceil(total / page_size)
+    page = 1
+
+    while True:
+        start = (page - 1) * page_size
+        end = min(start + page_size, total)
+
+        print(f"\n{title} — page {page}/{total_pages} (showing {start + 1}-{end} of {total})")
+        utils.print_records(data[start:end], show_total=False)
+
+        if total_pages <= 1:
+            break
+
+        choices = []
+        if page > 1:
+            choices.append("Previous page")
+        if page < total_pages:
+            choices.append("Next page")
+        choices.append("Exit")
+
+        action = questionary.select("Navigate:", choices=choices).ask()
+        if action is None or action == "Exit":
+            break
+        elif action == "Next page":
+            page += 1
+        elif action == "Previous page":
+            page -= 1
+
+
 def handle_view():
-    utils.print_all_records()
+    data = utils.get_all_records()
+    utils.log_action("VIEW_ALL", f"{len(data)} record(s) shown")
+    show_paginated(data, "All records")
+
+
+def confirm_summary(action_label, name, age, city, salary):
+    """Shows the collected values as a one-row table and asks the user to
+    confirm before anything is actually saved. Returns True/False."""
+    preview = {"id": "-", "name": name, "age": age, "city": city, "salary": float(salary)}
+    print(f"\n{action_label} - please review:")
+    utils.print_record(preview)
+    return bool(questionary.confirm("Save this record?", default=True).ask())
 
 
 def handle_create():
@@ -93,6 +146,12 @@ def handle_create():
     salary = ask_salary()
     if salary is None:
         return
+
+    if not confirm_summary("New employee", name, age, city, salary):
+        print("Creation cancelled.")
+        utils.log_action("CREATE_CANCELLED", f"name={name} age={age} city={city} salary={salary}")
+        return
+
     utils.create_new_record(name, age, city, salary)
 
 
@@ -122,6 +181,12 @@ def handle_update():
     salary = ask_salary(default=str(record["salary"]))
     if salary is None:
         return
+
+    if not confirm_summary(f"Updated employee {e_id}", name, age, city, salary):
+        print("Update cancelled.")
+        utils.log_action("UPDATE_CANCELLED", f"id={e_id} name={name} age={age} city={city} salary={salary}")
+        return
+
     utils.update_records(e_id, name, age, city, salary)
 
 
@@ -158,8 +223,7 @@ def handle_search():
         name=name, city=city, min_age=min_age, max_age=max_age,
         min_salary=min_salary, max_salary=max_salary,
     )
-    print()
-    utils.print_records(results, empty_message="No records match those filters.")
+    show_paginated(results, "Search results", empty_message="No records match those filters.")
 
 
 def handle_sort():
@@ -178,8 +242,7 @@ def handle_sort():
         return
 
     sorted_data = utils.sort_records(key=utils.SORT_KEYS[field], reverse=(order == "Descending"))
-    print()
-    utils.print_records(sorted_data)
+    show_paginated(sorted_data, f"Sorted by {field} ({order})")
 
 
 MENU_ACTIONS = {

@@ -55,15 +55,27 @@ def _print_table(rows):
         print(format_row(row))
 
 
-def print_records(data, empty_message="No records found."):
+def print_records(data, empty_message="No records found.", show_total=True):
     """Prints any list of employee dicts as a table. Shared by 'view all',
-    search results, and sorted results."""
+    search results, sorted results, and paginated pages.
+
+    show_total=False lets a caller (like pagination) print its own
+    page/total footer instead of this function's "N record(s) total" line.
+    """
     if not data:
         print(empty_message)
         return
     rows = [_row_values(employee) for employee in data]
     _print_table(rows)
-    print(f"\n{len(data)} record(s) total")
+    if show_total:
+        print(f"\n{len(data)} record(s) total")
+
+
+def get_all_records():
+    """Returns the full, raw list of employee records (unfiltered,
+    unsorted). Used by the CLI layer when it needs the actual list rather
+    than just a printed table - e.g. for pagination."""
+    return _load_data()
 
 
 def print_all_records():
