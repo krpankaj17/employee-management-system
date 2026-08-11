@@ -1,12 +1,5 @@
 [
     {
-        "id": 3,
-        "name": "Raj",
-        "age": 29,
-        "city": "jaipur",
-        "salary": 70000.0
-    },
-    {
         "id": 4,
         "name": "Coralyn Harpin",
         "age": 72,
@@ -103,5 +96,12 @@
         "age": 21,
         "city": "Goa",
         "salary": 150000.0
+    },
+    {
+        "id": 21,
+        "name": "Vijay singh",
+        "age": 38,
+        "city": "Jaipur",
+        "salary": 49000.0
     }
 ]

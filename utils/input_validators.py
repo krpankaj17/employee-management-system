@@ -17,7 +17,9 @@ def is_integer(value):
     """
     This function takes the value and validates if the input value is an Integer or not.
     It returns a Boolean value.
-    """
+    """ 
+    if isinstance(value,int):
+        return True
     if not isinstance(value, str):
         return False
     value = value.strip()
@@ -31,6 +33,8 @@ def is_decimal(value):
     It takes the value as parameter and validates that the entered value is a
     decimal point/float value. It returns a Boolean value.
     """
+    if isinstance(value , float):
+        return True
     if not isinstance(value, str):
         return False
     try:
