@@ -1,9 +1,6 @@
 import json
 
-from .input_validators import is_none, is_integer
-from .numeric_validator import is_positive_integer, is_positive_decimal, is_value_between
-from .string_function import convert_string_to_integer, convert_string_to_decimal
-from .logger import log_action
+import utils
 
 DATA_FILE = "MOCK_DATA.json"
 
@@ -14,7 +11,7 @@ def _load_data():
     try:
         with open(DATA_FILE, "r", encoding="utf-8") as myfile:
             return json.load(myfile)
-    except FileNotFoundError:
+    except FileNotFoundError:   
         return []
 
 
@@ -83,15 +80,15 @@ def print_all_records():
     try:
         data = _load_data()
         print_records(data)
-        log_action("VIEW_ALL", f"{len(data)} record(s) shown")
+        utils.log_action("VIEW_ALL", f"{len(data)} record(s) shown")
     except Exception as e:
         print(e)
-        log_action("VIEW_ALL_FAILED", str(e))
+        utils.log_action("VIEW_ALL_FAILED", str(e))
 
 
 def get_record_by_id(e_id):
     """Returns the employee dict matching the given id, or None if not found."""
-    e_id = convert_string_to_integer(e_id) if isinstance(e_id, str) else e_id
+    e_id = utils.convert_string_to_integer(e_id) if isinstance(e_id, str) else e_id
     for employee in _load_data():
         if employee["id"] == e_id:
             return employee
@@ -113,30 +110,30 @@ def create_new_record(e_name, e_age, e_city, e_salary):
     or {"ok": False, "error": "validation" | "server", "message": str} on failure.
     """
     try:
-        if is_none(e_name):
-            log_action("CREATE_FAILED", "name empty or null")
+        if utils.is_none(e_name):
+            utils.log_action("CREATE_FAILED", "name empty or null")
             return {"ok": False, "error": "validation", "message": "The name is empty or null"}
-        if is_integer(e_name):
-            log_action("CREATE_FAILED", "name was numeric")
+        if utils.is_integer(e_name):
+            utils.log_action("CREATE_FAILED", "name was numeric")
             return {"ok": False, "error": "validation", "message": "Name must be Text, Integer not allowed"}
-        if not is_positive_integer(e_age):
-            log_action("CREATE_FAILED", f"invalid age '{e_age}'")
+        if not utils.is_positive_integer(e_age):
+            utils.log_action("CREATE_FAILED", f"invalid age '{e_age}'")
             return {"ok": False, "error": "validation", "message": "Invalid age input, only enter a positive age between 18 and 70"}
-        if not is_value_between(e_age, "18", "70"):
-            log_action("CREATE_FAILED", f"age '{e_age}' out of range 18-70")
+        if not utils.is_value_between(e_age, "18", "70"):
+            utils.log_action("CREATE_FAILED", f"age '{e_age}' out of range 18-70")
             return {"ok": False, "error": "validation", "message": "Age must be between 18 and 70"}
-        if is_none(e_city):
-            log_action("CREATE_FAILED", "city empty or null")
+        if utils.is_none(e_city):
+            utils.log_action("CREATE_FAILED", "city empty or null")
             return {"ok": False, "error": "validation", "message": "City name is empty"}
-        if is_integer(e_city):
-            log_action("CREATE_FAILED", "city was numeric")
+        if utils.is_integer(e_city):
+            utils.log_action("CREATE_FAILED", "city was numeric")
             return {"ok": False, "error": "validation", "message": "City must be Text, Integer not allowed"}
-        if not is_positive_decimal(e_salary):
-            log_action("CREATE_FAILED", f"invalid salary '{e_salary}'")
+        if not utils.is_positive_decimal(e_salary):
+            utils.log_action("CREATE_FAILED", f"invalid salary '{e_salary}'")
             return {"ok": False, "error": "validation", "message": "Invalid salary input, please enter a valid salary"}
 
-        e_age = convert_string_to_integer(e_age) if isinstance(e_age, str) else e_age
-        e_salary = convert_string_to_decimal(e_salary) if isinstance(e_salary, str) else e_salary
+        e_age = utils.convert_string_to_integer(e_age) if isinstance(e_age, str) else e_age
+        e_salary = utils.convert_string_to_decimal(e_salary) if isinstance(e_salary, str) else e_salary
 
         data = _load_data()
         e_id = max((employee["id"] for employee in data), default=0) + 1
@@ -150,10 +147,10 @@ def create_new_record(e_name, e_age, e_city, e_salary):
         data.append(new_employee)
         _save_data(data)
 
-        log_action("CREATE", f"id={e_id} name={e_name} age={e_age} city={e_city} salary={e_salary}")
+        utils.log_action("CREATE", f"id={e_id} name={e_name} age={e_age} city={e_city} salary={e_salary}")
         return {"ok": True, "record": new_employee}
     except Exception as e:
-        log_action("CREATE_FAILED", f"unexpected error: {e}")
+        utils.log_action("CREATE_FAILED", f"unexpected error: {e}")
         return {"ok": False, "error": "server", "message": str(e)}
 
 
@@ -161,45 +158,45 @@ def update_records(e_id, e_name, e_age, e_city, e_salary):
     """Returns a dict: {"ok": True, "record": employee} on success,
     or {"ok": False, "error": "not_found" | "validation", "message": str} on failure."""
     try:
-        e_id = convert_string_to_integer(e_id) if isinstance(e_id, str) else e_id
+        e_id = utils.convert_string_to_integer(e_id) if isinstance(e_id, str) else e_id
         data = _load_data()
 
         employee_record = next((e for e in data if e["id"] == e_id), None)
         if not employee_record:
             msg = f"Employee record does not exist with id {e_id}"
-            log_action("UPDATE_FAILED", f"id={e_id} does not exist")
+            utils.log_action("UPDATE_FAILED", f"id={e_id} does not exist")
             return {"ok": False, "error": "not_found", "message": msg}
 
-        if is_none(e_name):
-            log_action("UPDATE_FAILED", f"id={e_id} name empty or null")
+        if utils.is_none(e_name):
+            utils.log_action("UPDATE_FAILED", f"id={e_id} name empty or null")
             return {"ok": False, "error": "validation", "message": "The name is empty or null"}
-        if not is_positive_integer(e_age):
-            log_action("UPDATE_FAILED", f"id={e_id} invalid age '{e_age}'")
+        if not utils.is_positive_integer(e_age):
+            utils.log_action("UPDATE_FAILED", f"id={e_id} invalid age '{e_age}'")
             return {"ok": False, "error": "validation", "message": "Invalid age input"}
-        if not is_value_between(e_age, "18", "70"):  # match create's range
-            log_action("UPDATE_FAILED", f"id={e_id} age '{e_age}' out of range 18-70")
+        if not utils.is_value_between(e_age, "18", "70"):  # match create's range
+            utils.log_action("UPDATE_FAILED", f"id={e_id} age '{e_age}' out of range 18-70")
             return {"ok": False, "error": "validation", "message": "Age must be between 18 and 70"}
-        if is_none(e_city):
-            log_action("UPDATE_FAILED", f"id={e_id} city empty or null")
+        if utils.is_none(e_city):
+            utils.log_action("UPDATE_FAILED", f"id={e_id} city empty or null")
             return {"ok": False, "error": "validation", "message": "City name is empty"}
-        if is_integer(e_city):
-            log_action("UPDATE_FAILED", f"id={e_id} city was numeric")
+        if utils.is_integer(e_city):
+            utils.log_action("UPDATE_FAILED", f"id={e_id} city was numeric")
             return {"ok": False, "error": "validation", "message": "City must be Text, Integer not allowed"}
-        if not is_positive_decimal(e_salary):
-            log_action("UPDATE_FAILED", f"id={e_id} invalid salary '{e_salary}'")
+        if not utils.is_positive_decimal(e_salary):
+            utils.log_action("UPDATE_FAILED", f"id={e_id} invalid salary '{e_salary}'")
             return {"ok": False, "error": "validation", "message": "Invalid salary input"}
 
         before = dict(employee_record)
         employee_record["name"] = e_name
-        employee_record["age"] = convert_string_to_integer(e_age)
+        employee_record["age"] = utils.convert_string_to_integer(e_age)
         employee_record["city"] = e_city
-        employee_record["salary"] = convert_string_to_decimal(e_salary)
+        employee_record["salary"] = utils.convert_string_to_decimal(e_salary)
         _save_data(data)
 
-        log_action("UPDATE", f"id={e_id} before={before} after={employee_record}")
+        utils.log_action("UPDATE", f"id={e_id} before={before} after={employee_record}")
         return {"ok": True, "record": employee_record}
     except Exception as e:
-        log_action("UPDATE_FAILED", f"id={e_id} unexpected error: {e}")
+        utils.log_action("UPDATE_FAILED", f"id={e_id} unexpected error: {e}")
         return {"ok": False, "error": "server", "message": str(e)}
 
 
@@ -213,7 +210,7 @@ def get_record_choices():
 def delete_record(e_id):
     """This function deletes the record with the given id, if it exists."""
     try:
-        e_id = convert_string_to_integer(e_id) if isinstance(e_id, str) else e_id
+        e_id = utils.convert_string_to_integer(e_id) if isinstance(e_id, str) else e_id
         data = _load_data()
 
         employee_record = None
@@ -224,18 +221,18 @@ def delete_record(e_id):
 
         if not employee_record:
             print("The id entered does not exist")
-            log_action("DELETE_FAILED", f"id={e_id} does not exist")
+            utils.log_action("DELETE_FAILED", f"id={e_id} does not exist")
             return None
 
         data.remove(employee_record)
         _save_data(data)
         print(f"Record with id {e_id} is deleted")
-        log_action("DELETE", f"id={e_id} record={employee_record}")
+        utils.log_action("DELETE", f"id={e_id} record={employee_record}")
         return {"details" : f"Employee with id {e_id} deleted"}
         
     except Exception as e:
         print(e)
-        log_action("DELETE_FAILED", f"id={e_id} unexpected error: {e}")
+        utils.log_action("DELETE_FAILED", f"id={e_id} unexpected error: {e}")
         return None
 
 
@@ -264,7 +261,7 @@ def search_records(name=None, city=None, min_age=None, max_age=None, min_salary=
             continue
         results.append(employee)
 
-    log_action(
+    utils.log_action(
         "SEARCH",
         f"name={name!r} city={city!r} min_age={min_age} max_age={max_age} "
         f"min_salary={min_salary} max_salary={max_salary} -> {len(results)} match(es)",
@@ -291,5 +288,5 @@ def sort_records(key="name", reverse=False, data=None):
         return value.lower() if isinstance(value, str) else value
 
     sorted_data = sorted(data, key=sort_key, reverse=reverse)
-    log_action("SORT", f"key={key} reverse={reverse} -> {len(sorted_data)} record(s)")
+    utils.log_action("SORT", f"key={key} reverse={reverse} -> {len(sorted_data)} record(s)")
     return sorted_data

@@ -3,6 +3,7 @@ import math
 import questionary
 
 import utils
+import services
 
 PAGE_SIZE = 10
 
@@ -48,7 +49,7 @@ def ask_id(prompt_text="Enter the employee id:"):
     before accepting it."""
     return questionary.text(
         prompt_text,
-        validate=lambda v: True if utils.is_positive_integer(v) and utils.get_record_by_id(v)
+        validate=lambda v: True if utils.is_positive_integer(v) and services.get_record_by_id(v)
         else "No record exists with that id",
     ).ask()
 
@@ -97,7 +98,7 @@ def show_paginated(data, title, empty_message="No records found.", page_size=PAG
         end = min(start + page_size, total)
 
         print(f"\n{title} — page {page}/{total_pages} (showing {start + 1}-{end} of {total})")
-        utils.print_records(data[start:end], show_total=False)
+        services.print_records(data[start:end], show_total=False)
 
         if total_pages <= 1:
             break
@@ -119,7 +120,7 @@ def show_paginated(data, title, empty_message="No records found.", page_size=PAG
 
 
 def handle_view():
-    data = utils.get_all_records()
+    data = services.get_all_records()
     utils.log_action("VIEW_ALL", f"{len(data)} record(s) shown")
     show_paginated(data, "All records")
 
@@ -129,7 +130,7 @@ def confirm_summary(action_label, name, age, city, salary):
     confirm before anything is actually saved. Returns True/False."""
     preview = {"id": "-", "name": name, "age": age, "city": city, "salary": float(salary)}
     print(f"\n{action_label} - please review:")
-    utils.print_record(preview)
+    services.print_record(preview)
     return bool(questionary.confirm("Save this record?", default=True).ask())
 
 
@@ -152,7 +153,7 @@ def handle_create():
         utils.log_action("CREATE_CANCELLED", f"name={name} age={age} city={city} salary={salary}")
         return
 
-    utils.create_new_record(name, age, city, salary)
+    services.create_new_record(name, age, city, salary)
 
 
 def handle_update():
@@ -160,13 +161,13 @@ def handle_update():
     if e_id is None:
         return
 
-    record = utils.get_record_by_id(e_id)
+    record = services.get_record_by_id(e_id)
     if record is None:
         print("Record not found.")
         return
 
     print("\nCurrently updating:")
-    utils.print_record(record)
+    services.print_record(record)
     print("(press Enter to keep the current value for any field)\n")
 
     name = ask_name(default=str(record["name"]))
@@ -187,7 +188,7 @@ def handle_update():
         utils.log_action("UPDATE_CANCELLED", f"id={e_id} name={name} age={age} city={city} salary={salary}")
         return
 
-    utils.update_records(e_id, name, age, city, salary)
+    services.update_records(e_id, name, age, city, salary)
 
 
 def handle_delete():
@@ -195,17 +196,17 @@ def handle_delete():
     if e_id is None:
         return
 
-    record = utils.get_record_by_id(e_id)
+    record = services.get_record_by_id(e_id)
     if record is None:
         print("Record not found.")
         return
 
     print("\nAbout to delete:")
-    utils.print_record(record)
+    services.print_record(record)
 
     confirmed = questionary.confirm(f"Are you sure you want to delete employee {e_id}?", default=False).ask()
     if confirmed:
-        utils.delete_record(e_id)
+        services.delete_record(e_id)
     else:
         print("Delete cancelled.")
 
@@ -219,7 +220,7 @@ def handle_search():
     min_salary = ask_optional_number("Minimum salary:", is_decimal=True)
     max_salary = ask_optional_number("Maximum salary:", is_decimal=True)
 
-    results = utils.search_records(
+    results = services.search_records(
         name=name, city=city, min_age=min_age, max_age=max_age,
         min_salary=min_salary, max_salary=max_salary,
     )
@@ -241,7 +242,7 @@ def handle_sort():
     if order is None:
         return
 
-    sorted_data = utils.sort_records(key=utils.SORT_KEYS[field], reverse=(order == "Descending"))
+    sorted_data = services.sort_records(key=services.SORT_KEYS[field], reverse=(order == "Descending"))
     show_paginated(sorted_data, f"Sorted by {field} ({order})")
 
 
