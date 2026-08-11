@@ -2,7 +2,7 @@ import json
 
 import utils
 
-DATA_FILE = "MOCK_DATA.json"
+DATA_FILE = "file/MOCK_DATA.json"
 
 
 def _load_data():
