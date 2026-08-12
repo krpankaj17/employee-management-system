@@ -1,4 +1,4 @@
-# Employee Management 
+# Employee Management System
 
 A simple employee record management system available in two independent flavors:
 
