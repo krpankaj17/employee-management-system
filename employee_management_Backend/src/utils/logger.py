@@ -1,3 +1,4 @@
+#logger.py
 import datetime
 
 LOG_FILE = "activity.log"
