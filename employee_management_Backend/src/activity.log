@@ -166,3 +166,21 @@
 [2026-08-13 13:38:39] UPDATE_FAILED - id=5 Department with id 9 does not exist. Existing department ids: [1, 2, 3, 4, 5]
 [2026-08-13 13:38:55] UPDATE - id=5 before={'id': 5, 'first_name': 'Vijay', 'last_name': 'Ram', 'dob': '1977-06-15', 'email': 'vijay.ram@company.com', 'phone': '+919810000005', 'address': 'Raipur, India', 'pincode': 492001, 'department_id': 1, 'joining_date': '2010-04-01', 'employee_status': 'active', 'reporting_manager_id': None, 'created_at': '2026-08-13T09:00:00', 'updated_at': '2026-08-13T09:00:00'} after={'id': 5, 'first_name': 'Vijay', 'last_name': 'Ram', 'dob': '1977-06-15', 'email': 'vijay.ram@company.com', 'phone': '9810000005', 'address': 'Raipur, India', 'pincode': 492001, 'department_id': 5, 'joining_date': '2010-04-01', 'employee_status': 'active', 'reporting_manager_id': None, 'created_at': '2026-08-13T09:00:00', 'updated_at': '2026-08-13T13:38:55'}
 [2026-08-13 13:41:04] SEARCH - first_name=None last_name=None department_id=5 employee_status=None -> 4 match(es)
+[2026-08-17 00:42:04] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-16 in=10:12 mode=in_office
+[2026-08-17 00:43:31] ATTENDANCE_CHECK_IN - emp_id=6 date=2026-08-16 in=10:00 mode=in_office
+[2026-08-17 00:44:05] ATTENDANCE_CHECK_IN - emp_id=6 date=2026-08-17 in=10:00 mode=in_office
+[2026-08-17 00:44:25] ATTENDANCE_CHECK_IN - emp_id=6 date=2026-08-18 in=10:00 mode=in_office
+[2026-08-17 10:46:41] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-17 in=10:46 mode=in_office
+[2026-08-17 10:47:44] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-15 in=10:46 mode=in_office
+[2026-08-17 10:57:43] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-17 out=10:57:43 total_hours=0.2 status=half_day
+[2026-08-17 11:00:40] ATTENDANCE_MANUAL_CREATE - id=46 emp_id=5 date=2026-08-16
+[2026-08-17 11:30:16] ATTENDANCE_MANUAL_CREATE - id=47 emp_id=5 date=2026-08-01
+[2026-08-17 11:30:16] ATTENDANCE_DELETE - id=47
+[2026-08-17 11:30:16] SORT - key=reporting_manager_id reverse=False -> 20 record(s)
+[2026-08-17 11:30:16] SORT - key=first_name reverse=False -> 20 record(s)
+[2026-08-17 11:36:51] DELETE - id=999 record={'id': 999, 'first_name': 'TestHead', 'last_name': 'Manager', 'dob': '1990-01-01', 'email': 'testhead@company.com', 'phone': '9810009999', 'address': 'Test Street', 'pincode': 123456, 'department_id': 1, 'joining_date': '2020-01-01', 'employee_status': 'active', 'reporting_manager_id': None, 'created_at': '2026-08-17T11:36:51', 'updated_at': '2026-08-17T11:36:51'}
+[2026-08-17 11:57:48] ATTENDANCE_DELETE - id=44
+[2026-08-17 11:57:56] ATTENDANCE_DELETE - id=45
+[2026-08-17 12:02:01] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-17 in=12:02:01 mode=in_office is_late=True
+[2026-08-17 12:02:01] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-17 out=12:02:01 total_hours=0.0 status=absent
+[2026-08-17 12:02:01] ATTENDANCE_DELETE - id=47

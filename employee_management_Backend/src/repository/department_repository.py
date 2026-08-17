@@ -1,8 +1,10 @@
 #department_repository.py
 import json
 import datetime
+from pathlib import Path
 
-DATA_FILE = "file/DEPARTMENT_DATA.json"
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_FILE = BASE_DIR / "file" / "DEPARTMENT_DATA.json"
 
 
 def _load():
@@ -10,7 +12,10 @@ def _load():
     yet. This is the ONLY function in this module that touches the file
     directly."""
     try:
-        with open(DATA_FILE, "r", encoding="utf-8") as myfile:
+        if DATA_FILE.exists():
+            with open(DATA_FILE, "r", encoding="utf-8") as myfile:
+                return json.load(myfile)
+        with open("file/DEPARTMENT_DATA.json", "r", encoding="utf-8") as myfile:
             return json.load(myfile)
     except FileNotFoundError:
         return []
@@ -18,6 +23,7 @@ def _load():
 
 def _save(data):
     """Writes the full record list back to the JSON file."""
+    DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
     with open(DATA_FILE, "w", encoding="utf-8") as myfile:
         json.dump(data, myfile, indent=4, default=str)
 

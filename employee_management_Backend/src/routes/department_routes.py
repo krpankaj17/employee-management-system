@@ -4,7 +4,7 @@ from fastapi import HTTPException, status, APIRouter, Query
 from pydantic import BaseModel, Field
 import services
 
-router = APIRouter()
+router = APIRouter(tags=["Department Management"])
 
 
 class DepartmentIn(BaseModel):
@@ -51,7 +51,8 @@ def get_all_departments(
     return services.get_all_departments(skip=skip, limit=limit)
 
 
-@router.get("/department/{department_id}", response_model=DepartmentOut)
+@router.get("/departments/{department_id}", response_model=DepartmentOut)
+@router.get("/department/{department_id}", response_model=DepartmentOut, include_in_schema=False)
 def get_department_by_id(department_id: int):
     department = services.get_department_by_id(department_id)
     if department is None:
@@ -59,7 +60,8 @@ def get_department_by_id(department_id: int):
     return department
 
 
-@router.post("/department", response_model=DepartmentOut, status_code=status.HTTP_201_CREATED)
+@router.post("/departments", response_model=DepartmentOut, status_code=status.HTTP_201_CREATED)
+@router.post("/department", response_model=DepartmentOut, status_code=status.HTTP_201_CREATED, include_in_schema=False)
 def create_department(department: DepartmentIn):
     result = services.create_new_department(department.name, department.head_employee_id)
     if not result["ok"]:
@@ -67,7 +69,8 @@ def create_department(department: DepartmentIn):
     return result["record"]
 
 
-@router.put("/department/{department_id}", response_model=DepartmentOut)
+@router.put("/departments/{department_id}", response_model=DepartmentOut)
+@router.put("/department/{department_id}", response_model=DepartmentOut, include_in_schema=False)
 def update_department(department_id: int, department: DepartmentIn):
     result = services.update_department(department_id, department.name, department.head_employee_id)
     if not result["ok"]:
@@ -76,7 +79,8 @@ def update_department(department_id: int, department: DepartmentIn):
     return result["record"]
 
 
-@router.delete("/department/{department_id}")
+@router.delete("/departments/{department_id}")
+@router.delete("/department/{department_id}", include_in_schema=False)
 def delete_department_by_id(department_id: int):
     result = services.delete_department(department_id)
     if not result["ok"]:
@@ -85,7 +89,8 @@ def delete_department_by_id(department_id: int):
     return {"details": result["details"]}
 
 
-@router.get("/department/{department_id}/employees", response_model=DepartmentEmployees)
+@router.get("/departments/{department_id}/employees", response_model=DepartmentEmployees)
+@router.get("/department/{department_id}/employees", response_model=DepartmentEmployees, include_in_schema=False)
 def get_department_employees(
     department_id: int,
     skip: int = Query(0, ge=0),

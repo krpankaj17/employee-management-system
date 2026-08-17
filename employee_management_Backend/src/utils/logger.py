@@ -1,7 +1,9 @@
 #logger.py
 import datetime
+from pathlib import Path
 
-LOG_FILE = "activity.log"
+BASE_DIR = Path(__file__).resolve().parent.parent
+LOG_FILE = BASE_DIR / "activity.log"
 
 
 def log_action(action, details=""):

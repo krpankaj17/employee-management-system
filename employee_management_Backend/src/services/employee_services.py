@@ -2,6 +2,7 @@
 import utils
 from repository import employee_repository as repo
 from repository import department_repository as dept_repo
+from repository import attendance_repository as att_repo
 
 SORT_KEYS = {
     "First Name": "first_name",
@@ -213,16 +214,35 @@ def update_records(e_id, first_name, last_name, dob, email, phone, address, pinc
 
 
 def delete_record(e_id):
+    """Deletes an employee and maintains referential integrity:
+    1. Cascades deletion to attendance records.
+    2. Nullifies reporting_manager_id for direct reports.
+    3. Nullifies head_employee_id for any department where this employee was head.
+    """
     try:
         e_id = utils.convert_string_to_integer(e_id) if isinstance(e_id, str) else e_id
-        deleted = repo.delete(e_id)
-
-        if deleted is None:
+        employee = repo.get_by_id(e_id)
+        if employee is None:
             utils.log_action("DELETE_FAILED", f"id={e_id} does not exist")
-            return None
+            return {"ok": False, "error": "not_found", "message": f"Employee with id {e_id} not found"}
 
+        # 1. Nullify reporting_manager_id on direct reports
+        for report in repo.get_all():
+            if report.get("reporting_manager_id") == e_id:
+                repo.update(report["id"], {"reporting_manager_id": None})
+
+        # 2. Nullify head_employee_id on departments
+        for dept in dept_repo.get_all():
+            if dept.get("head_employee_id") == e_id:
+                dept_repo.update(dept["id"], {"head_employee_id": None})
+
+        # 3. Cascade delete attendance records
+        att_repo.delete_by_employee_id(e_id)
+
+        # 4. Delete the employee record
+        deleted = repo.delete(e_id)
         utils.log_action("DELETE", f"id={e_id} record={deleted}")
-        return {"details": f"Employee with id {e_id} deleted"}
+        return {"ok": True, "details": f"Employee with id {e_id} deleted"}
     except Exception as e:
         utils.log_action("DELETE_FAILED", f"id={e_id} unexpected error: {e}")
         return {"ok": False, "error": "server", "message": str(e)}
@@ -267,16 +287,17 @@ def search_records(first_name=None, last_name=None, department_id=None, employee
 
 
 def sort_records(key="first_name", reverse=False, data=None):
-    """Sort-key logic also lives here — the repository just hands back
-    raw data, it doesn't know about sort order."""
+    """Sort-key logic safely handles strings and numeric fields without raising TypeError on None values."""
     if data is None:
         data = repo.get_all()
 
     def sort_key(employee):
         value = employee.get(key)
+        if value is None:
+            return "" if key in ("first_name", "last_name", "email", "employee_status", "joining_date", "dob", "address", "phone") else float("-inf")
         if isinstance(value, str):
             return value.lower()
-        return value if value is not None else -1
+        return value
 
     sorted_data = sorted(data, key=sort_key, reverse=reverse)
     utils.log_action("SORT", f"key={key} reverse={reverse} -> {len(sorted_data)} record(s)")
