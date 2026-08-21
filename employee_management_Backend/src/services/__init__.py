@@ -2,6 +2,8 @@
 from .employee_services import (
     get_all_records,
     get_record_by_id,
+    get_record_by_public_id,
+    get_record_by_code,
     get_record_by_email,
     get_direct_reports,
     get_record_choices,
@@ -15,6 +17,7 @@ from .employee_services import (
 from .department_services import (
     get_all_records as get_all_departments,
     get_record_by_id as get_department_by_id,
+    get_record_by_public_id as get_department_by_public_id,
     get_department_choices,
     create_new_record as create_new_department,
     update_records as update_department,

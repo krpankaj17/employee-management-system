@@ -1,4 +1,4 @@
-#attendance_services.py
+# attendance_services.py
 import datetime
 import calendar
 import utils
@@ -12,6 +12,18 @@ TIME_FORMATS = ["%H:%M:%S", "%H:%M"]
 # Standard shift start time (09:00 AM) and grace threshold (09:15 AM)
 STANDARD_SHIFT_START = datetime.time(9, 0, 0)
 GRACE_SHIFT_THRESHOLD = datetime.time(9, 15, 0)
+
+
+def _get_emp_field(emp, field_name, default=None):
+    """Safely retrieves a field from an Employee ORM model or dictionary."""
+    if emp is None:
+        return default
+    if hasattr(emp, field_name):
+        val = getattr(emp, field_name)
+        return val if val is not None else default
+    if isinstance(emp, dict):
+        return emp.get(field_name, default)
+    return default
 
 
 def _parse_time_str(time_str):
@@ -60,23 +72,28 @@ def _calculate_hours(check_in_str, check_out_str):
     t_out = _parse_time_str(check_out_str)
     if not t_in or not t_out:
         return 0.0
+    dt_in = datetime.datetime.combine(datetime.date.min, t_in)
+    dt_out = datetime.datetime.combine(datetime.date.min, t_out)
+    if dt_out <= dt_in:
+        return 0.0
+    diff = dt_out - dt_in
+    return round(diff.total_seconds() / 3600.0, 2)
 
-    dummy_date = datetime.date(2026, 1, 1)
-    dt_in = datetime.datetime.combine(dummy_date, t_in)
-    dt_out = datetime.datetime.combine(dummy_date, t_out)
 
-    if dt_out < dt_in:
-        # Crosses midnight / overnight shift
-        dt_out += datetime.timedelta(days=1)
-
-    delta = dt_out - dt_in
-    hours = delta.total_seconds() / 3600.0
-    return round(max(0.0, hours), 2)
+def _check_late_arrival(check_in_time):
+    """Determines whether check_in_time is late past 09:15 AM threshold.
+    Returns (is_late: bool, late_minutes: int)."""
+    if check_in_time > GRACE_SHIFT_THRESHOLD:
+        dt_start = datetime.datetime.combine(datetime.date.min, STANDARD_SHIFT_START)
+        dt_in = datetime.datetime.combine(datetime.date.min, check_in_time)
+        late_mins = int((dt_in - dt_start).total_seconds() // 60)
+        return True, late_mins
+    return False, 0
 
 
 def _determine_status(total_hours):
-    """Standard EMS status calculation based on hours worked."""
-    if total_hours >= 7.0:
+    """Determines attendance status based on standard working hours."""
+    if total_hours >= 8.0:
         return "present"
     elif total_hours >= 4.0:
         return "half_day"
@@ -84,34 +101,23 @@ def _determine_status(total_hours):
         return "absent"
 
 
-def _check_late_arrival(check_in_time_obj):
-    """Checks if check_in time exceeds the standard grace threshold (09:15 AM).
-    Returns (is_late: bool, late_minutes: int)."""
-    if not check_in_time_obj:
-        return False, 0
-    if check_in_time_obj > GRACE_SHIFT_THRESHOLD:
-        dummy_date = datetime.date(2026, 1, 1)
-        shift_dt = datetime.datetime.combine(dummy_date, STANDARD_SHIFT_START)
-        in_dt = datetime.datetime.combine(dummy_date, check_in_time_obj)
-        minutes_late = int((in_dt - shift_dt).total_seconds() // 60)
-        return True, minutes_late
-    return False, 0
-
+# ─── Core Live Punch Operations (Server-Authoritative) ─────────────────────────
 
 def check_in_employee(employee_id, work_mode="in_office", notes=None):
     """Records an employee live check-in using the current server timestamp.
     Client CANNOT pass date or time - server authority strictly enforced."""
     try:
-        employee_id = utils.convert_string_to_integer(employee_id) if isinstance(employee_id, str) else employee_id
+        employee_id = int(employee_id)
         employee = emp_repo.get_by_id(employee_id)
         if employee is None:
             return {"ok": False, "error": "not_found", "message": f"Employee with id {employee_id} not found"}
 
-        if employee.get("employee_status") in ("terminated", "inactive"):
+        emp_status = _get_emp_field(employee, "employee_status")
+        if emp_status in ("terminated", "inactive"):
             return {
                 "ok": False,
                 "error": "validation",
-                "message": f"Cannot check in: Employee {employee_id} status is '{employee.get('employee_status')}'",
+                "message": f"Cannot check in: Employee {employee_id} status is '{emp_status}'",
             }
 
         work_mode = work_mode.strip().lower() if work_mode else "in_office"
@@ -138,7 +144,6 @@ def check_in_employee(employee_id, work_mode="in_office", notes=None):
             auto_notes = f"{late_tag} {auto_notes}".strip()
 
         new_record = {
-            "id": repo.next_id(),
             "employee_id": employee_id,
             "date": today_str,
             "check_in": now_time_str,
@@ -150,13 +155,13 @@ def check_in_employee(employee_id, work_mode="in_office", notes=None):
             "late_minutes": late_minutes,
             "notes": auto_notes if auto_notes else None,
         }
-        repo.add(new_record)
 
+        created = repo.create(new_record)
         utils.log_action(
             "ATTENDANCE_CHECK_IN",
             f"emp_id={employee_id} date={today_str} in={now_time_str} mode={work_mode} is_late={is_late}",
         )
-        return {"ok": True, "record": new_record}
+        return {"ok": True, "record": created}
     except Exception as e:
         utils.log_action("ATTENDANCE_CHECK_IN_FAILED", f"emp_id={employee_id} error: {e}")
         return {"ok": False, "error": "server", "message": str(e)}
@@ -166,7 +171,7 @@ def check_out_employee(employee_id, notes=None):
     """Records an employee live check-out using the current server timestamp.
     Client CANNOT pass date or time - server authority strictly enforced."""
     try:
-        employee_id = utils.convert_string_to_integer(employee_id) if isinstance(employee_id, str) else employee_id
+        employee_id = int(employee_id)
         if emp_repo.get_by_id(employee_id) is None:
             return {"ok": False, "error": "not_found", "message": f"Employee with id {employee_id} not found"}
 
@@ -210,7 +215,7 @@ def create_manual_record(employee_id, date_str, check_in=None, check_out=None,
                          work_mode="in_office", status="present", notes=None):
     """Allows manual creation of attendance by Administrators / HR (e.g. past dates, leaves, administrative overrides)."""
     try:
-        employee_id = utils.convert_string_to_integer(employee_id) if isinstance(employee_id, str) else employee_id
+        employee_id = int(employee_id)
         if emp_repo.get_by_id(employee_id) is None:
             return {"ok": False, "error": "not_found", "message": f"Employee with id {employee_id} not found"}
 
@@ -231,38 +236,54 @@ def create_manual_record(employee_id, date_str, check_in=None, check_out=None,
                 return {
                     "ok": False,
                     "error": "validation",
-                    "message": "Cannot log work hours for future dates. Future dates are only permitted for 'on_leave' status.",
+                    "message": "Cannot create attendance for future dates unless status is 'on_leave'",
                 }
-            if check_in is not None or check_out is not None:
+            if check_in or check_out:
                 return {
                     "ok": False,
                     "error": "validation",
-                    "message": "Check-in and check-out times cannot be set for future dates.",
+                    "message": "Future leave records must not have check-in or check-out times",
                 }
 
-        # Check for future times if date is today
-        if check_in and _is_future_time_on_date(date_str, check_in):
-            return {"ok": False, "error": "validation", "message": "Check-in time cannot be in the future"}
-        if check_out and _is_future_time_on_date(date_str, check_out):
-            return {"ok": False, "error": "validation", "message": "Check-out time cannot be in the future"}
+        # Check existing record for this employee and date
+        existing = repo.get_by_employee_and_date(employee_id, date_str)
+        if existing:
+            first_rec = existing[0] if isinstance(existing, list) else existing
+            return {
+                "ok": False,
+                "error": "conflict",
+                "message": f"Attendance record already exists for employee {employee_id} on {date_str} (id={first_rec['id']})",
+            }
 
-        total_hours = 0.0
+        # Validate punch timestamps if provided
+        t_in = _parse_time_str(check_in) if check_in else None
+        t_out = _parse_time_str(check_out) if check_out else None
+
+        if check_in and t_in is None:
+            return {"ok": False, "error": "validation", "message": "Invalid check_in time format. Use HH:MM:SS or HH:MM"}
+        if check_out and t_out is None:
+            return {"ok": False, "error": "validation", "message": "Invalid check_out time format. Use HH:MM:SS or HH:MM"}
+
+        if t_in and t_out and t_out <= t_in:
+            return {"ok": False, "error": "validation", "message": "check_out time must be after check_in time"}
+
+        if check_in and _is_future_time_on_date(date_str, check_in):
+            return {"ok": False, "error": "validation", "message": "check_in time cannot be in the future"}
+        if check_out and _is_future_time_on_date(date_str, check_out):
+            return {"ok": False, "error": "validation", "message": "check_out time cannot be in the future"}
+
+        # Calculate hours and late metrics
+        total_hours = _calculate_hours(check_in, check_out) if (check_in and check_out) else 0.0
         is_late = False
         late_minutes = 0
-
-        if check_in and check_out:
-            if not _parse_time_str(check_in) or not _parse_time_str(check_out):
-                return {"ok": False, "error": "validation", "message": "Invalid check_in or check_out time format"}
-            t_in = _parse_time_str(check_in)
-            total_hours = _calculate_hours(check_in, check_out)
+        if t_in:
             is_late, late_minutes = _check_late_arrival(t_in)
 
         new_record = {
-            "id": repo.next_id(),
             "employee_id": employee_id,
             "date": date_str,
-            "check_in": check_in,
-            "check_out": check_out,
+            "check_in": t_in.strftime("%H:%M:%S") if t_in else None,
+            "check_out": t_out.strftime("%H:%M:%S") if t_out else None,
             "work_mode": work_mode,
             "status": status,
             "total_hours": total_hours,
@@ -270,133 +291,152 @@ def create_manual_record(employee_id, date_str, check_in=None, check_out=None,
             "late_minutes": late_minutes,
             "notes": notes.strip() if notes else None,
         }
-        repo.add(new_record)
-        utils.log_action("ATTENDANCE_MANUAL_CREATE", f"id={new_record['id']} emp_id={employee_id} date={date_str}")
-        return {"ok": True, "record": new_record}
+
+        created = repo.create(new_record)
+        utils.log_action(
+            "ATTENDANCE_MANUAL_CREATE",
+            f"emp_id={employee_id} date={date_str} in={check_in} out={check_out} status={status}",
+        )
+        return {"ok": True, "record": created}
     except Exception as e:
         utils.log_action("ATTENDANCE_MANUAL_CREATE_FAILED", f"emp_id={employee_id} error: {e}")
         return {"ok": False, "error": "server", "message": str(e)}
 
 
-def update_record(a_id, check_in=None, check_out=None, work_mode=None, status=None, notes=None):
-    """Updates an existing attendance entry and recalculates hours if times change."""
+create_manual_attendance = create_manual_record
+
+
+def update_attendance_record(a_id, check_in=None, check_out=None, work_mode=None, status=None, notes=None):
+    """Updates an existing attendance record (admin override). Recalculates total_hours & is_late automatically."""
     try:
         a_id = utils.convert_string_to_integer(a_id) if isinstance(a_id, str) else a_id
         existing = repo.get_by_id(a_id)
         if existing is None:
-            return {"ok": False, "error": "not_found", "message": f"Attendance record with id {a_id} not found"}
+            return {"ok": False, "error": "not_found", "message": f"Attendance record {a_id} not found"}
 
-        record_date = existing.get("date")
-        updated_fields = {}
-        new_check_in = check_in if check_in is not None else existing.get("check_in")
-        new_check_out = check_out if check_out is not None else existing.get("check_out")
+        effective_date = existing["date"]
+        effective_in = check_in.strip() if check_in is not None else existing.get("check_in")
+        effective_out = check_out.strip() if check_out is not None else existing.get("check_out")
+        effective_status = status.strip().lower() if status is not None else existing.get("status")
+        effective_mode = work_mode.strip().lower() if work_mode is not None else existing.get("work_mode")
 
-        if check_in is not None:
-            if check_in and not _parse_time_str(check_in):
-                return {"ok": False, "error": "validation", "message": "Invalid check_in time format"}
-            if check_in and _is_future_time_on_date(record_date, check_in):
-                return {"ok": False, "error": "validation", "message": "Check-in time cannot be in the future"}
-            updated_fields["check_in"] = check_in
-            t_in = _parse_time_str(new_check_in)
+        if effective_status not in VALID_STATUSES:
+            return {"ok": False, "error": "validation", "message": f"status must be one of {sorted(VALID_STATUSES)}"}
+        if effective_mode not in VALID_WORK_MODES:
+            return {"ok": False, "error": "validation", "message": f"work_mode must be one of {sorted(VALID_WORK_MODES)}"}
+
+        t_in = _parse_time_str(effective_in) if effective_in else None
+        t_out = _parse_time_str(effective_out) if effective_out else None
+
+        if effective_in and t_in is None:
+            return {"ok": False, "error": "validation", "message": "Invalid check_in format"}
+        if effective_out and t_out is None:
+            return {"ok": False, "error": "validation", "message": "Invalid check_out format"}
+        if t_in and t_out and t_out <= t_in:
+            return {"ok": False, "error": "validation", "message": "check_out time must be after check_in time"}
+
+        if effective_in and _is_future_time_on_date(effective_date, effective_in):
+            return {"ok": False, "error": "validation", "message": "check_in time cannot be in the future"}
+        if effective_out and _is_future_time_on_date(effective_date, effective_out):
+            return {"ok": False, "error": "validation", "message": "check_out time cannot be in the future"}
+
+        total_hours = _calculate_hours(effective_in, effective_out) if (effective_in and effective_out) else 0.0
+        is_late, late_minutes = (False, 0)
+        if t_in:
             is_late, late_minutes = _check_late_arrival(t_in)
-            updated_fields["is_late"] = is_late
-            updated_fields["late_minutes"] = late_minutes
 
-        if check_out is not None:
-            if check_out and not _parse_time_str(check_out):
-                return {"ok": False, "error": "validation", "message": "Invalid check_out time format"}
-            if check_out and _is_future_time_on_date(record_date, check_out):
-                return {"ok": False, "error": "validation", "message": "Check-out time cannot be in the future"}
-            updated_fields["check_out"] = check_out
-
-        if new_check_in and new_check_out:
-            if not _parse_time_str(new_check_in) or not _parse_time_str(new_check_out):
-                return {"ok": False, "error": "validation", "message": "Invalid check_in or check_out time format"}
-            updated_fields["total_hours"] = _calculate_hours(new_check_in, new_check_out)
-
-        if work_mode is not None:
-            mode = work_mode.strip().lower()
-            if mode not in VALID_WORK_MODES:
-                return {"ok": False, "error": "validation", "message": f"work_mode must be one of {sorted(VALID_WORK_MODES)}"}
-            updated_fields["work_mode"] = mode
-
-        if status is not None:
-            st = status.strip().lower()
-            if st not in VALID_STATUSES:
-                return {"ok": False, "error": "validation", "message": f"status must be one of {sorted(VALID_STATUSES)}"}
-            if _is_future_date(record_date) and st != "on_leave":
-                return {"ok": False, "error": "validation", "message": "Future attendance records can only have 'on_leave' status"}
-            updated_fields["status"] = st
-
+        updates = {
+            "check_in": t_in.strftime("%H:%M:%S") if t_in else None,
+            "check_out": t_out.strftime("%H:%M:%S") if t_out else None,
+            "work_mode": effective_mode,
+            "status": effective_status,
+            "total_hours": total_hours,
+            "is_late": is_late,
+            "late_minutes": late_minutes,
+        }
         if notes is not None:
-            updated_fields["notes"] = notes.strip() if notes else None
+            updates["notes"] = notes.strip() if notes else None
 
-        updated = repo.update(a_id, updated_fields)
-        utils.log_action("ATTENDANCE_UPDATE", f"id={a_id} updated={updated_fields}")
-        return {"ok": True, "record": updated}
+        updated_record = repo.update(a_id, updates)
+        utils.log_action("ATTENDANCE_UPDATE", f"id={a_id} updates={updates}")
+        return {"ok": True, "record": updated_record}
     except Exception as e:
         utils.log_action("ATTENDANCE_UPDATE_FAILED", f"id={a_id} error: {e}")
         return {"ok": False, "error": "server", "message": str(e)}
 
 
-def delete_record(a_id):
+update_record = update_attendance_record
+
+
+def delete_attendance_record(a_id):
     """Deletes an attendance record by ID."""
     try:
         a_id = utils.convert_string_to_integer(a_id) if isinstance(a_id, str) else a_id
-        deleted = repo.delete(a_id)
-        if deleted is None:
+        if repo.get_by_id(a_id) is None:
             return {"ok": False, "error": "not_found", "message": f"Attendance record with id {a_id} not found"}
+        repo.delete(a_id)
         utils.log_action("ATTENDANCE_DELETE", f"id={a_id}")
-        return {"ok": True, "details": f"Attendance record with id {a_id} deleted"}
+        return {"ok": True, "details": f"Attendance record {a_id} deleted successfully"}
     except Exception as e:
         utils.log_action("ATTENDANCE_DELETE_FAILED", f"id={a_id} error: {e}")
         return {"ok": False, "error": "server", "message": str(e)}
 
 
-def get_record_by_id(a_id):
-    """Fetches a single attendance record by ID."""
+delete_record = delete_attendance_record
+
+
+# ─── Query & Summary Aggregates ────────────────────────────────────────────────
+
+def get_all_records(employee_id=None, department_id=None, date_from=None, date_to=None,
+                    status=None, work_mode=None, skip=0, limit=None):
+    """Retrieves paginated and filtered attendance records across the enterprise."""
+    data = repo.get_all()
+
+    # Join department if department_id filter is requested
+    if department_id is not None:
+        department_id = utils.convert_string_to_integer(department_id) if isinstance(department_id, str) else department_id
+        dept_emp_ids = {
+            _get_emp_field(e, "emp_id", e.get("id") if isinstance(e, dict) else None)
+            for e in emp_repo.get_all()
+            if _get_emp_field(e, "dept_id") == department_id
+        }
+        data = [r for r in data if r.get("employee_id") in dept_emp_ids]
+
+    if employee_id is not None:
+        employee_id = utils.convert_string_to_integer(employee_id) if isinstance(employee_id, str) else employee_id
+        data = [r for r in data if r.get("employee_id") == employee_id]
+
+    if date_from:
+        data = [r for r in data if r.get("date", "") >= date_from]
+    if date_to:
+        data = [r for r in data if r.get("date", "") <= date_to]
+    if status:
+        data = [r for r in data if r.get("status") == status.strip().lower()]
+    if work_mode:
+        data = [r for r in data if r.get("work_mode") == work_mode.strip().lower()]
+
+    data.sort(key=lambda x: (x.get("date", ""), x.get("id", 0)), reverse=True)
+    total = len(data)
+    items = data[skip: skip + limit] if limit is not None else data[skip:]
+    return {"total": total, "skip": skip, "limit": limit, "items": items}
+
+
+get_all_attendance = get_all_records
+
+
+def get_attendance_by_id(a_id):
+    """Retrieves a single attendance record by ID."""
     a_id = utils.convert_string_to_integer(a_id) if isinstance(a_id, str) else a_id
     return repo.get_by_id(a_id)
 
 
-def get_all_records(employee_id=None, department_id=None, date_from=None, date_to=None,
-                    status=None, work_mode=None, skip=0, limit=None):
-    """Retrieves filtered and paginated attendance records."""
-    data = repo.get_all()
-
-    # If department_id specified, find employee IDs in that department
-    dept_emp_ids = None
-    if department_id is not None:
-        dept_id = utils.convert_string_to_integer(department_id) if isinstance(department_id, str) else department_id
-        dept_emp_ids = {e["id"] for e in emp_repo.get_all() if e.get("department_id") == dept_id}
-
-    results = []
-    for r in data:
-        if employee_id is not None and r["employee_id"] != employee_id:
-            continue
-        if dept_emp_ids is not None and r["employee_id"] not in dept_emp_ids:
-            continue
-        if date_from and r["date"] < date_from:
-            continue
-        if date_to and r["date"] > date_to:
-            continue
-        if status and r["status"].lower() != status.strip().lower():
-            continue
-        if work_mode and r["work_mode"].lower() != work_mode.strip().lower():
-            continue
-        results.append(r)
-
-    # Sort descending by date and check_in time
-    results.sort(key=lambda x: (x.get("date", ""), x.get("check_in") or ""), reverse=True)
-
-    total = len(results)
-    paged = results[skip: skip + limit] if limit is not None else results[skip:]
-    return {"total": total, "skip": skip, "limit": limit, "items": paged}
+get_record_by_id = get_attendance_by_id
 
 
-def get_employee_attendance(employee_id, date_from=None, date_to=None, status=None, skip=0, limit=None):
-    """Fetches paginated attendance records for a specific employee."""
-    employee_id = utils.convert_string_to_integer(employee_id) if isinstance(employee_id, str) else employee_id
+def get_employee_attendance(employee_id, date_from=None, date_to=None,
+                            status=None, skip=0, limit=None):
+    """Retrieves attendance history for a specific employee with optional date range/status filters."""
+    employee_id = int(employee_id)
     if emp_repo.get_by_id(employee_id) is None:
         return None
 
@@ -412,10 +452,14 @@ def get_employee_attendance(employee_id, date_from=None, date_to=None, status=No
 
 def get_monthly_summary(employee_id, year, month):
     """Generates monthly attendance aggregates and daily breakdown for an employee."""
-    employee_id = utils.convert_string_to_integer(employee_id) if isinstance(employee_id, str) else employee_id
+    employee_id = int(employee_id)
     employee = emp_repo.get_by_id(employee_id)
     if employee is None:
         return None
+
+    first_name = _get_emp_field(employee, "first_name", "")
+    last_name = _get_emp_field(employee, "last_name", "")
+    emp_name = f"{first_name} {last_name}".strip()
 
     prefix = f"{year:04d}-{month:02d}"
     records = [
@@ -441,7 +485,7 @@ def get_monthly_summary(employee_id, year, month):
 
     return {
         "employee_id": employee_id,
-        "employee_name": f"{employee.get('first_name')} {employee.get('last_name')}",
+        "employee_name": emp_name,
         "year": year,
         "month": month,
         "month_name": calendar.month_name[month],
@@ -457,14 +501,20 @@ def get_monthly_summary(employee_id, year, month):
     }
 
 
+get_employee_monthly_attendance_summary = get_monthly_summary
+
+
 def get_yearly_summary(employee_id, year):
     """Generates annual attendance aggregates with month-by-month trends for an employee."""
-    employee_id = utils.convert_string_to_integer(employee_id) if isinstance(employee_id, str) else employee_id
+    employee_id = int(employee_id)
     employee = emp_repo.get_by_id(employee_id)
     if employee is None:
         return None
 
-    # Fetch all records for this employee once to avoid redundant file I/O
+    first_name = _get_emp_field(employee, "first_name", "")
+    last_name = _get_emp_field(employee, "last_name", "")
+    emp_name = f"{first_name} {last_name}".strip()
+
     all_emp_records = repo.get_by_employee_id(employee_id)
     year_prefix = f"{year:04d}-"
     year_records = [r for r in all_emp_records if r.get("date", "").startswith(year_prefix)]
@@ -523,7 +573,7 @@ def get_yearly_summary(employee_id, year):
 
     return {
         "employee_id": employee_id,
-        "employee_name": f"{employee.get('first_name')} {employee.get('last_name')}",
+        "employee_name": emp_name,
         "year": year,
         "total_days_present": total_present,
         "total_days_half_day": total_half_days,
@@ -535,13 +585,22 @@ def get_yearly_summary(employee_id, year):
     }
 
 
+get_employee_yearly_attendance_summary = get_yearly_summary
+
+
 def get_today_attendance_overview():
     """Provides a company-wide attendance status breakdown for today."""
     today_str = datetime.date.today().isoformat()
-    all_employees = [e for e in emp_repo.get_all() if e.get("employee_status") == "active"]
+    all_employees = [
+        e for e in emp_repo.get_all()
+        if _get_emp_field(e, "employee_status") == "active"
+    ]
     today_records = [r for r in repo.get_all() if r.get("date") == today_str]
 
-    emp_lookup = {e["id"]: e for e in all_employees}
+    emp_lookup = {
+        _get_emp_field(e, "emp_id", e.get("id") if isinstance(e, dict) else None): e
+        for e in all_employees
+    }
     record_by_emp = {r["employee_id"]: r for r in today_records}
 
     checked_in = []
@@ -550,12 +609,16 @@ def get_today_attendance_overview():
     not_checked_in = []
 
     for emp_id, emp in emp_lookup.items():
+        if emp_id is None:
+            continue
         rec = record_by_emp.get(emp_id)
+        first_name = _get_emp_field(emp, "first_name", "")
+        last_name = _get_emp_field(emp, "last_name", "")
         emp_summary = {
             "employee_id": emp_id,
-            "name": f"{emp['first_name']} {emp['last_name']}",
-            "email": emp.get("email"),
-            "department_id": emp.get("department_id"),
+            "name": f"{first_name} {last_name}".strip(),
+            "email": _get_emp_field(emp, "email"),
+            "department_id": _get_emp_field(emp, "dept_id"),
         }
         if rec is None:
             not_checked_in.append(emp_summary)
@@ -575,7 +638,6 @@ def get_today_attendance_overview():
                 "check_out": rec.get("check_out"),
                 "total_hours": rec.get("total_hours"),
                 "status": rec.get("status"),
-                "is_late": rec.get("is_late", False),
             })
 
     return {

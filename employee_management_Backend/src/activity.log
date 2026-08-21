@@ -184,3 +184,1267 @@
 [2026-08-17 12:02:01] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-17 in=12:02:01 mode=in_office is_late=True
 [2026-08-17 12:02:01] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-17 out=12:02:01 total_hours=0.0 status=absent
 [2026-08-17 12:02:01] ATTENDANCE_DELETE - id=47
+[2026-08-20 18:14:01] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 18:33:38] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-20 in=18:33:38 mode=in_office is_late=True
+[2026-08-20 18:33:38] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-20 out=18:33:38 total_hours=0.0 status=absent
+[2026-08-20 18:33:38] ATTENDANCE_MANUAL_CREATE - id=48 emp_id=6 date=2026-08-01
+[2026-08-20 18:33:38] ATTENDANCE_DELETE - id=48
+[2026-08-20 18:33:38] ATTENDANCE_DELETE - id=47
+[2026-08-20 18:35:37] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 18:41:34] SEARCH - first_name='riya' last_name=None department_id=None employee_status=None -> 1 match(es)
+[2026-08-20 18:44:36] CREATE - id=14 name=Barry Alan email=barry@gmail.com
+[2026-08-20 18:46:06] SEARCH - first_name='barry' last_name=None department_id=None employee_status=None -> 0 match(es)
+[2026-08-20 18:56:13] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 18:56:20] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 18:56:29] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 18:56:49] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 18:57:06] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-20 in=18:57:06 mode=in_office is_late=True
+[2026-08-20 18:57:07] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-20 out=18:57:07 total_hours=0.0 status=absent
+[2026-08-20 18:57:07] ATTENDANCE_MANUAL_CREATE - id=48 emp_id=6 date=2026-08-01
+[2026-08-20 18:57:07] ATTENDANCE_DELETE - id=48
+[2026-08-20 18:57:07] ATTENDANCE_DELETE - id=47
+[2026-08-20 19:00:19] CREATE - id=14 name=Barry Alan email=barry@gmail.com
+[2026-08-20 19:09:41] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 19:10:40] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 19:10:53] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 19:11:07] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 19:11:14] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 19:11:55] SEARCH - first_name='Vijay' last_name=None department_id=2 employee_status=None -> 1 match(es)
+[2026-08-20 19:11:55] CREATE_FAILED - unexpected error: (psycopg.errors.CheckViolation) new row for relation "employee_addresses" violates check constraint "chk_emp_addr_type"
+DETAIL:  Failing row contains (17, 15, 13, primary, t, 2026-08-20 19:11:55.206952+05:30, 2026-08-20 19:11:55.206952+05:30).
+[SQL: INSERT INTO employee_addresses (employee_id, address_id, address_type, is_primary) VALUES (%(employee_id)s::BIGINT, %(address_id)s::BIGINT, %(address_type)s::VARCHAR, %(is_primary)s) RETURNING employee_addresses.employee_address_id, employee_addresses.created_at, employee_addresses.updated_at]
+[parameters: {'employee_id': 15, 'address_id': 13, 'address_type': 'primary', 'is_primary': True}]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
+[2026-08-20 19:12:11] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 19:12:16] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 19:12:37] SEARCH - first_name='Vijay' last_name=None department_id=2 employee_status=None -> 1 match(es)
+[2026-08-20 19:12:37] CREATE - id=16 name=Kavita Menon email=kavita.menon@company.com
+[2026-08-20 19:12:37] UPDATE - id=16 updated in database
+[2026-08-20 19:12:37] DELETE - id=16 deleted from database
+[2026-08-20 19:13:23] SEARCH - first_name='Vijay' last_name=None department_id=2 employee_status=None -> 1 match(es)
+[2026-08-20 19:13:23] CREATE - id=17 name=Kavita Menon email=kavita.menon@company.com
+[2026-08-20 19:13:23] UPDATE - id=17 updated in database
+[2026-08-20 19:13:23] DELETE - id=17 deleted from database
+[2026-08-20 19:13:31] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-20 in=19:13:31 mode=in_office is_late=True
+[2026-08-20 19:13:31] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-20 out=19:13:31 total_hours=0.0 status=absent
+[2026-08-20 19:13:31] ATTENDANCE_MANUAL_CREATE - id=48 emp_id=6 date=2026-08-01
+[2026-08-20 19:13:31] ATTENDANCE_DELETE - id=48
+[2026-08-20 19:13:31] ATTENDANCE_DELETE - id=47
+[2026-08-20 19:20:10] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 19:20:15] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 19:20:21] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 19:20:32] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 19:21:12] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 19:21:24] SEARCH - first_name='Rajesh' last_name=None dept_id=None employee_status=None -> 1 match(es)
+[2026-08-20 19:21:32] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 19:21:43] SEARCH - first_name='Rajesh' last_name=None dept_id=None employee_status=None -> 1 match(es)
+[2026-08-20 19:21:43] CREATE - emp_id=18 code=EMP-2001 name=Aarav Singhania
+[2026-08-20 19:21:43] UPDATE - emp_id=18 updated in database
+[2026-08-20 19:21:43] DELETE - emp_id=18 deleted from database
+[2026-08-20 19:21:53] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 19:24:57] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-20 in=19:24:57 mode=in_office is_late=True
+[2026-08-20 19:24:57] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-20 out=19:24:57 total_hours=0.0 status=absent
+[2026-08-20 19:24:58] ATTENDANCE_MANUAL_CREATE - id=48 emp_id=6 date=2026-08-01
+[2026-08-20 19:24:58] ATTENDANCE_DELETE - id=48
+[2026-08-20 19:24:58] ATTENDANCE_DELETE - id=47
+[2026-08-20 19:25:10] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-20 19:26:17] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-20 in=19:26:17 mode=in_office is_late=True
+[2026-08-20 19:26:17] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-20 out=19:26:17 total_hours=0.0 status=absent
+[2026-08-20 19:26:17] ATTENDANCE_MANUAL_CREATE - id=48 emp_id=6 date=2026-08-01
+[2026-08-20 19:26:17] ATTENDANCE_DELETE - id=48
+[2026-08-20 19:26:17] ATTENDANCE_DELETE - id=47
+[2026-08-20 19:26:41] SEARCH - first_name='Rajesh' last_name=None dept_id=None employee_status=None -> 1 match(es)
+[2026-08-20 19:26:41] CREATE - emp_id=19 code=EMP-2001 name=Aarav Singhania
+[2026-08-20 19:26:41] UPDATE - emp_id=19 updated in database
+[2026-08-20 19:26:41] DELETE - emp_id=19 deleted from database
+[2026-08-21 10:41:21] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 10:41:30] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 10:41:57] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 10:42:31] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 10:42:52] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 10:43:03] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 10:43:50] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 10:45:48] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 10:45:59] SEARCH - first_name=None last_name=None dept_uuid=6799a11e-0314-4c9a-9e27-4a457e06a006 employee_status=None -> 1 match(es)
+[2026-08-21 10:45:59] CREATE - emp_id=20 code=EMP-UUID-01 name=TestUUID Migration
+[2026-08-21 10:45:59] UPDATE - public_id=e15a8867-0ecb-4b81-8143-56b3ff8e52e0 updated in database
+[2026-08-21 10:46:00] DELETE - public_id=e15a8867-0ecb-4b81-8143-56b3ff8e52e0 deleted from database
+[2026-08-21 10:46:38] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 10:47:02] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-21 in=10:47:02 mode=in_office is_late=True
+[2026-08-21 10:47:02] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-21 out=10:47:02 total_hours=0.0 status=absent
+[2026-08-21 10:47:02] ATTENDANCE_MANUAL_CREATE - id=48 emp_id=6 date=2026-08-01
+[2026-08-21 10:47:02] ATTENDANCE_DELETE - id=48
+[2026-08-21 10:47:02] ATTENDANCE_DELETE - id=47
+[2026-08-21 10:53:30] CREATE - emp_id=21 code=EMP-016 name=Aditya Mathur
+[2026-08-21 11:12:54] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:13:02] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:13:17] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:13:55] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:14:31] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:14:38] SIGNUP - user=sarah.connor@cyberdyne.com public_id=54b51412-2b63-42f2-941f-73fa12800119
+[2026-08-21 11:14:38] LOGIN - user=sarah.connor@cyberdyne.com public_id=54b51412-2b63-42f2-941f-73fa12800119
+[2026-08-21 11:14:46] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:14:53] SIGNUP - user=sarah.connor@cyberdyne.com public_id=9eb8129c-5861-46a4-b937-04ef2dfd9d2a
+[2026-08-21 11:14:53] LOGIN - user=sarah.connor@cyberdyne.com public_id=9eb8129c-5861-46a4-b937-04ef2dfd9d2a
+[2026-08-21 11:14:54] LOGIN - user=sarah.connor@cyberdyne.com public_id=9eb8129c-5861-46a4-b937-04ef2dfd9d2a
+[2026-08-21 11:14:54] PASSWORD_RESET_REQUESTED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:14:54] PASSWORD_RESET_COMPLETED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:14:54] LOGIN - user=sarah.connor@cyberdyne.com public_id=9eb8129c-5861-46a4-b937-04ef2dfd9d2a
+[2026-08-21 11:15:01] SEARCH - first_name=None last_name=None dept_uuid=6799a11e-0314-4c9a-9e27-4a457e06a006 employee_status=None -> 2 match(es)
+[2026-08-21 11:15:01] CREATE - emp_id=22 code=EMP-UUID-01 name=TestUUID Migration
+[2026-08-21 11:15:01] UPDATE - public_id=eb7849ac-578e-4b37-b513-87edc9912699 updated in database
+[2026-08-21 11:15:01] DELETE - public_id=eb7849ac-578e-4b37-b513-87edc9912699 deleted from database
+[2026-08-21 11:15:07] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-21 in=11:15:07 mode=in_office is_late=True
+[2026-08-21 11:15:07] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-21 out=11:15:07 total_hours=0.0 status=absent
+[2026-08-21 11:15:07] ATTENDANCE_MANUAL_CREATE - id=48 emp_id=6 date=2026-08-01
+[2026-08-21 11:15:07] ATTENDANCE_DELETE - id=48
+[2026-08-21 11:15:07] ATTENDANCE_DELETE - id=47
+[2026-08-21 11:18:55] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:19:01] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:21:34] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:21:56] LOGIN - user=admin.tester@company.com public_id=e59d7bab-f786-45b2-8826-d9dd36dd5f61
+[2026-08-21 11:21:56] DESIGNATION_CREATED - title=Principal AI Architect public_id=95ebae26-3392-4591-a911-5ebd0c644bb2
+[2026-08-21 11:21:56] DESIGNATION_UPDATED - title=Chief AI Architect public_id=95ebae26-3392-4591-a911-5ebd0c644bb2
+[2026-08-21 11:21:56] DESIGNATION_DELETED - public_id=95ebae26-3392-4591-a911-5ebd0c644bb2
+[2026-08-21 11:21:56] DEPARTMENT_CREATED - name=Autonomous Systems public_id=840d7f87-a28d-463e-af0a-a5e0335e5fcc
+[2026-08-21 11:21:56] DEPARTMENT_UPDATED - name=Autonomous Systems & Robotics public_id=840d7f87-a28d-463e-af0a-a5e0335e5fcc
+[2026-08-21 11:21:56] DEPARTMENT_DELETED - public_id=840d7f87-a28d-463e-af0a-a5e0335e5fcc
+[2026-08-21 11:21:56] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=current
+[2026-08-21 11:21:56] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=permanent
+[2026-08-21 11:21:56] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=e5c96d28-ef91-49e4-8eec-4b01f038b2d5
+[2026-08-21 11:21:56] EMERGENCY_CONTACT_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 name=Elena Sharma
+[2026-08-21 11:21:56] EMERGENCY_CONTACT_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 id=11
+[2026-08-21 11:21:56] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=bd019ca1-1334-4d01-82dc-d4c15188d598
+[2026-08-21 11:22:03] SIGNUP - user=sarah.connor@cyberdyne.com public_id=df476355-3179-4e29-8c03-5deb4b741534
+[2026-08-21 11:22:04] LOGIN - user=sarah.connor@cyberdyne.com public_id=df476355-3179-4e29-8c03-5deb4b741534
+[2026-08-21 11:22:04] LOGIN - user=sarah.connor@cyberdyne.com public_id=df476355-3179-4e29-8c03-5deb4b741534
+[2026-08-21 11:22:04] PASSWORD_RESET_REQUESTED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:22:04] PASSWORD_RESET_COMPLETED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:22:04] LOGIN - user=sarah.connor@cyberdyne.com public_id=df476355-3179-4e29-8c03-5deb4b741534
+[2026-08-21 11:22:11] SEARCH - first_name=None last_name=None dept_uuid=6799a11e-0314-4c9a-9e27-4a457e06a006 employee_status=None -> 2 match(es)
+[2026-08-21 11:22:11] CREATE - emp_id=23 code=EMP-UUID-01 name=TestUUID Migration
+[2026-08-21 11:22:11] UPDATE - public_id=15a4beaa-f630-444d-b460-258cee15138d updated in database
+[2026-08-21 11:22:12] DELETE - public_id=15a4beaa-f630-444d-b460-258cee15138d deleted from database
+[2026-08-21 11:22:21] SEARCH - first_name=None last_name=None dept_uuid=6799a11e-0314-4c9a-9e27-4a457e06a006 employee_status=None -> 2 match(es)
+[2026-08-21 11:22:21] CREATE - emp_id=24 code=EMP-UUID-01 name=TestUUID Migration
+[2026-08-21 11:22:21] UPDATE - public_id=01131180-66cc-4cfd-bcf1-45d767ea5e8c updated in database
+[2026-08-21 11:22:21] DELETE - public_id=01131180-66cc-4cfd-bcf1-45d767ea5e8c deleted from database
+[2026-08-21 11:22:29] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-21 in=11:22:29 mode=in_office is_late=True
+[2026-08-21 11:22:29] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-21 out=11:22:29 total_hours=0.0 status=absent
+[2026-08-21 11:22:29] ATTENDANCE_MANUAL_CREATE - id=48 emp_id=6 date=2026-08-01
+[2026-08-21 11:22:29] ATTENDANCE_DELETE - id=48
+[2026-08-21 11:22:29] ATTENDANCE_DELETE - id=47
+[2026-08-21 11:25:40] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:26:05] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:27:02] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:27:19] LOGIN - user=hr.admin@company.com public_id=fcab461b-7791-4e3f-8e08-6dfa187490ef
+[2026-08-21 11:27:19] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:27:19] HOLIDAY_DELETED - public_id=8bb221cc-6e58-4fe8-af47-6e52efe149fb
+[2026-08-21 11:27:19] LEAVE_ALLOCATED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=Casual Leave days=12
+[2026-08-21 11:27:19] LEAVE_REQUESTED - emp_id=1 days=3.0
+[2026-08-21 11:27:30] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:27:39] LOGIN - user=hr.admin@company.com public_id=fcab461b-7791-4e3f-8e08-6dfa187490ef
+[2026-08-21 11:27:39] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:27:39] HOLIDAY_DELETED - public_id=f85be06a-12b6-4574-bd49-f2f804da535f
+[2026-08-21 11:27:39] LEAVE_ALLOCATED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=Casual Leave days=12
+[2026-08-21 11:27:39] LEAVE_REQUESTED - emp_id=1 days=3.0
+[2026-08-21 11:27:59] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:27:59] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:27:59] HOLIDAY_DELETED - public_id=6e9da5cf-af90-4249-a377-415f4e0ab0d9
+[2026-08-21 11:27:59] LEAVE_ALLOCATED - emp=3d1f3899-8d0d-4106-af88-599e3abb13c8 type=Casual Leave days=12
+[2026-08-21 11:27:59] LEAVE_REQUESTED - emp_id=2 days=3.0
+[2026-08-21 11:27:59] LEAVE_PROCESSED - public_id=87b75c78-e790-46b9-96bf-f0017c10ba84 action=approved
+[2026-08-21 11:27:59] LEAVE_CANCELLED - public_id=87b75c78-e790-46b9-96bf-f0017c10ba84
+[2026-08-21 11:28:05] SIGNUP - user=sarah.connor@cyberdyne.com public_id=8ee99739-8d4d-4870-b1b3-f7110c9d3d25
+[2026-08-21 11:28:06] LOGIN - user=sarah.connor@cyberdyne.com public_id=8ee99739-8d4d-4870-b1b3-f7110c9d3d25
+[2026-08-21 11:28:06] LOGIN - user=sarah.connor@cyberdyne.com public_id=8ee99739-8d4d-4870-b1b3-f7110c9d3d25
+[2026-08-21 11:28:06] PASSWORD_RESET_REQUESTED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:28:06] PASSWORD_RESET_COMPLETED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:28:06] LOGIN - user=sarah.connor@cyberdyne.com public_id=8ee99739-8d4d-4870-b1b3-f7110c9d3d25
+[2026-08-21 11:28:14] LOGIN - user=admin.tester@company.com public_id=600a206f-7169-40fd-9cba-5e1605a1dd8d
+[2026-08-21 11:28:14] DESIGNATION_CREATED - title=Principal AI Architect public_id=e6922c75-243c-4ad9-826b-6597618127f4
+[2026-08-21 11:28:14] DESIGNATION_UPDATED - title=Chief AI Architect public_id=e6922c75-243c-4ad9-826b-6597618127f4
+[2026-08-21 11:28:14] DESIGNATION_DELETED - public_id=e6922c75-243c-4ad9-826b-6597618127f4
+[2026-08-21 11:28:14] DEPARTMENT_CREATED - name=Autonomous Systems public_id=8184d133-2a21-4b02-86e4-852e28326f48
+[2026-08-21 11:28:14] DEPARTMENT_UPDATED - name=Autonomous Systems & Robotics public_id=8184d133-2a21-4b02-86e4-852e28326f48
+[2026-08-21 11:28:14] DEPARTMENT_DELETED - public_id=8184d133-2a21-4b02-86e4-852e28326f48
+[2026-08-21 11:28:14] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=current
+[2026-08-21 11:28:14] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=permanent
+[2026-08-21 11:28:14] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=c8b9ec9e-e86a-4d74-a631-3512e1bfb05d
+[2026-08-21 11:28:14] EMERGENCY_CONTACT_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 name=Elena Sharma
+[2026-08-21 11:28:14] EMERGENCY_CONTACT_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 id=12
+[2026-08-21 11:28:14] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=e75ef5f7-84cb-4f08-8ef1-30290f360502
+[2026-08-21 11:28:23] SEARCH - first_name=None last_name=None dept_uuid=6799a11e-0314-4c9a-9e27-4a457e06a006 employee_status=None -> 2 match(es)
+[2026-08-21 11:28:23] CREATE - emp_id=25 code=EMP-UUID-01 name=TestUUID Migration
+[2026-08-21 11:28:23] UPDATE - public_id=b03d2e43-85a5-4841-ac03-ed30cb7ee9df updated in database
+[2026-08-21 11:28:23] DELETE - public_id=b03d2e43-85a5-4841-ac03-ed30cb7ee9df deleted from database
+[2026-08-21 11:28:30] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-21 in=11:28:30 mode=in_office is_late=True
+[2026-08-21 11:28:30] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-21 out=11:28:30 total_hours=0.0 status=absent
+[2026-08-21 11:28:30] ATTENDANCE_MANUAL_CREATE - id=48 emp_id=6 date=2026-08-01
+[2026-08-21 11:28:30] ATTENDANCE_DELETE - id=48
+[2026-08-21 11:28:30] ATTENDANCE_DELETE - id=47
+[2026-08-21 11:30:01] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:30:02] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:30:02] HOLIDAY_DELETED - public_id=2885261d-ea17-4cae-b70d-511d872e44e6
+[2026-08-21 11:30:02] LEAVE_ALLOCATED - emp=3d1f3899-8d0d-4106-af88-599e3abb13c8 type=Casual Leave days=12
+[2026-08-21 11:30:02] LEAVE_REQUESTED - emp_id=2 days=3.0
+[2026-08-21 11:30:02] LEAVE_PROCESSED - public_id=1dfdb3fb-da27-49c3-96be-48909e0c270e action=approved
+[2026-08-21 11:30:02] LEAVE_CANCELLED - public_id=1dfdb3fb-da27-49c3-96be-48909e0c270e
+[2026-08-21 11:30:22] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:30:22] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:30:22] HOLIDAY_DELETED - public_id=e6b785b7-f8f6-4ca9-a723-f89edf502714
+[2026-08-21 11:30:22] LEAVE_ALLOCATED - emp=3d1f3899-8d0d-4106-af88-599e3abb13c8 type=Casual Leave days=12
+[2026-08-21 11:30:22] LEAVE_REQUESTED - emp_id=2 days=3.0
+[2026-08-21 11:30:23] LEAVE_PROCESSED - public_id=c067f90e-f014-465a-8e8c-8e12aea996a6 action=approved
+[2026-08-21 11:30:23] LEAVE_CANCELLED - public_id=c067f90e-f014-465a-8e8c-8e12aea996a6
+[2026-08-21 11:31:53] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:31:53] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:31:53] HOLIDAY_DELETED - public_id=1a283e29-510d-4a76-8598-94aeef0dd078
+[2026-08-21 11:31:53] LEAVE_ALLOCATED - emp=3d1f3899-8d0d-4106-af88-599e3abb13c8 type=Casual Leave days=12
+[2026-08-21 11:31:53] LEAVE_REQUESTED - emp_id=2 days=3.0
+[2026-08-21 11:31:53] LEAVE_PROCESSED - public_id=74880bbc-4718-4774-b9b0-b2518f54a4d9 action=approved
+[2026-08-21 11:31:53] LEAVE_CANCELLED - public_id=74880bbc-4718-4774-b9b0-b2518f54a4d9
+[2026-08-21 11:33:23] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:33:23] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:33:23] HOLIDAY_DELETED - public_id=6c63d842-3f3f-40d0-b1eb-0e02b3c62760
+[2026-08-21 11:33:23] LEAVE_ALLOCATED - emp=3d1f3899-8d0d-4106-af88-599e3abb13c8 type=Casual Leave days=12
+[2026-08-21 11:33:23] LEAVE_REQUESTED - emp_id=2 days=3.0
+[2026-08-21 11:33:23] LEAVE_PROCESSED - public_id=45ff52be-d646-4d8e-a2c9-3fee10a8c114 action=approved
+[2026-08-21 11:33:23] LEAVE_CANCELLED - public_id=45ff52be-d646-4d8e-a2c9-3fee10a8c114
+[2026-08-21 11:34:49] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:34:49] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:34:49] HOLIDAY_DELETED - public_id=48f35be6-00d9-4386-bcb9-2738acf6928c
+[2026-08-21 11:34:49] LEAVE_ALLOCATED - emp=3d1f3899-8d0d-4106-af88-599e3abb13c8 type=Casual Leave days=12
+[2026-08-21 11:34:49] LEAVE_REQUESTED - emp_id=2 days=3.0
+[2026-08-21 11:34:49] LEAVE_PROCESSED - public_id=15950bf9-6301-4fe8-8bab-c9ddaebe2514 action=approved
+[2026-08-21 11:34:49] LEAVE_CANCELLED - public_id=15950bf9-6301-4fe8-8bab-c9ddaebe2514
+[2026-08-21 11:37:20] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:37:27] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:37:32] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:37:53] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:38:11] SIGNUP - user=sarah.connor@cyberdyne.com public_id=30cd049e-4323-4372-8a28-6f5628fbe724
+[2026-08-21 11:38:11] LOGIN - user=sarah.connor@cyberdyne.com public_id=30cd049e-4323-4372-8a28-6f5628fbe724
+[2026-08-21 11:38:12] LOGIN - user=sarah.connor@cyberdyne.com public_id=30cd049e-4323-4372-8a28-6f5628fbe724
+[2026-08-21 11:38:12] PASSWORD_RESET_REQUESTED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:38:12] PASSWORD_RESET_COMPLETED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:38:12] LOGIN - user=sarah.connor@cyberdyne.com public_id=30cd049e-4323-4372-8a28-6f5628fbe724
+[2026-08-21 11:38:14] LOGIN - user=admin.tester@company.com public_id=9dd33574-3adc-418f-9a57-8a91a154b7a0
+[2026-08-21 11:38:14] DESIGNATION_CREATED - title=Principal AI Architect public_id=8513d21d-8327-4908-9a23-ef11e0f01c33
+[2026-08-21 11:38:14] DESIGNATION_UPDATED - title=Chief AI Architect public_id=8513d21d-8327-4908-9a23-ef11e0f01c33
+[2026-08-21 11:38:14] DESIGNATION_DELETED - public_id=8513d21d-8327-4908-9a23-ef11e0f01c33
+[2026-08-21 11:38:14] DEPARTMENT_CREATED - name=Autonomous Systems public_id=98bec446-c2d6-480f-a2f5-e684dbd484be
+[2026-08-21 11:38:14] DEPARTMENT_UPDATED - name=Autonomous Systems & Robotics public_id=98bec446-c2d6-480f-a2f5-e684dbd484be
+[2026-08-21 11:38:14] DEPARTMENT_DELETED - public_id=98bec446-c2d6-480f-a2f5-e684dbd484be
+[2026-08-21 11:38:14] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=current
+[2026-08-21 11:38:14] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=permanent
+[2026-08-21 11:38:14] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=914836d1-ceef-4a66-9f39-fa7ba440ec19
+[2026-08-21 11:38:14] EMERGENCY_CONTACT_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 name=Elena Sharma
+[2026-08-21 11:38:14] EMERGENCY_CONTACT_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 id=13
+[2026-08-21 11:38:14] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=1056c0c6-25d2-44cd-a966-8ddf48facf81
+[2026-08-21 11:38:16] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:38:16] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:38:16] HOLIDAY_DELETED - public_id=a722fc3f-fe47-4796-a523-215a40eaabfc
+[2026-08-21 11:38:16] LEAVE_ALLOCATED - emp=3d1f3899-8d0d-4106-af88-599e3abb13c8 type=Casual Leave days=12
+[2026-08-21 11:38:16] LEAVE_REQUESTED - emp_id=2 days=3.0
+[2026-08-21 11:38:16] LEAVE_PROCESSED - public_id=a392c889-7900-4d3f-ae3e-a466fb1956ee action=approved
+[2026-08-21 11:38:16] LEAVE_CANCELLED - public_id=a392c889-7900-4d3f-ae3e-a466fb1956ee
+[2026-08-21 11:38:17] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-21 in=11:38:17 mode=in_office is_late=True
+[2026-08-21 11:38:17] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-21 out=11:38:17 total_hours=0.0 status=absent
+[2026-08-21 11:38:17] ATTENDANCE_MANUAL_CREATE - id=48 emp_id=6 date=2026-08-01
+[2026-08-21 11:38:17] ATTENDANCE_DELETE - id=48
+[2026-08-21 11:38:17] ATTENDANCE_DELETE - id=47
+[2026-08-21 11:41:46] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:41:53] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:42:01] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:42:07] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:42:14] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:42:19] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:42:26] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:42:46] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:43:03] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:43:15] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:44:24] SIGNUP - user=sarah.connor@cyberdyne.com public_id=9aa1a0f9-34cb-472b-b5c9-63b35a6c4c14
+[2026-08-21 11:44:24] LOGIN - user=sarah.connor@cyberdyne.com public_id=9aa1a0f9-34cb-472b-b5c9-63b35a6c4c14
+[2026-08-21 11:44:24] LOGIN - user=sarah.connor@cyberdyne.com public_id=9aa1a0f9-34cb-472b-b5c9-63b35a6c4c14
+[2026-08-21 11:44:24] PASSWORD_RESET_REQUESTED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:44:25] PASSWORD_RESET_COMPLETED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:44:25] LOGIN - user=sarah.connor@cyberdyne.com public_id=9aa1a0f9-34cb-472b-b5c9-63b35a6c4c14
+[2026-08-21 11:44:26] LOGIN - user=admin.tester@company.com public_id=6f68a4a3-baed-4713-b235-d55ec8980037
+[2026-08-21 11:44:26] DESIGNATION_CREATED - title=Principal AI Architect public_id=1ca3c68f-52a7-4061-a49c-b63110077de7
+[2026-08-21 11:44:26] DESIGNATION_UPDATED - title=Chief AI Architect public_id=1ca3c68f-52a7-4061-a49c-b63110077de7
+[2026-08-21 11:44:26] DESIGNATION_DELETED - public_id=1ca3c68f-52a7-4061-a49c-b63110077de7
+[2026-08-21 11:44:26] DEPARTMENT_CREATED - name=Autonomous Systems public_id=77517c6e-75d1-482b-853a-f54d8833f4f5
+[2026-08-21 11:44:26] DEPARTMENT_UPDATED - name=Autonomous Systems & Robotics public_id=77517c6e-75d1-482b-853a-f54d8833f4f5
+[2026-08-21 11:44:27] DEPARTMENT_DELETED - public_id=77517c6e-75d1-482b-853a-f54d8833f4f5
+[2026-08-21 11:44:27] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=current
+[2026-08-21 11:44:27] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=permanent
+[2026-08-21 11:44:27] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=3ab68833-0e9a-41cc-99c7-bfe062136588
+[2026-08-21 11:44:27] EMERGENCY_CONTACT_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 name=Elena Sharma
+[2026-08-21 11:44:27] EMERGENCY_CONTACT_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 id=14
+[2026-08-21 11:44:27] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=fb57a0d1-3746-4965-bcbf-0324c24bf8de
+[2026-08-21 11:44:28] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:44:28] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:44:28] HOLIDAY_DELETED - public_id=e5efdfa5-e938-4433-9e55-588d95de77e2
+[2026-08-21 11:44:28] LEAVE_ALLOCATED - emp=3d1f3899-8d0d-4106-af88-599e3abb13c8 type=Casual Leave days=12
+[2026-08-21 11:44:30] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:44:30] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-21 in=11:44:30 mode=in_office is_late=True
+[2026-08-21 11:44:30] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-21 out=11:44:30 total_hours=0.0 status=absent
+[2026-08-21 11:44:30] ATTENDANCE_MANUAL_CREATE - id=48 emp_id=6 date=2026-08-10
+[2026-08-21 11:44:30] ATTENDANCE_DELETE - id=48
+[2026-08-21 11:44:30] ATTENDANCE_DELETE - id=47
+[2026-08-21 11:44:46] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:44:51] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:45:02] SIGNUP - user=sarah.connor@cyberdyne.com public_id=3d7bd4f2-90c7-413f-8419-0afb44dc7c95
+[2026-08-21 11:45:02] LOGIN - user=sarah.connor@cyberdyne.com public_id=3d7bd4f2-90c7-413f-8419-0afb44dc7c95
+[2026-08-21 11:45:02] LOGIN - user=sarah.connor@cyberdyne.com public_id=3d7bd4f2-90c7-413f-8419-0afb44dc7c95
+[2026-08-21 11:45:02] PASSWORD_RESET_REQUESTED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:45:03] PASSWORD_RESET_COMPLETED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:45:03] LOGIN - user=sarah.connor@cyberdyne.com public_id=3d7bd4f2-90c7-413f-8419-0afb44dc7c95
+[2026-08-21 11:45:05] LOGIN - user=admin.tester@company.com public_id=86c282d9-fc85-447b-af19-6f47f152a0ea
+[2026-08-21 11:45:05] DESIGNATION_CREATED - title=Principal AI Architect public_id=c32788af-3c9a-4caf-afd4-289deb1fa819
+[2026-08-21 11:45:05] DESIGNATION_UPDATED - title=Chief AI Architect public_id=c32788af-3c9a-4caf-afd4-289deb1fa819
+[2026-08-21 11:45:05] DESIGNATION_DELETED - public_id=c32788af-3c9a-4caf-afd4-289deb1fa819
+[2026-08-21 11:45:05] DEPARTMENT_CREATED - name=Autonomous Systems public_id=fe23f7ca-5491-459e-baef-7e5b3e56f566
+[2026-08-21 11:45:05] DEPARTMENT_UPDATED - name=Autonomous Systems & Robotics public_id=fe23f7ca-5491-459e-baef-7e5b3e56f566
+[2026-08-21 11:45:05] DEPARTMENT_DELETED - public_id=fe23f7ca-5491-459e-baef-7e5b3e56f566
+[2026-08-21 11:45:05] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=current
+[2026-08-21 11:45:05] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=permanent
+[2026-08-21 11:45:05] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=5f901709-8e94-41d2-b653-cb0319161e82
+[2026-08-21 11:45:05] EMERGENCY_CONTACT_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 name=Elena Sharma
+[2026-08-21 11:45:05] EMERGENCY_CONTACT_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 id=15
+[2026-08-21 11:45:05] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=892e599b-09ed-4c3f-ab9a-4a679305677d
+[2026-08-21 11:45:07] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:45:07] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:45:07] HOLIDAY_DELETED - public_id=678c27be-f388-4ed9-af55-23f5678330cb
+[2026-08-21 11:45:07] LEAVE_ALLOCATED - emp=3d1f3899-8d0d-4106-af88-599e3abb13c8 type=Casual Leave days=12
+[2026-08-21 11:45:09] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:45:09] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-21 in=11:45:09 mode=in_office is_late=True
+[2026-08-21 11:45:09] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-21 out=11:45:09 total_hours=0.0 status=absent
+[2026-08-21 11:45:09] ATTENDANCE_MANUAL_CREATE - id=48 emp_id=6 date=2026-08-10
+[2026-08-21 11:45:09] ATTENDANCE_DELETE - id=48
+[2026-08-21 11:45:09] ATTENDANCE_DELETE - id=47
+[2026-08-21 11:45:53] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:46:07] SIGNUP - user=sarah.connor@cyberdyne.com public_id=2bee3d82-019d-4180-9d78-70aa6120c775
+[2026-08-21 11:46:08] LOGIN - user=sarah.connor@cyberdyne.com public_id=2bee3d82-019d-4180-9d78-70aa6120c775
+[2026-08-21 11:46:08] LOGIN - user=sarah.connor@cyberdyne.com public_id=2bee3d82-019d-4180-9d78-70aa6120c775
+[2026-08-21 11:46:08] PASSWORD_RESET_REQUESTED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:46:08] PASSWORD_RESET_COMPLETED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:46:08] LOGIN - user=sarah.connor@cyberdyne.com public_id=2bee3d82-019d-4180-9d78-70aa6120c775
+[2026-08-21 11:46:10] LOGIN - user=admin.tester@company.com public_id=491c4aa5-1134-4352-8f47-3ea85a987c9c
+[2026-08-21 11:46:10] DESIGNATION_CREATED - title=Principal AI Architect public_id=b000c510-0025-427d-8b1c-25760bd62564
+[2026-08-21 11:46:10] DESIGNATION_UPDATED - title=Chief AI Architect public_id=b000c510-0025-427d-8b1c-25760bd62564
+[2026-08-21 11:46:10] DESIGNATION_DELETED - public_id=b000c510-0025-427d-8b1c-25760bd62564
+[2026-08-21 11:46:10] DEPARTMENT_CREATED - name=Autonomous Systems public_id=ad78b3ff-11d5-4997-81cb-54423b46da16
+[2026-08-21 11:46:10] DEPARTMENT_UPDATED - name=Autonomous Systems & Robotics public_id=ad78b3ff-11d5-4997-81cb-54423b46da16
+[2026-08-21 11:46:10] DEPARTMENT_DELETED - public_id=ad78b3ff-11d5-4997-81cb-54423b46da16
+[2026-08-21 11:46:10] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=current
+[2026-08-21 11:46:10] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=permanent
+[2026-08-21 11:46:10] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=af19cadd-2855-40b1-8436-9b71066f6d61
+[2026-08-21 11:46:10] EMERGENCY_CONTACT_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 name=Elena Sharma
+[2026-08-21 11:46:10] EMERGENCY_CONTACT_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 id=16
+[2026-08-21 11:46:10] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=8e721247-51bd-41cc-bd5e-d1ee29687cd0
+[2026-08-21 11:46:12] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:46:12] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:46:12] HOLIDAY_DELETED - public_id=1f462612-8923-4cf1-a79a-024be0b321da
+[2026-08-21 11:46:12] LEAVE_ALLOCATED - emp=3d1f3899-8d0d-4106-af88-599e3abb13c8 type=Casual Leave days=12
+[2026-08-21 11:46:12] LEAVE_REQUESTED - emp_id=2 days=3.0
+[2026-08-21 11:46:12] LEAVE_PROCESSED - public_id=0fbc91bc-a4cd-4fb9-bd9b-effca1922615 action=approved
+[2026-08-21 11:46:12] LEAVE_CANCELLED - public_id=0fbc91bc-a4cd-4fb9-bd9b-effca1922615
+[2026-08-21 11:46:14] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:46:14] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-21 in=11:46:14 mode=in_office is_late=True
+[2026-08-21 11:46:14] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-21 out=11:46:14 total_hours=0.0 status=absent
+[2026-08-21 11:46:14] ATTENDANCE_MANUAL_CREATE - id=48 emp_id=6 date=2026-08-10
+[2026-08-21 11:46:14] ATTENDANCE_DELETE - id=48
+[2026-08-21 11:46:14] ATTENDANCE_DELETE - id=47
+[2026-08-21 11:46:32] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:46:40] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:46:40] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-21 in=11:46:40 mode=in_office is_late=True
+[2026-08-21 11:46:40] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-21 out=11:46:40 total_hours=0.0 status=absent
+[2026-08-21 11:46:40] ATTENDANCE_MANUAL_CREATE - id=48 emp_id=6 date=2026-08-10
+[2026-08-21 11:46:40] ATTENDANCE_DELETE - id=48
+[2026-08-21 11:46:40] ATTENDANCE_DELETE - id=47
+[2026-08-21 11:46:48] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:46:55] SIGNUP - user=sarah.connor@cyberdyne.com public_id=309e85c2-347b-428c-8643-c083b17d6edc
+[2026-08-21 11:46:55] LOGIN - user=sarah.connor@cyberdyne.com public_id=309e85c2-347b-428c-8643-c083b17d6edc
+[2026-08-21 11:46:56] LOGIN - user=sarah.connor@cyberdyne.com public_id=309e85c2-347b-428c-8643-c083b17d6edc
+[2026-08-21 11:46:56] PASSWORD_RESET_REQUESTED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:46:56] PASSWORD_RESET_COMPLETED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:46:56] LOGIN - user=sarah.connor@cyberdyne.com public_id=309e85c2-347b-428c-8643-c083b17d6edc
+[2026-08-21 11:46:58] LOGIN - user=admin.tester@company.com public_id=da1a32c9-8348-419f-a073-22df1ce466ee
+[2026-08-21 11:46:58] DESIGNATION_CREATED - title=Principal AI Architect public_id=b1222395-15f8-4a39-a710-bc57464b195b
+[2026-08-21 11:46:58] DESIGNATION_UPDATED - title=Chief AI Architect public_id=b1222395-15f8-4a39-a710-bc57464b195b
+[2026-08-21 11:46:58] DESIGNATION_DELETED - public_id=b1222395-15f8-4a39-a710-bc57464b195b
+[2026-08-21 11:46:58] DEPARTMENT_CREATED - name=Autonomous Systems public_id=f8d32c18-e2b2-4c10-9a41-c02f628cf625
+[2026-08-21 11:46:58] DEPARTMENT_UPDATED - name=Autonomous Systems & Robotics public_id=f8d32c18-e2b2-4c10-9a41-c02f628cf625
+[2026-08-21 11:46:58] DEPARTMENT_DELETED - public_id=f8d32c18-e2b2-4c10-9a41-c02f628cf625
+[2026-08-21 11:46:58] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=current
+[2026-08-21 11:46:58] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=permanent
+[2026-08-21 11:46:58] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=df3679b9-6747-4a87-956d-48d8c501f4bb
+[2026-08-21 11:46:58] EMERGENCY_CONTACT_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 name=Elena Sharma
+[2026-08-21 11:46:58] EMERGENCY_CONTACT_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 id=17
+[2026-08-21 11:46:58] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=bd62098b-2ba4-4599-b84c-2def63dd939b
+[2026-08-21 11:47:00] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:47:00] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:47:00] HOLIDAY_DELETED - public_id=b8e95e13-3ba1-41ca-a41e-3c2fb43886a2
+[2026-08-21 11:47:00] LEAVE_ALLOCATED - emp=3d1f3899-8d0d-4106-af88-599e3abb13c8 type=Casual Leave days=12
+[2026-08-21 11:47:00] LEAVE_REQUESTED - emp_id=2 days=3.0
+[2026-08-21 11:47:00] LEAVE_PROCESSED - public_id=9f6fbc22-9dd2-4546-81e5-a7aeac3f7ffd action=approved
+[2026-08-21 11:47:00] LEAVE_CANCELLED - public_id=9f6fbc22-9dd2-4546-81e5-a7aeac3f7ffd
+[2026-08-21 11:47:01] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:47:02] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-21 in=11:47:02 mode=in_office is_late=True
+[2026-08-21 11:47:02] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-21 out=11:47:02 total_hours=0.0 status=absent
+[2026-08-21 11:47:02] ATTENDANCE_MANUAL_CREATE - id=48 emp_id=6 date=2026-08-10
+[2026-08-21 11:47:02] ATTENDANCE_DELETE - id=48
+[2026-08-21 11:47:02] ATTENDANCE_DELETE - id=47
+[2026-08-21 11:49:44] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:49:51] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:49:58] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:50:06] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:50:12] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:50:17] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:50:25] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:50:35] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:50:51] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:51:03] SIGNUP - user=sarah.connor@cyberdyne.com public_id=41b2a1b8-601a-45bd-9a7e-5829e4614a32
+[2026-08-21 11:51:03] LOGIN - user=sarah.connor@cyberdyne.com public_id=41b2a1b8-601a-45bd-9a7e-5829e4614a32
+[2026-08-21 11:51:04] LOGIN - user=sarah.connor@cyberdyne.com public_id=41b2a1b8-601a-45bd-9a7e-5829e4614a32
+[2026-08-21 11:51:04] PASSWORD_RESET_REQUESTED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:51:04] PASSWORD_RESET_COMPLETED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:51:04] LOGIN - user=sarah.connor@cyberdyne.com public_id=41b2a1b8-601a-45bd-9a7e-5829e4614a32
+[2026-08-21 11:51:06] LOGIN - user=admin.tester@company.com public_id=03d21afa-0b32-494b-a880-f4bc9ad8afb1
+[2026-08-21 11:51:06] DESIGNATION_CREATED - title=Principal AI Architect public_id=49581956-8b1c-4f6b-aeef-b1f49ecd0fdb
+[2026-08-21 11:51:06] DESIGNATION_UPDATED - title=Chief AI Architect public_id=49581956-8b1c-4f6b-aeef-b1f49ecd0fdb
+[2026-08-21 11:51:06] DESIGNATION_DELETED - public_id=49581956-8b1c-4f6b-aeef-b1f49ecd0fdb
+[2026-08-21 11:51:06] DEPARTMENT_CREATED - name=Autonomous Systems public_id=ca3e9001-147e-42cf-8596-0dd0c425ff2c
+[2026-08-21 11:51:06] DEPARTMENT_UPDATED - name=Autonomous Systems & Robotics public_id=ca3e9001-147e-42cf-8596-0dd0c425ff2c
+[2026-08-21 11:51:06] DEPARTMENT_DELETED - public_id=ca3e9001-147e-42cf-8596-0dd0c425ff2c
+[2026-08-21 11:51:06] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=current
+[2026-08-21 11:51:06] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=permanent
+[2026-08-21 11:51:06] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=d786ecbd-a26c-404f-ac90-f46423c25cdf
+[2026-08-21 11:51:06] EMERGENCY_CONTACT_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 name=Elena Sharma
+[2026-08-21 11:51:06] EMERGENCY_CONTACT_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 id=18
+[2026-08-21 11:51:06] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=8eace3fc-d099-4448-bfbd-a5d0e927e40c
+[2026-08-21 11:51:08] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:51:08] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:51:08] HOLIDAY_DELETED - public_id=bc31f967-0fbf-411a-b59b-ecbc3c87dfcd
+[2026-08-21 11:51:08] LEAVE_ALLOCATED - emp=3d1f3899-8d0d-4106-af88-599e3abb13c8 type=Casual Leave days=12
+[2026-08-21 11:51:08] LEAVE_REQUESTED - emp_id=2 days=3.0
+[2026-08-21 11:51:08] LEAVE_PROCESSED - public_id=b17a7186-3f90-43c1-8019-613434a73312 action=approved
+[2026-08-21 11:51:08] LEAVE_CANCELLED - public_id=b17a7186-3f90-43c1-8019-613434a73312
+[2026-08-21 11:51:10] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:51:10] ATTENDANCE_CHECK_IN_FAILED - emp_id=5 error: get_by_id() missing 1 required positional argument: 'db'
+[2026-08-21 11:51:20] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:51:28] SIGNUP - user=sarah.connor@cyberdyne.com public_id=dd875c45-8f30-4685-a6c9-7fafb86e183f
+[2026-08-21 11:51:28] LOGIN - user=sarah.connor@cyberdyne.com public_id=dd875c45-8f30-4685-a6c9-7fafb86e183f
+[2026-08-21 11:51:28] LOGIN - user=sarah.connor@cyberdyne.com public_id=dd875c45-8f30-4685-a6c9-7fafb86e183f
+[2026-08-21 11:51:28] PASSWORD_RESET_REQUESTED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:51:28] PASSWORD_RESET_COMPLETED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:51:29] LOGIN - user=sarah.connor@cyberdyne.com public_id=dd875c45-8f30-4685-a6c9-7fafb86e183f
+[2026-08-21 11:51:30] LOGIN - user=admin.tester@company.com public_id=69f9c0c0-8785-4b5c-bc51-5642cc31908d
+[2026-08-21 11:51:30] DESIGNATION_CREATED - title=Principal AI Architect public_id=817d32e8-fe34-4cec-bd9d-b6e5ab35c2e7
+[2026-08-21 11:51:30] DESIGNATION_UPDATED - title=Chief AI Architect public_id=817d32e8-fe34-4cec-bd9d-b6e5ab35c2e7
+[2026-08-21 11:51:30] DESIGNATION_DELETED - public_id=817d32e8-fe34-4cec-bd9d-b6e5ab35c2e7
+[2026-08-21 11:51:30] DEPARTMENT_CREATED - name=Autonomous Systems public_id=66a43922-bdfa-4e11-a22d-22f1fd3bee16
+[2026-08-21 11:51:30] DEPARTMENT_UPDATED - name=Autonomous Systems & Robotics public_id=66a43922-bdfa-4e11-a22d-22f1fd3bee16
+[2026-08-21 11:51:30] DEPARTMENT_DELETED - public_id=66a43922-bdfa-4e11-a22d-22f1fd3bee16
+[2026-08-21 11:51:30] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=current
+[2026-08-21 11:51:30] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=permanent
+[2026-08-21 11:51:30] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=7fc76db9-e9c8-4618-acfb-a5c10283da71
+[2026-08-21 11:51:30] EMERGENCY_CONTACT_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 name=Elena Sharma
+[2026-08-21 11:51:30] EMERGENCY_CONTACT_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 id=19
+[2026-08-21 11:51:30] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=09662fc7-b597-49ac-88f7-3ee935874d2b
+[2026-08-21 11:51:32] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:51:32] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:51:32] HOLIDAY_DELETED - public_id=18ee6a85-9574-4fe7-aecd-e2ec8121633f
+[2026-08-21 11:51:32] LEAVE_ALLOCATED - emp=3d1f3899-8d0d-4106-af88-599e3abb13c8 type=Casual Leave days=12
+[2026-08-21 11:51:32] LEAVE_REQUESTED - emp_id=2 days=3.0
+[2026-08-21 11:51:32] LEAVE_PROCESSED - public_id=b0ec2b4c-3c14-499b-ae8d-1685719cc903 action=approved
+[2026-08-21 11:51:32] LEAVE_CANCELLED - public_id=b0ec2b4c-3c14-499b-ae8d-1685719cc903
+[2026-08-21 11:51:34] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:51:34] ATTENDANCE_CHECK_IN_FAILED - emp_id=5 error: 'Employee' object has no attribute 'get'
+[2026-08-21 11:52:40] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:52:48] SIGNUP - user=sarah.connor@cyberdyne.com public_id=9c7b1bd1-e189-406c-989f-d97cf363ebfe
+[2026-08-21 11:52:48] LOGIN - user=sarah.connor@cyberdyne.com public_id=9c7b1bd1-e189-406c-989f-d97cf363ebfe
+[2026-08-21 11:52:49] LOGIN - user=sarah.connor@cyberdyne.com public_id=9c7b1bd1-e189-406c-989f-d97cf363ebfe
+[2026-08-21 11:52:49] PASSWORD_RESET_REQUESTED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:52:49] PASSWORD_RESET_COMPLETED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:52:49] LOGIN - user=sarah.connor@cyberdyne.com public_id=9c7b1bd1-e189-406c-989f-d97cf363ebfe
+[2026-08-21 11:52:51] LOGIN - user=admin.tester@company.com public_id=c73bf6c3-66ca-46bc-9314-82cd448d819d
+[2026-08-21 11:52:51] DESIGNATION_CREATED - title=Principal AI Architect public_id=fe797ee4-200d-4ab7-b630-f5904cdea6ef
+[2026-08-21 11:52:51] DESIGNATION_UPDATED - title=Chief AI Architect public_id=fe797ee4-200d-4ab7-b630-f5904cdea6ef
+[2026-08-21 11:52:51] DESIGNATION_DELETED - public_id=fe797ee4-200d-4ab7-b630-f5904cdea6ef
+[2026-08-21 11:52:51] DEPARTMENT_CREATED - name=Autonomous Systems public_id=6514372b-1f5f-473e-990c-3a37c9153f19
+[2026-08-21 11:52:51] DEPARTMENT_UPDATED - name=Autonomous Systems & Robotics public_id=6514372b-1f5f-473e-990c-3a37c9153f19
+[2026-08-21 11:52:51] DEPARTMENT_DELETED - public_id=6514372b-1f5f-473e-990c-3a37c9153f19
+[2026-08-21 11:52:51] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=current
+[2026-08-21 11:52:51] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=permanent
+[2026-08-21 11:52:51] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=bcf9a340-b53b-4628-aec8-ca7c3b69db60
+[2026-08-21 11:52:51] EMERGENCY_CONTACT_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 name=Elena Sharma
+[2026-08-21 11:52:51] EMERGENCY_CONTACT_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 id=20
+[2026-08-21 11:52:51] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=7516447e-5b24-4f10-ac63-f93625e96be5
+[2026-08-21 11:52:53] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:52:53] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:52:53] HOLIDAY_DELETED - public_id=174650ab-c469-45de-ba96-937522cddae3
+[2026-08-21 11:52:53] LEAVE_ALLOCATED - emp=3d1f3899-8d0d-4106-af88-599e3abb13c8 type=Casual Leave days=12
+[2026-08-21 11:52:53] LEAVE_REQUESTED - emp_id=2 days=3.0
+[2026-08-21 11:52:53] LEAVE_PROCESSED - public_id=7eb21384-91f5-490a-9334-116b8228004e action=approved
+[2026-08-21 11:52:53] LEAVE_CANCELLED - public_id=7eb21384-91f5-490a-9334-116b8228004e
+[2026-08-21 11:52:55] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:52:55] ATTENDANCE_CHECK_IN_FAILED - emp_id=5 error: module 'repository.attendance_repository' has no attribute 'create'
+[2026-08-21 11:53:04] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:53:26] SIGNUP - user=sarah.connor@cyberdyne.com public_id=11250011-6293-405b-8bb8-7b229eb14330
+[2026-08-21 11:53:27] LOGIN - user=sarah.connor@cyberdyne.com public_id=11250011-6293-405b-8bb8-7b229eb14330
+[2026-08-21 11:53:27] LOGIN - user=sarah.connor@cyberdyne.com public_id=11250011-6293-405b-8bb8-7b229eb14330
+[2026-08-21 11:53:27] PASSWORD_RESET_REQUESTED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:53:27] PASSWORD_RESET_COMPLETED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:53:27] LOGIN - user=sarah.connor@cyberdyne.com public_id=11250011-6293-405b-8bb8-7b229eb14330
+[2026-08-21 11:53:29] LOGIN - user=admin.tester@company.com public_id=edb5f3af-6bc6-4d6a-b78a-76d842b4919e
+[2026-08-21 11:53:29] DESIGNATION_CREATED - title=Principal AI Architect public_id=b9f61a36-7bf4-4389-8ad3-54260dfba7bf
+[2026-08-21 11:53:29] DESIGNATION_UPDATED - title=Chief AI Architect public_id=b9f61a36-7bf4-4389-8ad3-54260dfba7bf
+[2026-08-21 11:53:29] DESIGNATION_DELETED - public_id=b9f61a36-7bf4-4389-8ad3-54260dfba7bf
+[2026-08-21 11:53:29] DEPARTMENT_CREATED - name=Autonomous Systems public_id=a277f738-37c3-4130-96b7-cfe4a1384dac
+[2026-08-21 11:53:29] DEPARTMENT_UPDATED - name=Autonomous Systems & Robotics public_id=a277f738-37c3-4130-96b7-cfe4a1384dac
+[2026-08-21 11:53:29] DEPARTMENT_DELETED - public_id=a277f738-37c3-4130-96b7-cfe4a1384dac
+[2026-08-21 11:53:29] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=current
+[2026-08-21 11:53:29] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=permanent
+[2026-08-21 11:53:29] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=8e61a594-0585-4721-ae45-4a48498f3a6d
+[2026-08-21 11:53:29] EMERGENCY_CONTACT_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 name=Elena Sharma
+[2026-08-21 11:53:29] EMERGENCY_CONTACT_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 id=21
+[2026-08-21 11:53:29] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=abfeaafe-f7cf-4b59-9e59-652b90aa4c6a
+[2026-08-21 11:53:31] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:53:31] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:53:31] HOLIDAY_DELETED - public_id=729830b0-6167-4256-8674-9469b140f59a
+[2026-08-21 11:53:31] LEAVE_ALLOCATED - emp=3d1f3899-8d0d-4106-af88-599e3abb13c8 type=Casual Leave days=12
+[2026-08-21 11:53:32] LEAVE_REQUESTED - emp_id=2 days=3.0
+[2026-08-21 11:53:32] LEAVE_PROCESSED - public_id=61543789-1fee-44ab-bd62-0d5f0df38bf9 action=approved
+[2026-08-21 11:53:32] LEAVE_CANCELLED - public_id=61543789-1fee-44ab-bd62-0d5f0df38bf9
+[2026-08-21 11:53:33] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:53:33] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-21 in=11:53:33 mode=in_office is_late=True
+[2026-08-21 11:53:33] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-21 out=11:53:33 total_hours=0.0 status=absent
+[2026-08-21 11:53:33] ATTENDANCE_MANUAL_CREATE_FAILED - emp_id=6 error: list indices must be integers or slices, not str
+[2026-08-21 11:53:42] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:53:49] SIGNUP - user=sarah.connor@cyberdyne.com public_id=68973bb4-93a1-4f23-9d65-6c8797eba6de
+[2026-08-21 11:53:50] LOGIN - user=sarah.connor@cyberdyne.com public_id=68973bb4-93a1-4f23-9d65-6c8797eba6de
+[2026-08-21 11:53:50] LOGIN - user=sarah.connor@cyberdyne.com public_id=68973bb4-93a1-4f23-9d65-6c8797eba6de
+[2026-08-21 11:53:50] PASSWORD_RESET_REQUESTED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:53:50] PASSWORD_RESET_COMPLETED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:53:50] LOGIN - user=sarah.connor@cyberdyne.com public_id=68973bb4-93a1-4f23-9d65-6c8797eba6de
+[2026-08-21 11:53:52] LOGIN - user=admin.tester@company.com public_id=35e3ab5c-4dfb-4d09-9c97-9dedf928741d
+[2026-08-21 11:53:52] DESIGNATION_CREATED - title=Principal AI Architect public_id=1ad78635-3b28-4861-8acc-84280b9b67ed
+[2026-08-21 11:53:52] DESIGNATION_UPDATED - title=Chief AI Architect public_id=1ad78635-3b28-4861-8acc-84280b9b67ed
+[2026-08-21 11:53:52] DESIGNATION_DELETED - public_id=1ad78635-3b28-4861-8acc-84280b9b67ed
+[2026-08-21 11:53:52] DEPARTMENT_CREATED - name=Autonomous Systems public_id=e17fd0ac-0e94-4f90-bcaf-9b058a544085
+[2026-08-21 11:53:52] DEPARTMENT_UPDATED - name=Autonomous Systems & Robotics public_id=e17fd0ac-0e94-4f90-bcaf-9b058a544085
+[2026-08-21 11:53:52] DEPARTMENT_DELETED - public_id=e17fd0ac-0e94-4f90-bcaf-9b058a544085
+[2026-08-21 11:53:52] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=current
+[2026-08-21 11:53:52] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=permanent
+[2026-08-21 11:53:52] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=f6c2d83f-e203-4f14-a964-048cc4e9980a
+[2026-08-21 11:53:52] EMERGENCY_CONTACT_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 name=Elena Sharma
+[2026-08-21 11:53:52] EMERGENCY_CONTACT_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 id=22
+[2026-08-21 11:53:52] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=0d64ef9a-352f-4847-b14f-7adde385bc6f
+[2026-08-21 11:53:54] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:53:54] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:53:54] HOLIDAY_DELETED - public_id=a07cfea0-2d7a-40f8-bc7c-7234d34e717a
+[2026-08-21 11:53:54] LEAVE_ALLOCATED - emp=3d1f3899-8d0d-4106-af88-599e3abb13c8 type=Casual Leave days=12
+[2026-08-21 11:53:54] LEAVE_REQUESTED - emp_id=2 days=3.0
+[2026-08-21 11:53:54] LEAVE_PROCESSED - public_id=fb80db20-bf0d-4f01-8228-7bc9021b88b2 action=approved
+[2026-08-21 11:53:54] LEAVE_CANCELLED - public_id=fb80db20-bf0d-4f01-8228-7bc9021b88b2
+[2026-08-21 11:53:56] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:53:56] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-21 in=11:53:56 mode=in_office is_late=True
+[2026-08-21 11:53:56] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-21 out=11:53:56 total_hours=0.0 status=absent
+[2026-08-21 11:54:05] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:54:12] SIGNUP - user=sarah.connor@cyberdyne.com public_id=61142c25-37ed-4013-8f93-c1be64e60cf9
+[2026-08-21 11:54:12] LOGIN - user=sarah.connor@cyberdyne.com public_id=61142c25-37ed-4013-8f93-c1be64e60cf9
+[2026-08-21 11:54:13] LOGIN - user=sarah.connor@cyberdyne.com public_id=61142c25-37ed-4013-8f93-c1be64e60cf9
+[2026-08-21 11:54:13] PASSWORD_RESET_REQUESTED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:54:13] PASSWORD_RESET_COMPLETED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:54:13] LOGIN - user=sarah.connor@cyberdyne.com public_id=61142c25-37ed-4013-8f93-c1be64e60cf9
+[2026-08-21 11:54:15] LOGIN - user=admin.tester@company.com public_id=db44c5c8-d3c2-4503-bc94-41c0e5123795
+[2026-08-21 11:54:15] DESIGNATION_CREATED - title=Principal AI Architect public_id=24f17106-96cc-46f9-a60d-b2bbb5f2499c
+[2026-08-21 11:54:15] DESIGNATION_UPDATED - title=Chief AI Architect public_id=24f17106-96cc-46f9-a60d-b2bbb5f2499c
+[2026-08-21 11:54:15] DESIGNATION_DELETED - public_id=24f17106-96cc-46f9-a60d-b2bbb5f2499c
+[2026-08-21 11:54:15] DEPARTMENT_CREATED - name=Autonomous Systems public_id=c3b250f2-a1ba-45cc-976b-09798990ee5d
+[2026-08-21 11:54:15] DEPARTMENT_UPDATED - name=Autonomous Systems & Robotics public_id=c3b250f2-a1ba-45cc-976b-09798990ee5d
+[2026-08-21 11:54:15] DEPARTMENT_DELETED - public_id=c3b250f2-a1ba-45cc-976b-09798990ee5d
+[2026-08-21 11:54:15] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=current
+[2026-08-21 11:54:15] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=permanent
+[2026-08-21 11:54:15] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=cc2f4622-8c45-4181-9329-4898028fa463
+[2026-08-21 11:54:15] EMERGENCY_CONTACT_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 name=Elena Sharma
+[2026-08-21 11:54:15] EMERGENCY_CONTACT_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 id=23
+[2026-08-21 11:54:15] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=ed8d521f-7114-4ae8-b336-16a2036f9c11
+[2026-08-21 11:54:16] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:54:17] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:54:17] HOLIDAY_DELETED - public_id=ec54923b-a4c9-49d8-86b8-6183d3fe8c3b
+[2026-08-21 11:54:17] LEAVE_ALLOCATED - emp=3d1f3899-8d0d-4106-af88-599e3abb13c8 type=Casual Leave days=12
+[2026-08-21 11:54:17] LEAVE_REQUESTED - emp_id=2 days=3.0
+[2026-08-21 11:54:17] LEAVE_PROCESSED - public_id=c0c48b06-2622-4bcb-89b4-1f8b1fde480a action=approved
+[2026-08-21 11:54:17] LEAVE_CANCELLED - public_id=c0c48b06-2622-4bcb-89b4-1f8b1fde480a
+[2026-08-21 11:54:18] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:54:18] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-21 in=11:54:18 mode=in_office is_late=True
+[2026-08-21 11:54:18] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-21 out=11:54:18 total_hours=0.0 status=absent
+[2026-08-21 11:54:26] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:54:30] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 11:56:51] SIGNUP - user=pankajsingh@gmail.com public_id=76c5e2db-5221-4ef8-8ed3-1273122430c1
+[2026-08-21 11:57:54] LOGIN - user=pankajsingh@gmail.com public_id=76c5e2db-5221-4ef8-8ed3-1273122430c1
+[2026-08-21 11:58:35] SIGNUP - user=sarah.connor@cyberdyne.com public_id=0d437943-61f7-4785-a492-9192c0a1cf67
+[2026-08-21 11:58:35] LOGIN - user=sarah.connor@cyberdyne.com public_id=0d437943-61f7-4785-a492-9192c0a1cf67
+[2026-08-21 11:58:35] LOGIN - user=sarah.connor@cyberdyne.com public_id=0d437943-61f7-4785-a492-9192c0a1cf67
+[2026-08-21 11:58:35] PASSWORD_RESET_REQUESTED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:58:35] PASSWORD_RESET_COMPLETED - user=sarah.connor@cyberdyne.com
+[2026-08-21 11:58:36] LOGIN - user=sarah.connor@cyberdyne.com public_id=0d437943-61f7-4785-a492-9192c0a1cf67
+[2026-08-21 11:58:37] LOGIN - user=admin.tester@company.com public_id=e3e86056-6101-4f20-b38e-7909b9b84d1d
+[2026-08-21 11:58:37] DESIGNATION_CREATED - title=Principal AI Architect public_id=dbdd2b2c-633f-49a8-8c52-78e856fe2cd7
+[2026-08-21 11:58:37] DESIGNATION_UPDATED - title=Chief AI Architect public_id=dbdd2b2c-633f-49a8-8c52-78e856fe2cd7
+[2026-08-21 11:58:37] DESIGNATION_DELETED - public_id=dbdd2b2c-633f-49a8-8c52-78e856fe2cd7
+[2026-08-21 11:58:37] DEPARTMENT_CREATED - name=Autonomous Systems public_id=44eea918-1b5b-46f3-8e86-6531c01defd5
+[2026-08-21 11:58:37] DEPARTMENT_UPDATED - name=Autonomous Systems & Robotics public_id=44eea918-1b5b-46f3-8e86-6531c01defd5
+[2026-08-21 11:58:37] DEPARTMENT_DELETED - public_id=44eea918-1b5b-46f3-8e86-6531c01defd5
+[2026-08-21 11:58:37] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=current
+[2026-08-21 11:58:37] ADDRESS_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 type=permanent
+[2026-08-21 11:58:37] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=cd1de14a-fda3-4341-af8a-7c5ec9de3800
+[2026-08-21 11:58:37] EMERGENCY_CONTACT_ADDED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 name=Elena Sharma
+[2026-08-21 11:58:37] EMERGENCY_CONTACT_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 id=24
+[2026-08-21 11:58:37] ADDRESS_DELETED - emp=505b6a9e-0899-4feb-94bd-73a6d0787da5 addr=143a7860-5905-44de-8ac4-fc0c17ed677b
+[2026-08-21 11:58:39] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:58:39] HOLIDAY_CREATED - name=Founders Day date=2026-10-15
+[2026-08-21 11:58:39] HOLIDAY_DELETED - public_id=62c1adbc-3cdb-4522-9eca-54bc424554e1
+[2026-08-21 11:58:39] LEAVE_ALLOCATED - emp=3d1f3899-8d0d-4106-af88-599e3abb13c8 type=Casual Leave days=12
+[2026-08-21 11:58:39] LEAVE_REQUESTED - emp_id=2 days=3.0
+[2026-08-21 11:58:39] LEAVE_PROCESSED - public_id=57f27bff-8cfd-4a34-beec-afd8bccffe92 action=approved
+[2026-08-21 11:58:39] LEAVE_CANCELLED - public_id=57f27bff-8cfd-4a34-beec-afd8bccffe92
+[2026-08-21 11:58:41] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 11:58:41] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-21 in=11:58:41 mode=in_office is_late=True
+[2026-08-21 11:58:41] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-21 out=11:58:41 total_hours=0.0 status=absent
+[2026-08-21 11:58:41] ATTENDANCE_MANUAL_CREATE - emp_id=6 date=2026-08-10 in=09:15:00 out=18:00:00 status=present
+[2026-08-21 11:58:41] ATTENDANCE_DELETE - id=51
+[2026-08-21 11:58:41] ATTENDANCE_DELETE - id=50
+[2026-08-21 12:06:58] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:07:02] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:07:18] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:07:22] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:07:41] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:07:54] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:08:00] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:08:06] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:08:16] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:08:21] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:08:30] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:08:35] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:08:41] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:08:50] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:08:59] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:09:11] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:09:21] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:09:27] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:09:34] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:09:55] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:09:58] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:10:21] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 12:10:21] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-21 in=12:10:21 mode=in_office is_late=True
+[2026-08-21 12:10:21] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-21 out=12:10:21 total_hours=0.0 status=absent
+[2026-08-21 12:10:21] ATTENDANCE_MANUAL_CREATE - emp_id=6 date=2026-08-10 in=09:15:00 out=18:00:00 status=present
+[2026-08-21 12:10:21] ATTENDANCE_DELETE - id=51
+[2026-08-21 12:10:21] ATTENDANCE_DELETE - id=50
+[2026-08-21 12:17:29] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:17:35] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:17:40] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:17:52] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:17:59] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:18:05] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:18:18] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:18:28] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:18:34] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:21:37] LOGIN - user=rajesh.sharma@company.com public_id=bf6d36c4-42af-4117-ba7b-240b9e953158
+[2026-08-21 12:21:37] ATTENDANCE_CHECK_IN - emp_id=5 date=2026-08-21 in=12:21:37 mode=in_office is_late=True
+[2026-08-21 12:21:37] ATTENDANCE_CHECK_OUT - emp_id=5 date=2026-08-21 out=12:21:37 total_hours=0.0 status=absent
+[2026-08-21 12:21:37] ATTENDANCE_MANUAL_CREATE - emp_id=6 date=2026-08-10 in=09:15:00 out=18:00:00 status=present
+[2026-08-21 12:21:37] ATTENDANCE_DELETE - id=51
+[2026-08-21 12:21:37] ATTENDANCE_DELETE - id=50
+[2026-08-21 12:23:01] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:23:13] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:23:18] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:23:20] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:23:25] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:23:30] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:23:35] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:25:49] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:27:49] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:27:54] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:27:59] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:28:51] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:29:56] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:31:33] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:31:36] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:31:51] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:31:55] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:31:59] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:32:03] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:32:05] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:32:08] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:32:13] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:32:22] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:33:13] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:34:25] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:36:13] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:38:13] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:44:45] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:44:51] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:45:13] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:45:59] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:46:05] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:46:33] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:46:59] SALARY_CREATED - Created salary revision for employee EMP-1001 (Basic: 50000.00, Net: 76200.00 INR)
+[2026-08-21 12:46:59] SALARY_CREATED - Created salary revision for employee EMP-1001 (Basic: 60000.00, Net: 91480.00 INR)
+[2026-08-21 12:46:59] BANK_DETAIL_ADDED - Added savings bank account (HDFC Bank) for employee EMP-1001
+[2026-08-21 12:46:59] BANK_DETAIL_ADDED - Added savings bank account (ICICI Bank) for employee EMP-1001
+[2026-08-21 12:46:59] PAYROLL_PROCESSED - Processed payroll batch for period 2026-08-01 to 2026-08-31 (1 created, 0 skipped)
+[2026-08-21 12:46:59] PAYROLL_DISBURSED - Disbursed 91480.00 to employee EMP-1001 via bank_transfer (Ref: NEFT-20260831-987654321)
+[2026-08-21 12:49:17] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:51:27] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:52:52] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:54:13] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:59:12] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:59:18] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:59:22] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:59:35] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:59:42] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 12:59:53] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 13:00:17] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 13:36:10] LOGIN - user=pankajsingh@gmail.com public_id=76c5e2db-5221-4ef8-8ed3-1273122430c1
+[2026-08-21 13:46:53] ROLES_ASSIGNED - user=pankajsingh@gmail.com roles=['Admin']
+[2026-08-21 14:03:00] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:10:39] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:10:49] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:12:32] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:13:06] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:25:34] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:25:36] SIGNUP - user=signup.71b2fe0e@company.com public_id=fd93576a-0625-4680-b012-754f012541de
+[2026-08-21 14:25:36] SIGNUP - user=dup.bdc26d8b@company.com public_id=1cc4c079-2b54-4877-937a-3716ca523688
+[2026-08-21 14:26:10] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:26:10] ATTENDANCE_CHECK_IN - emp_id=28 date=2026-08-21 in=14:26:10 mode=in_office is_late=True
+[2026-08-21 14:26:10] ATTENDANCE_CHECK_OUT - emp_id=28 date=2026-08-21 out=14:26:10 total_hours=0.0 status=absent
+[2026-08-21 14:26:11] SIGNUP - user=signup.8274cd23@company.com public_id=ca883ac1-e6d6-46dc-863c-ca5f77246012
+[2026-08-21 14:26:11] SIGNUP - user=dup.9f9d3f9a@company.com public_id=9b7fd84c-73c1-450a-b05b-83e49754ddce
+[2026-08-21 14:26:11] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:26:12] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:26:12] ANNOUNCEMENT_POSTED - Announcement 'Townhall Meeting 376431' posted by employee ID 29
+[2026-08-21 14:26:12] ANNOUNCEMENT_DELETED - Announcement 'Townhall Meeting 376431' deleted
+[2026-08-21 14:26:12] SEARCH - first_name=None last_name=None dept_uuid=None employee_status='active' -> 16 match(es)
+[2026-08-21 14:26:12] CREATE - emp_id=30 code=EMP-1030 name=John Doe-f2a288
+[2026-08-21 14:26:12] UPDATE - public_id=e7242292-4ca1-4052-a323-7028598ac254 updated in database
+[2026-08-21 14:26:12] LEAVE_TYPE_CREATED - name=Casual-0b1f28 public_id=aee545a9-fc45-4031-9df2-9af505129d47
+[2026-08-21 14:26:12] LEAVE_ALLOCATED - emp=0aec9a90-d915-4a1f-861a-71044db2396c type=Casual-0b1f28 days=15
+[2026-08-21 14:26:12] PROJECT_CREATED - Project 'Cloud Platform 1291a8' created (Public ID: 67839e78-7d62-4e78-8b02-031ecab5adfd)
+[2026-08-21 14:26:12] PROJECT_UPDATED - Project 'Cloud Platform 1291a8' updated
+[2026-08-21 14:26:12] PROJECT_MEMBER_ADDED - Employee 'Employee' added to project 'Cloud Platform 1291a8' as 'Lead Developer'
+[2026-08-21 14:26:12] PROJECT_MEMBER_REMOVED - Employee 'Employee' removed from project 'Cloud Platform 1291a8'
+[2026-08-21 14:26:12] PROJECT_DELETED - Project 'Cloud Platform 1291a8' deleted
+[2026-08-21 14:26:13] REVIEW_CREATED - Performance review created for employee ID 28 by reviewer ID 29
+[2026-08-21 14:26:13] REVIEW_UPDATED - Performance review '3ccd6f7c-e8de-4513-b635-b6f1d1f52836' updated (Status: finalized)
+[2026-08-21 14:27:46] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:27:46] ATTENDANCE_CHECK_IN - emp_id=28 date=2026-08-21 in=14:27:46 mode=in_office is_late=True
+[2026-08-21 14:27:46] ATTENDANCE_CHECK_OUT - emp_id=28 date=2026-08-21 out=14:27:46 total_hours=0.0 status=absent
+[2026-08-21 14:27:47] SIGNUP - user=signup.6458790e@company.com public_id=f17f794b-d98b-46c8-a346-e25fefe5d9b3
+[2026-08-21 14:27:47] SIGNUP - user=dup.97376e6d@company.com public_id=4c99ab4d-bebe-4e60-b96c-ed3bb53f91b0
+[2026-08-21 14:27:48] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:27:48] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:27:48] DEPARTMENT_CREATED - name=Engineering-5931 public_id=2c519681-12ac-42f7-ad4c-b2e97113de49
+[2026-08-21 14:27:48] DEPARTMENT_UPDATED - name=Engineering-5931-Updated public_id=2c519681-12ac-42f7-ad4c-b2e97113de49
+[2026-08-21 14:27:48] DEPARTMENT_DELETED - public_id=2c519681-12ac-42f7-ad4c-b2e97113de49
+[2026-08-21 14:27:48] DESIGNATION_CREATED - title=Staff Engineer-515814 public_id=8b494b41-2e4e-4faa-9567-6c38d931dc76
+[2026-08-21 14:27:48] DESIGNATION_UPDATED - title=Staff Engineer-515814-Senior public_id=8b494b41-2e4e-4faa-9567-6c38d931dc76
+[2026-08-21 14:27:48] DESIGNATION_DELETED - public_id=8b494b41-2e4e-4faa-9567-6c38d931dc76
+[2026-08-21 14:27:48] DOCUMENT_REGISTERED - Document 'Offer_Letter_2026.pdf' registered for employee 'Employee'
+[2026-08-21 14:27:48] ANNOUNCEMENT_POSTED - Announcement 'Townhall Meeting 94b6d2' posted by employee ID 29
+[2026-08-21 14:27:48] ANNOUNCEMENT_DELETED - Announcement 'Townhall Meeting 94b6d2' deleted
+[2026-08-21 14:27:48] SEARCH - first_name=None last_name=None dept_uuid=None employee_status='active' -> 18 match(es)
+[2026-08-21 14:27:49] CREATE - emp_id=32 code=EMP-1032 name=John Doe-38aa77
+[2026-08-21 14:27:49] UPDATE - public_id=d365e775-f37b-4a30-b3da-e275c58a4f79 updated in database
+[2026-08-21 14:27:49] LEAVE_TYPE_CREATED - name=Casual-fe9f16 public_id=1c6ec85e-adc9-4e7c-848d-bc06929a183d
+[2026-08-21 14:27:49] LEAVE_ALLOCATED - emp=0aec9a90-d915-4a1f-861a-71044db2396c type=Casual-fe9f16 days=15
+[2026-08-21 14:27:49] LEAVE_REQUESTED - emp_id=28 days=3.0
+[2026-08-21 14:27:49] LEAVE_PROCESSED - public_id=ec0372bc-d757-4ace-8616-2d8d52bfa849 action=approved
+[2026-08-21 14:27:49] LEAVE_CANCELLED - public_id=ec0372bc-d757-4ace-8616-2d8d52bfa849
+[2026-08-21 14:27:49] SALARY_CREATED - Created salary revision for employee EMP-TEST-EMP (Basic: 75000.0, Net: 96400.00 INR)
+[2026-08-21 14:27:49] PROJECT_CREATED - Project 'Cloud Platform 41c55b' created (Public ID: 7f6a5935-28c5-46d3-a094-1bd2a9960caa)
+[2026-08-21 14:27:49] PROJECT_UPDATED - Project 'Cloud Platform 41c55b' updated
+[2026-08-21 14:27:49] PROJECT_MEMBER_ADDED - Employee 'Employee' added to project 'Cloud Platform 41c55b' as 'Lead Developer'
+[2026-08-21 14:27:49] PROJECT_MEMBER_REMOVED - Employee 'Employee' removed from project 'Cloud Platform 41c55b'
+[2026-08-21 14:27:49] PROJECT_DELETED - Project 'Cloud Platform 41c55b' deleted
+[2026-08-21 14:27:49] REVIEW_CREATED - Performance review created for employee ID 28 by reviewer ID 29
+[2026-08-21 14:27:49] REVIEW_UPDATED - Performance review '7257c422-3d94-48d3-9fe7-50a7ef34722a' updated (Status: finalized)
+[2026-08-21 14:28:21] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:28:21] ATTENDANCE_CHECK_IN - emp_id=28 date=2026-08-21 in=14:28:21 mode=in_office is_late=True
+[2026-08-21 14:28:21] ATTENDANCE_CHECK_OUT - emp_id=28 date=2026-08-21 out=14:28:21 total_hours=0.0 status=absent
+[2026-08-21 14:28:21] HOLIDAY_CREATED - name=Test Holiday bbd25f date=2026-11-20
+[2026-08-21 14:28:21] HOLIDAY_DELETED - public_id=94f49554-2de0-4198-8a89-7d65fad8fbad
+[2026-08-21 14:28:22] SIGNUP - user=signup.fafe04c8@company.com public_id=a946951e-3049-4b7d-b3f8-ee095da4492b
+[2026-08-21 14:28:22] SIGNUP - user=dup.e220c8a2@company.com public_id=c8c17610-4e99-4594-8f64-b39ace02fd97
+[2026-08-21 14:28:22] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:28:23] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:28:23] DEPARTMENT_CREATED - name=Engineering-2579 public_id=8c66c010-3dec-424d-8a95-00a2e05e605b
+[2026-08-21 14:28:23] DEPARTMENT_UPDATED - name=Engineering-2579-Updated public_id=8c66c010-3dec-424d-8a95-00a2e05e605b
+[2026-08-21 14:28:23] DEPARTMENT_DELETED - public_id=8c66c010-3dec-424d-8a95-00a2e05e605b
+[2026-08-21 14:28:23] DESIGNATION_CREATED - title=Staff Engineer-cacb8b public_id=31e2e7dd-2dd9-4d7f-af41-d5f430e06170
+[2026-08-21 14:28:23] DESIGNATION_UPDATED - title=Staff Engineer-cacb8b-Senior public_id=31e2e7dd-2dd9-4d7f-af41-d5f430e06170
+[2026-08-21 14:28:23] DESIGNATION_DELETED - public_id=31e2e7dd-2dd9-4d7f-af41-d5f430e06170
+[2026-08-21 14:28:23] DOCUMENT_REGISTERED - Document 'Offer_Letter_2026.pdf' registered for employee 'Employee'
+[2026-08-21 14:28:23] ANNOUNCEMENT_POSTED - Announcement 'Townhall Meeting 301178' posted by employee ID 29
+[2026-08-21 14:28:23] ANNOUNCEMENT_DELETED - Announcement 'Townhall Meeting 301178' deleted
+[2026-08-21 14:28:23] SEARCH - first_name=None last_name=None dept_uuid=None employee_status='active' -> 19 match(es)
+[2026-08-21 14:28:23] CREATE - emp_id=33 code=EMP-1033 name=John Doe-452761
+[2026-08-21 14:28:23] UPDATE - public_id=fe71ad29-40a6-4e9c-a0f7-ad8ac2eac975 updated in database
+[2026-08-21 14:28:23] ADDRESS_ADDED - emp=fe71ad29-40a6-4e9c-a0f7-ad8ac2eac975 type=current
+[2026-08-21 14:28:23] EMERGENCY_CONTACT_ADDED - emp=fe71ad29-40a6-4e9c-a0f7-ad8ac2eac975 name=Jane Doe
+[2026-08-21 14:28:23] DELETE - public_id=fe71ad29-40a6-4e9c-a0f7-ad8ac2eac975 deleted from database
+[2026-08-21 14:28:23] LEAVE_TYPE_CREATED - name=Casual-9bed33 public_id=ba08efdf-bee8-4a2d-90ba-28f6895476db
+[2026-08-21 14:28:23] LEAVE_ALLOCATED - emp=0aec9a90-d915-4a1f-861a-71044db2396c type=Casual-9bed33 days=15
+[2026-08-21 14:28:23] LEAVE_REQUESTED - emp_id=28 days=3.0
+[2026-08-21 14:28:23] LEAVE_PROCESSED - public_id=36b8fb92-de6e-443c-9892-1258298943df action=approved
+[2026-08-21 14:28:23] LEAVE_CANCELLED - public_id=36b8fb92-de6e-443c-9892-1258298943df
+[2026-08-21 14:28:23] BANK_DETAIL_ADDED - Added savings bank account (HDFC Bank) for employee EMP-TEST-EMP
+[2026-08-21 14:28:23] PAYROLL_PROCESSED - Processed payroll batch for period 2026-08-01 to 2026-08-31 (1 created, 0 skipped)
+[2026-08-21 14:28:23] PROJECT_CREATED - Project 'Cloud Platform 4c6d79' created (Public ID: 52dfae89-c98f-4262-87cc-9362f403259d)
+[2026-08-21 14:28:23] PROJECT_UPDATED - Project 'Cloud Platform 4c6d79' updated
+[2026-08-21 14:28:24] PROJECT_MEMBER_ADDED - Employee 'Employee' added to project 'Cloud Platform 4c6d79' as 'Lead Developer'
+[2026-08-21 14:28:24] PROJECT_MEMBER_REMOVED - Employee 'Employee' removed from project 'Cloud Platform 4c6d79'
+[2026-08-21 14:28:24] PROJECT_DELETED - Project 'Cloud Platform 4c6d79' deleted
+[2026-08-21 14:28:24] REVIEW_CREATED - Performance review created for employee ID 28 by reviewer ID 29
+[2026-08-21 14:28:24] REVIEW_UPDATED - Performance review '99596110-c3cf-4f1f-8e43-ab7f7a68871f' updated (Status: finalized)
+[2026-08-21 14:29:00] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:29:01] ATTENDANCE_CHECK_IN - emp_id=28 date=2026-08-21 in=14:29:01 mode=in_office is_late=True
+[2026-08-21 14:29:01] ATTENDANCE_CHECK_OUT - emp_id=28 date=2026-08-21 out=14:29:01 total_hours=0.0 status=absent
+[2026-08-21 14:29:01] HOLIDAY_CREATED - name=Test Holiday a8f56b date=2026-11-20
+[2026-08-21 14:29:01] HOLIDAY_DELETED - public_id=8767ecc3-22a7-49dc-934c-7508d4af5fbd
+[2026-08-21 14:29:01] SIGNUP - user=signup.d24ff5b4@company.com public_id=1e258cf4-6928-4bc8-bc7a-0d2489ee3c47
+[2026-08-21 14:29:02] SIGNUP - user=dup.8ce035ca@company.com public_id=af442a5f-c63b-449b-b3e1-ceb466803180
+[2026-08-21 14:29:02] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:29:02] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:29:02] DEPARTMENT_CREATED - name=Engineering-9F6E public_id=e7f13938-d2f4-420c-a8a9-585ee83625c6
+[2026-08-21 14:29:02] DEPARTMENT_UPDATED - name=Engineering-9F6E-Updated public_id=e7f13938-d2f4-420c-a8a9-585ee83625c6
+[2026-08-21 14:29:02] DEPARTMENT_DELETED - public_id=e7f13938-d2f4-420c-a8a9-585ee83625c6
+[2026-08-21 14:29:02] DESIGNATION_CREATED - title=Staff Engineer-ca3238 public_id=7f54dec0-1bca-4e25-9e2d-11bdb3733905
+[2026-08-21 14:29:02] DESIGNATION_UPDATED - title=Staff Engineer-ca3238-Senior public_id=7f54dec0-1bca-4e25-9e2d-11bdb3733905
+[2026-08-21 14:29:02] DESIGNATION_DELETED - public_id=7f54dec0-1bca-4e25-9e2d-11bdb3733905
+[2026-08-21 14:29:02] DOCUMENT_REGISTERED - Document 'Offer_Letter_2026.pdf' registered for employee 'Employee'
+[2026-08-21 14:29:02] ANNOUNCEMENT_POSTED - Announcement 'Townhall Meeting 289850' posted by employee ID 29
+[2026-08-21 14:29:03] ANNOUNCEMENT_DELETED - Announcement 'Townhall Meeting 289850' deleted
+[2026-08-21 14:29:03] SEARCH - first_name=None last_name=None dept_uuid=None employee_status='active' -> 19 match(es)
+[2026-08-21 14:29:03] CREATE - emp_id=34 code=EMP-1033 name=John Doe-02464a
+[2026-08-21 14:29:03] UPDATE - public_id=c5f646f3-6e6e-4a8c-976e-21f586d65992 updated in database
+[2026-08-21 14:29:03] ADDRESS_ADDED - emp=c5f646f3-6e6e-4a8c-976e-21f586d65992 type=current
+[2026-08-21 14:29:03] EMERGENCY_CONTACT_ADDED - emp=c5f646f3-6e6e-4a8c-976e-21f586d65992 name=Jane Doe
+[2026-08-21 14:29:03] DELETE - public_id=c5f646f3-6e6e-4a8c-976e-21f586d65992 deleted from database
+[2026-08-21 14:29:03] LEAVE_TYPE_CREATED - name=Casual-da95d1 public_id=7ed4e4c7-af57-4101-997a-6fd9f732be95
+[2026-08-21 14:29:03] LEAVE_ALLOCATED - emp=0aec9a90-d915-4a1f-861a-71044db2396c type=Casual-da95d1 days=15
+[2026-08-21 14:29:03] LEAVE_REQUESTED - emp_id=28 days=3.0
+[2026-08-21 14:29:03] LEAVE_PROCESSED - public_id=e85492c1-b2a6-4cad-bbf4-fe7bcafc8770 action=approved
+[2026-08-21 14:29:03] LEAVE_CANCELLED - public_id=e85492c1-b2a6-4cad-bbf4-fe7bcafc8770
+[2026-08-21 14:29:03] BANK_DETAIL_ADDED - Added savings bank account (HDFC Bank) for employee EMP-TEST-EMP
+[2026-08-21 14:29:03] PAYROLL_PROCESSED - Processed payroll batch for period 2026-08-01 to 2026-08-31 (0 created, 1 skipped)
+[2026-08-21 14:29:03] PAYROLL_DISBURSED - Disbursed 96400.00 to employee EMP-TEST-EMP via bank_transfer (Ref: TXN-A08E6A9D066D)
+[2026-08-21 14:29:03] PROJECT_CREATED - Project 'Cloud Platform eb8094' created (Public ID: f19ecece-2aba-47b2-b457-0f12599353cb)
+[2026-08-21 14:29:03] PROJECT_UPDATED - Project 'Cloud Platform eb8094' updated
+[2026-08-21 14:29:03] PROJECT_MEMBER_ADDED - Employee 'Employee' added to project 'Cloud Platform eb8094' as 'Lead Developer'
+[2026-08-21 14:29:04] PROJECT_MEMBER_REMOVED - Employee 'Employee' removed from project 'Cloud Platform eb8094'
+[2026-08-21 14:29:04] PROJECT_DELETED - Project 'Cloud Platform eb8094' deleted
+[2026-08-21 14:29:04] REVIEW_CREATED - Performance review created for employee ID 28 by reviewer ID 29
+[2026-08-21 14:29:04] REVIEW_UPDATED - Performance review '6325efa0-09d1-4566-878a-52fbf7cfe8a8' updated (Status: finalized)
+[2026-08-21 14:29:38] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:29:42] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:29:51] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:29:51] ATTENDANCE_CHECK_IN - emp_id=28 date=2026-08-21 in=14:29:51 mode=in_office is_late=True
+[2026-08-21 14:29:51] ATTENDANCE_CHECK_OUT - emp_id=28 date=2026-08-21 out=14:29:51 total_hours=0.0 status=absent
+[2026-08-21 14:29:52] HOLIDAY_CREATED - name=Test Holiday 810e4f date=2026-11-20
+[2026-08-21 14:29:52] HOLIDAY_DELETED - public_id=f1d4b695-d6c8-426b-a121-125b00b53dd6
+[2026-08-21 14:29:52] SIGNUP - user=signup.1a43d815@company.com public_id=fce713e5-7e1b-46ae-9ea8-fcc18128b8bb
+[2026-08-21 14:29:52] SIGNUP - user=dup.d19c7409@company.com public_id=83dbfe28-18d3-4b0c-8b88-ab24c96af970
+[2026-08-21 14:29:52] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:29:53] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:29:53] DEPARTMENT_CREATED - name=Engineering-CE0F public_id=d711da07-e64a-4725-acb1-d3b13947cbd9
+[2026-08-21 14:29:53] DEPARTMENT_UPDATED - name=Engineering-CE0F-Updated public_id=d711da07-e64a-4725-acb1-d3b13947cbd9
+[2026-08-21 14:29:53] DEPARTMENT_DELETED - public_id=d711da07-e64a-4725-acb1-d3b13947cbd9
+[2026-08-21 14:29:53] DESIGNATION_CREATED - title=Staff Engineer-c446cf public_id=9a8fd1d9-9167-44ad-a2fa-15ed0519615f
+[2026-08-21 14:29:53] DESIGNATION_UPDATED - title=Staff Engineer-c446cf-Senior public_id=9a8fd1d9-9167-44ad-a2fa-15ed0519615f
+[2026-08-21 14:29:53] DESIGNATION_DELETED - public_id=9a8fd1d9-9167-44ad-a2fa-15ed0519615f
+[2026-08-21 14:29:53] DOCUMENT_REGISTERED - Document 'Offer_Letter_2026.pdf' registered for employee 'Employee'
+[2026-08-21 14:29:53] ANNOUNCEMENT_POSTED - Announcement 'Townhall Meeting 567bed' posted by employee ID 29
+[2026-08-21 14:29:53] ANNOUNCEMENT_DELETED - Announcement 'Townhall Meeting 567bed' deleted
+[2026-08-21 14:29:53] SEARCH - first_name=None last_name=None dept_uuid=None employee_status='active' -> 19 match(es)
+[2026-08-21 14:29:53] CREATE - emp_id=35 code=EMP-1033 name=John Doe-6da1f9
+[2026-08-21 14:29:53] UPDATE - public_id=5b366de9-dade-43b4-bc4c-1a6ea53577ac updated in database
+[2026-08-21 14:29:53] ADDRESS_ADDED - emp=5b366de9-dade-43b4-bc4c-1a6ea53577ac type=current
+[2026-08-21 14:29:53] EMERGENCY_CONTACT_ADDED - emp=5b366de9-dade-43b4-bc4c-1a6ea53577ac name=Jane Doe
+[2026-08-21 14:29:53] DELETE - public_id=5b366de9-dade-43b4-bc4c-1a6ea53577ac deleted from database
+[2026-08-21 14:29:53] LEAVE_TYPE_CREATED - name=Casual-3ddd1e public_id=2d4d3e9e-705a-4945-8e68-2a74c425e125
+[2026-08-21 14:29:53] LEAVE_ALLOCATED - emp=0aec9a90-d915-4a1f-861a-71044db2396c type=Casual-3ddd1e days=15
+[2026-08-21 14:29:53] LEAVE_REQUESTED - emp_id=28 days=3.0
+[2026-08-21 14:29:53] LEAVE_PROCESSED - public_id=51bd8a2b-f1e1-4186-b7c1-f3c5a5495d2c action=approved
+[2026-08-21 14:29:53] LEAVE_CANCELLED - public_id=51bd8a2b-f1e1-4186-b7c1-f3c5a5495d2c
+[2026-08-21 14:29:53] BANK_DETAIL_ADDED - Added savings bank account (HDFC Bank) for employee EMP-TEST-EMP
+[2026-08-21 14:29:53] PAYROLL_PROCESSED - Processed payroll batch for period 2026-08-01 to 2026-08-31 (0 created, 1 skipped)
+[2026-08-21 14:29:53] PROJECT_CREATED - Project 'Cloud Platform 65991e' created (Public ID: 63feb64d-b135-4eac-9a25-e580cc215529)
+[2026-08-21 14:29:53] PROJECT_UPDATED - Project 'Cloud Platform 65991e' updated
+[2026-08-21 14:29:53] PROJECT_MEMBER_ADDED - Employee 'Employee' added to project 'Cloud Platform 65991e' as 'Lead Developer'
+[2026-08-21 14:29:54] PROJECT_MEMBER_REMOVED - Employee 'Employee' removed from project 'Cloud Platform 65991e'
+[2026-08-21 14:29:54] PROJECT_DELETED - Project 'Cloud Platform 65991e' deleted
+[2026-08-21 14:29:54] REVIEW_CREATED - Performance review created for employee ID 28 by reviewer ID 29
+[2026-08-21 14:29:54] REVIEW_UPDATED - Performance review '607f6064-39a2-46fa-87a0-dd5f7fa33c2f' updated (Status: finalized)
+[2026-08-21 14:30:30] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:30:30] ATTENDANCE_CHECK_IN - emp_id=28 date=2026-08-21 in=14:30:30 mode=in_office is_late=True
+[2026-08-21 14:30:30] ATTENDANCE_CHECK_OUT - emp_id=28 date=2026-08-21 out=14:30:30 total_hours=0.0 status=absent
+[2026-08-21 14:30:31] HOLIDAY_CREATED - name=Test Holiday 4459d3 date=2026-11-20
+[2026-08-21 14:30:31] HOLIDAY_DELETED - public_id=93461ac6-7c08-41a5-b74f-40d949dde7ce
+[2026-08-21 14:30:31] SIGNUP - user=signup.26e3ae0b@company.com public_id=294cdfd5-cbd8-4364-b50d-c2dec69f84ca
+[2026-08-21 14:30:31] SIGNUP - user=dup.7e9ba22a@company.com public_id=1b8537b8-97ce-4dcb-b0d3-f16a64936dad
+[2026-08-21 14:30:31] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:30:32] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:30:32] DEPARTMENT_CREATED - name=Engineering-3326 public_id=fad1c062-dfec-4609-b721-251c8ad4759b
+[2026-08-21 14:30:32] DEPARTMENT_UPDATED - name=Engineering-3326-Updated public_id=fad1c062-dfec-4609-b721-251c8ad4759b
+[2026-08-21 14:30:32] DEPARTMENT_DELETED - public_id=fad1c062-dfec-4609-b721-251c8ad4759b
+[2026-08-21 14:30:32] DESIGNATION_CREATED - title=Staff Engineer-602e63 public_id=829cd2b6-e7c0-4ba4-bfc1-354ffbeebec5
+[2026-08-21 14:30:32] DESIGNATION_UPDATED - title=Staff Engineer-602e63-Senior public_id=829cd2b6-e7c0-4ba4-bfc1-354ffbeebec5
+[2026-08-21 14:30:32] DESIGNATION_DELETED - public_id=829cd2b6-e7c0-4ba4-bfc1-354ffbeebec5
+[2026-08-21 14:30:32] DOCUMENT_REGISTERED - Document 'Offer_Letter_2026.pdf' registered for employee 'Employee'
+[2026-08-21 14:30:32] ANNOUNCEMENT_POSTED - Announcement 'Townhall Meeting f91104' posted by employee ID 29
+[2026-08-21 14:30:32] ANNOUNCEMENT_DELETED - Announcement 'Townhall Meeting f91104' deleted
+[2026-08-21 14:30:32] SEARCH - first_name=None last_name=None dept_uuid=None employee_status='active' -> 19 match(es)
+[2026-08-21 14:30:32] CREATE - emp_id=36 code=EMP-1033 name=John Doe-4a0b09
+[2026-08-21 14:30:32] UPDATE - public_id=9811864e-fc42-4ec5-ba7b-43bf2095dfb9 updated in database
+[2026-08-21 14:30:32] ADDRESS_ADDED - emp=9811864e-fc42-4ec5-ba7b-43bf2095dfb9 type=current
+[2026-08-21 14:30:32] EMERGENCY_CONTACT_ADDED - emp=9811864e-fc42-4ec5-ba7b-43bf2095dfb9 name=Jane Doe
+[2026-08-21 14:30:32] DELETE - public_id=9811864e-fc42-4ec5-ba7b-43bf2095dfb9 deleted from database
+[2026-08-21 14:30:32] LEAVE_TYPE_CREATED - name=Casual-5dec43 public_id=fbe43350-850c-4813-a049-463c9c0f0836
+[2026-08-21 14:30:32] LEAVE_ALLOCATED - emp=0aec9a90-d915-4a1f-861a-71044db2396c type=Casual-5dec43 days=15
+[2026-08-21 14:30:32] LEAVE_REQUESTED - emp_id=28 days=3.0
+[2026-08-21 14:30:32] LEAVE_PROCESSED - public_id=d4a1e541-0633-441e-886c-4e839c246ba6 action=approved
+[2026-08-21 14:30:32] LEAVE_CANCELLED - public_id=d4a1e541-0633-441e-886c-4e839c246ba6
+[2026-08-21 14:30:32] BANK_DETAIL_ADDED - Added savings bank account (HDFC Bank) for employee EMP-TEST-EMP
+[2026-08-21 14:30:32] PAYROLL_PROCESSED - Processed payroll batch for period 2026-08-01 to 2026-08-31 (0 created, 1 skipped)
+[2026-08-21 14:30:32] PROJECT_CREATED - Project 'Cloud Platform 99c9cb' created (Public ID: eadfb449-29d3-4d10-a8e5-d987e019f792)
+[2026-08-21 14:30:32] PROJECT_UPDATED - Project 'Cloud Platform 99c9cb' updated
+[2026-08-21 14:30:32] PROJECT_MEMBER_ADDED - Employee 'Employee' added to project 'Cloud Platform 99c9cb' as 'Lead Developer'
+[2026-08-21 14:30:32] PROJECT_MEMBER_REMOVED - Employee 'Employee' removed from project 'Cloud Platform 99c9cb'
+[2026-08-21 14:30:32] PROJECT_DELETED - Project 'Cloud Platform 99c9cb' deleted
+[2026-08-21 14:30:33] REVIEW_CREATED - Performance review created for employee ID 28 by reviewer ID 29
+[2026-08-21 14:30:33] REVIEW_UPDATED - Performance review '2e64d116-3b6d-4b11-a836-80485a63dec4' updated (Status: finalized)
+[2026-08-21 14:33:17] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:33:18] ATTENDANCE_CHECK_IN - emp_id=28 date=2026-08-21 in=14:33:18 mode=in_office is_late=True
+[2026-08-21 14:33:18] ATTENDANCE_CHECK_OUT - emp_id=28 date=2026-08-21 out=14:33:18 total_hours=0.0 status=absent
+[2026-08-21 14:33:18] HOLIDAY_CREATED - name=Test Holiday 4f91e5 date=2026-11-20
+[2026-08-21 14:33:18] HOLIDAY_DELETED - public_id=07828b35-6e86-41bc-bac6-85289f2a6ab3
+[2026-08-21 14:33:18] SIGNUP - user=signup.65b06253@company.com public_id=3b18e1ed-14e1-4dff-9d9b-06d4b490f18c
+[2026-08-21 14:33:18] SIGNUP - user=dup.7ccee196@company.com public_id=344fe640-8c9b-4c9b-bf31-e9cb8a0c6f5b
+[2026-08-21 14:33:19] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:33:19] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:33:19] DEPARTMENT_CREATED - name=Engineering-50D9 public_id=fc000d8b-61b5-48e7-85b2-213b6f31da88
+[2026-08-21 14:33:19] DEPARTMENT_UPDATED - name=Engineering-50D9-Updated public_id=fc000d8b-61b5-48e7-85b2-213b6f31da88
+[2026-08-21 14:33:19] DEPARTMENT_DELETED - public_id=fc000d8b-61b5-48e7-85b2-213b6f31da88
+[2026-08-21 14:33:19] DESIGNATION_CREATED - title=Staff Engineer-bce20b public_id=68d17515-7acc-400f-8912-b55cb9e79220
+[2026-08-21 14:33:19] DESIGNATION_UPDATED - title=Staff Engineer-bce20b-Senior public_id=68d17515-7acc-400f-8912-b55cb9e79220
+[2026-08-21 14:33:19] DESIGNATION_DELETED - public_id=68d17515-7acc-400f-8912-b55cb9e79220
+[2026-08-21 14:33:19] DOCUMENT_REGISTERED - Document 'Offer_Letter_2026.pdf' registered for employee 'Employee'
+[2026-08-21 14:33:19] ANNOUNCEMENT_POSTED - Announcement 'Townhall Meeting a028f6' posted by employee ID 29
+[2026-08-21 14:33:19] ANNOUNCEMENT_DELETED - Announcement 'Townhall Meeting a028f6' deleted
+[2026-08-21 14:33:19] SEARCH - first_name=None last_name=None dept_uuid=None employee_status='active' -> 19 match(es)
+[2026-08-21 14:33:19] CREATE - emp_id=37 code=EMP-1033 name=John Doe-96a6e7
+[2026-08-21 14:33:19] UPDATE - public_id=b4b0d66f-01b8-4883-add5-de1988db472f updated in database
+[2026-08-21 14:33:19] ADDRESS_ADDED - emp=b4b0d66f-01b8-4883-add5-de1988db472f type=current
+[2026-08-21 14:33:19] EMERGENCY_CONTACT_ADDED - emp=b4b0d66f-01b8-4883-add5-de1988db472f name=Jane Doe
+[2026-08-21 14:33:19] DELETE - public_id=b4b0d66f-01b8-4883-add5-de1988db472f deleted from database
+[2026-08-21 14:33:19] LEAVE_TYPE_CREATED - name=Casual-a0005f public_id=b3883ffc-3654-49b1-8ba2-f79312288c06
+[2026-08-21 14:33:19] LEAVE_ALLOCATED - emp=0aec9a90-d915-4a1f-861a-71044db2396c type=Casual-a0005f days=15
+[2026-08-21 14:33:20] LEAVE_REQUESTED - emp_id=28 days=3.0
+[2026-08-21 14:33:20] LEAVE_PROCESSED - public_id=09c9d3c8-910b-47ee-be3f-0ff1b199926e action=approved
+[2026-08-21 14:33:20] LEAVE_CANCELLED - public_id=09c9d3c8-910b-47ee-be3f-0ff1b199926e
+[2026-08-21 14:33:20] BANK_DETAIL_ADDED - Added savings bank account (HDFC Bank) for employee EMP-TEST-EMP
+[2026-08-21 14:33:20] PAYROLL_PROCESSED - Processed payroll batch for period 2026-08-01 to 2026-08-31 (0 created, 1 skipped)
+[2026-08-21 14:33:20] PROJECT_CREATED - Project 'Cloud Platform c7cb3d' created (Public ID: e22790b5-963a-4651-9717-f16c761a09e4)
+[2026-08-21 14:33:20] PROJECT_UPDATED - Project 'Cloud Platform c7cb3d' updated
+[2026-08-21 14:33:20] PROJECT_MEMBER_ADDED - Employee 'Employee' added to project 'Cloud Platform c7cb3d' as 'Lead Developer'
+[2026-08-21 14:33:20] PROJECT_MEMBER_REMOVED - Employee 'Employee' removed from project 'Cloud Platform c7cb3d'
+[2026-08-21 14:33:20] PROJECT_DELETED - Project 'Cloud Platform c7cb3d' deleted
+[2026-08-21 14:33:20] REVIEW_CREATED - Performance review created for employee ID 28 by reviewer ID 29
+[2026-08-21 14:33:20] REVIEW_UPDATED - Performance review '2942cbba-cebd-4cfc-b1fc-8e8b3e80b4cb' updated (Status: finalized)
+[2026-08-21 14:34:43] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:34:53] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:34:53] ATTENDANCE_CHECK_IN - emp_id=28 date=2026-08-21 in=14:34:53 mode=in_office is_late=True
+[2026-08-21 14:34:53] ATTENDANCE_CHECK_OUT - emp_id=28 date=2026-08-21 out=14:34:53 total_hours=0.0 status=absent
+[2026-08-21 14:34:54] HOLIDAY_CREATED - name=Test Holiday 5e42a2 date=2026-11-20
+[2026-08-21 14:34:54] HOLIDAY_DELETED - public_id=4e22772e-53dd-413f-bcf6-52b0bdf5bb0b
+[2026-08-21 14:34:54] SIGNUP - user=signup.dc906e51@company.com public_id=cf10ac87-0348-4788-867a-2c4d57096f68
+[2026-08-21 14:34:54] SIGNUP - user=dup.060d6865@company.com public_id=d1a0cd8f-95f4-4068-acfb-b4ad75c293e2
+[2026-08-21 14:34:54] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:34:55] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:34:55] DEPARTMENT_CREATED - name=Engineering-C7C7 public_id=c058c49e-5aa3-4299-aaad-de3bda4ff8ab
+[2026-08-21 14:34:55] DEPARTMENT_UPDATED - name=Engineering-C7C7-Updated public_id=c058c49e-5aa3-4299-aaad-de3bda4ff8ab
+[2026-08-21 14:34:55] DEPARTMENT_DELETED - public_id=c058c49e-5aa3-4299-aaad-de3bda4ff8ab
+[2026-08-21 14:34:55] DESIGNATION_CREATED - title=Staff Engineer-c68c47 public_id=31ad7b46-612f-48aa-994f-b9d3b1a48c8d
+[2026-08-21 14:34:55] DESIGNATION_UPDATED - title=Staff Engineer-c68c47-Senior public_id=31ad7b46-612f-48aa-994f-b9d3b1a48c8d
+[2026-08-21 14:34:55] DESIGNATION_DELETED - public_id=31ad7b46-612f-48aa-994f-b9d3b1a48c8d
+[2026-08-21 14:34:55] DOCUMENT_REGISTERED - Document 'Offer_Letter_2026.pdf' registered for employee 'Employee'
+[2026-08-21 14:34:55] ANNOUNCEMENT_POSTED - Announcement 'Townhall Meeting fc84d3' posted by employee ID 29
+[2026-08-21 14:34:55] ANNOUNCEMENT_DELETED - Announcement 'Townhall Meeting fc84d3' deleted
+[2026-08-21 14:34:55] SEARCH - first_name=None last_name=None dept_uuid=None employee_status='active' -> 19 match(es)
+[2026-08-21 14:34:55] CREATE - emp_id=38 code=EMP-1033 name=John Doe-f17c32
+[2026-08-21 14:34:55] UPDATE - public_id=2f390b59-f7fc-4186-968a-609ad6baf9f4 updated in database
+[2026-08-21 14:34:55] ADDRESS_ADDED - emp=2f390b59-f7fc-4186-968a-609ad6baf9f4 type=current
+[2026-08-21 14:34:55] EMERGENCY_CONTACT_ADDED - emp=2f390b59-f7fc-4186-968a-609ad6baf9f4 name=Jane Doe
+[2026-08-21 14:34:55] DELETE - public_id=2f390b59-f7fc-4186-968a-609ad6baf9f4 deleted from database
+[2026-08-21 14:34:55] LEAVE_TYPE_CREATED - name=Casual-e3cddd public_id=560eddda-e07b-4642-b7fa-3449494744a6
+[2026-08-21 14:34:55] LEAVE_ALLOCATED - emp=0aec9a90-d915-4a1f-861a-71044db2396c type=Casual-e3cddd days=15
+[2026-08-21 14:34:55] LEAVE_REQUESTED - emp_id=28 days=3.0
+[2026-08-21 14:34:55] LEAVE_PROCESSED - public_id=e072fff0-c21a-4048-9681-2f4ab7f91f20 action=approved
+[2026-08-21 14:34:55] LEAVE_CANCELLED - public_id=e072fff0-c21a-4048-9681-2f4ab7f91f20
+[2026-08-21 14:34:55] BANK_DETAIL_ADDED - Added savings bank account (HDFC Bank) for employee EMP-TEST-EMP
+[2026-08-21 14:34:55] PAYROLL_PROCESSED - Processed payroll batch for period 2026-08-01 to 2026-08-31 (0 created, 1 skipped)
+[2026-08-21 14:34:55] PROJECT_CREATED - Project 'Cloud Platform 8e6854' created (Public ID: f36c4979-17c7-4535-8653-95a6300845ce)
+[2026-08-21 14:34:55] PROJECT_UPDATED - Project 'Cloud Platform 8e6854' updated
+[2026-08-21 14:34:55] PROJECT_MEMBER_ADDED - Employee 'Employee' added to project 'Cloud Platform 8e6854' as 'Lead Developer'
+[2026-08-21 14:34:55] PROJECT_MEMBER_REMOVED - Employee 'Employee' removed from project 'Cloud Platform 8e6854'
+[2026-08-21 14:34:55] PROJECT_DELETED - Project 'Cloud Platform 8e6854' deleted
+[2026-08-21 14:34:56] REVIEW_CREATED - Performance review created for employee ID 28 by reviewer ID 29
+[2026-08-21 14:34:56] REVIEW_UPDATED - Performance review 'ecfe1993-a625-4a53-bee3-a5131af2a03b' updated (Status: finalized)
+[2026-08-21 14:36:29] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:36:30] ATTENDANCE_CHECK_IN - emp_id=28 date=2026-08-21 in=14:36:30 mode=in_office is_late=True
+[2026-08-21 14:36:30] ATTENDANCE_CHECK_OUT - emp_id=28 date=2026-08-21 out=14:36:30 total_hours=0.0 status=absent
+[2026-08-21 14:36:30] HOLIDAY_CREATED - name=Test Holiday 9e4698 date=2026-11-20
+[2026-08-21 14:36:30] HOLIDAY_DELETED - public_id=ad8dc6f5-014c-48fc-a091-4daf5c8178fb
+[2026-08-21 14:36:30] SIGNUP - user=signup.fbd7ad61@company.com public_id=cd94e2f3-e78e-4f4f-8c2b-ddd8f9d530d1
+[2026-08-21 14:36:30] SIGNUP - user=dup.63e57683@company.com public_id=bf10cd30-c224-4e85-9d0b-f6309b935a96
+[2026-08-21 14:36:31] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:36:31] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:36:31] DEPARTMENT_CREATED - name=Engineering-6398 public_id=0f92075e-6f3b-47de-a28e-a1e5b56e31a4
+[2026-08-21 14:36:31] DEPARTMENT_UPDATED - name=Engineering-6398-Updated public_id=0f92075e-6f3b-47de-a28e-a1e5b56e31a4
+[2026-08-21 14:36:31] DEPARTMENT_DELETED - public_id=0f92075e-6f3b-47de-a28e-a1e5b56e31a4
+[2026-08-21 14:36:31] DESIGNATION_CREATED - title=Staff Engineer-5ec6da public_id=0ff359f3-c32a-452d-9292-e5141cfc5875
+[2026-08-21 14:36:31] DESIGNATION_UPDATED - title=Staff Engineer-5ec6da-Senior public_id=0ff359f3-c32a-452d-9292-e5141cfc5875
+[2026-08-21 14:36:31] DESIGNATION_DELETED - public_id=0ff359f3-c32a-452d-9292-e5141cfc5875
+[2026-08-21 14:36:31] DOCUMENT_REGISTERED - Document 'Offer_Letter_2026.pdf' registered for employee 'Employee'
+[2026-08-21 14:36:31] ANNOUNCEMENT_POSTED - Announcement 'Townhall Meeting 17d7e0' posted by employee ID 29
+[2026-08-21 14:36:31] ANNOUNCEMENT_DELETED - Announcement 'Townhall Meeting 17d7e0' deleted
+[2026-08-21 14:36:31] SEARCH - first_name=None last_name=None dept_uuid=None employee_status='active' -> 19 match(es)
+[2026-08-21 14:36:31] CREATE - emp_id=39 code=EMP-1033 name=John Doe-80d5de
+[2026-08-21 14:36:31] UPDATE - public_id=d6f5a26b-e7b4-4b5f-80b6-b91f94f0ebbc updated in database
+[2026-08-21 14:36:31] ADDRESS_ADDED - emp=d6f5a26b-e7b4-4b5f-80b6-b91f94f0ebbc type=current
+[2026-08-21 14:36:31] EMERGENCY_CONTACT_ADDED - emp=d6f5a26b-e7b4-4b5f-80b6-b91f94f0ebbc name=Jane Doe
+[2026-08-21 14:36:31] DELETE - public_id=d6f5a26b-e7b4-4b5f-80b6-b91f94f0ebbc deleted from database
+[2026-08-21 14:36:31] LEAVE_TYPE_CREATED - name=Casual-b1a443 public_id=be01a65d-c0d8-4332-835e-0269c2ae558e
+[2026-08-21 14:36:31] LEAVE_ALLOCATED - emp=0aec9a90-d915-4a1f-861a-71044db2396c type=Casual-b1a443 days=15
+[2026-08-21 14:36:32] LEAVE_REQUESTED - emp_id=28 days=3.0
+[2026-08-21 14:36:32] LEAVE_PROCESSED - public_id=8e752a90-0b52-43e3-be80-ea549238eecd action=approved
+[2026-08-21 14:36:32] LEAVE_CANCELLED - public_id=8e752a90-0b52-43e3-be80-ea549238eecd
+[2026-08-21 14:36:32] BANK_DETAIL_ADDED - Added savings bank account (HDFC Bank) for employee EMP-TEST-EMP
+[2026-08-21 14:36:32] PAYROLL_PROCESSED - Processed payroll batch for period 2026-08-01 to 2026-08-31 (0 created, 1 skipped)
+[2026-08-21 14:36:32] PROJECT_CREATED - Project 'Cloud Platform be5869' created (Public ID: 5be00b9e-b7f5-463c-9ae5-93e032d339b5)
+[2026-08-21 14:36:32] PROJECT_UPDATED - Project 'Cloud Platform be5869' updated
+[2026-08-21 14:36:32] PROJECT_MEMBER_ADDED - Employee 'Employee' added to project 'Cloud Platform be5869' as 'Lead Developer'
+[2026-08-21 14:36:32] PROJECT_MEMBER_REMOVED - Employee 'Employee' removed from project 'Cloud Platform be5869'
+[2026-08-21 14:36:32] PROJECT_DELETED - Project 'Cloud Platform be5869' deleted
+[2026-08-21 14:36:32] REVIEW_CREATED - Performance review created for employee ID 28 by reviewer ID 29
+[2026-08-21 14:36:32] REVIEW_UPDATED - Performance review '044004d0-2dd3-437f-8e74-101f88cbdd5f' updated (Status: finalized)
+[2026-08-21 14:38:34] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:39:48] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:39:48] ATTENDANCE_CHECK_IN - emp_id=28 date=2026-08-21 in=14:39:48 mode=in_office is_late=True
+[2026-08-21 14:39:48] ATTENDANCE_CHECK_OUT - emp_id=28 date=2026-08-21 out=14:39:48 total_hours=0.0 status=absent
+[2026-08-21 14:39:48] HOLIDAY_CREATED - name=Test Holiday 2f706d date=2026-11-20
+[2026-08-21 14:39:48] HOLIDAY_DELETED - public_id=d469e439-3eea-4ecf-8640-981cc6e88e7b
+[2026-08-21 14:39:49] SIGNUP - user=signup.c162c287@company.com public_id=4b2430a3-4bc0-4263-bff2-bae90b70cde4
+[2026-08-21 14:39:49] SIGNUP - user=dup.a265dddb@company.com public_id=ba86874e-da48-4a79-866e-7492fe892056
+[2026-08-21 14:39:49] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:39:50] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:39:50] DEPARTMENT_CREATED - name=Engineering-D4FF public_id=b65f2eea-7abb-44bb-87c5-b5537bd8bcd6
+[2026-08-21 14:39:50] DEPARTMENT_UPDATED - name=Engineering-D4FF-Updated public_id=b65f2eea-7abb-44bb-87c5-b5537bd8bcd6
+[2026-08-21 14:39:50] DEPARTMENT_DELETED - public_id=b65f2eea-7abb-44bb-87c5-b5537bd8bcd6
+[2026-08-21 14:39:50] DESIGNATION_CREATED - title=Staff Engineer-f974ea public_id=b776939e-c680-44f8-9a15-4ac188d02355
+[2026-08-21 14:39:50] DESIGNATION_UPDATED - title=Staff Engineer-f974ea-Senior public_id=b776939e-c680-44f8-9a15-4ac188d02355
+[2026-08-21 14:39:50] DESIGNATION_DELETED - public_id=b776939e-c680-44f8-9a15-4ac188d02355
+[2026-08-21 14:39:50] DOCUMENT_REGISTERED - Document 'Offer_Letter_2026.pdf' registered for employee 'Employee'
+[2026-08-21 14:39:50] ANNOUNCEMENT_POSTED - Announcement 'Townhall Meeting 5f63f7' posted by employee ID 29
+[2026-08-21 14:39:50] ANNOUNCEMENT_DELETED - Announcement 'Townhall Meeting 5f63f7' deleted
+[2026-08-21 14:39:50] SEARCH - first_name=None last_name=None dept_uuid=None employee_status='active' -> 19 match(es)
+[2026-08-21 14:39:50] CREATE - emp_id=40 code=EMP-1033 name=John Doe-4db7d9
+[2026-08-21 14:39:50] UPDATE - public_id=8dac86f7-90cb-4807-aa91-33f75f472f28 updated in database
+[2026-08-21 14:39:50] ADDRESS_ADDED - emp=8dac86f7-90cb-4807-aa91-33f75f472f28 type=current
+[2026-08-21 14:39:50] EMERGENCY_CONTACT_ADDED - emp=8dac86f7-90cb-4807-aa91-33f75f472f28 name=Jane Doe
+[2026-08-21 14:39:50] DELETE - public_id=8dac86f7-90cb-4807-aa91-33f75f472f28 deleted from database
+[2026-08-21 14:39:50] LEAVE_TYPE_CREATED - name=Casual-f4da1a public_id=ce6f11ad-7885-4933-9eb6-0b46113b9749
+[2026-08-21 14:39:50] LEAVE_ALLOCATED - emp=0aec9a90-d915-4a1f-861a-71044db2396c type=Casual-f4da1a days=15
+[2026-08-21 14:39:50] LEAVE_REQUESTED - emp_id=28 days=3.0
+[2026-08-21 14:39:50] LEAVE_PROCESSED - public_id=c52b523b-559c-436c-b1b0-422631535b8f action=approved
+[2026-08-21 14:39:50] LEAVE_CANCELLED - public_id=c52b523b-559c-436c-b1b0-422631535b8f
+[2026-08-21 14:39:50] BANK_DETAIL_ADDED - Added savings bank account (HDFC Bank) for employee EMP-TEST-EMP
+[2026-08-21 14:39:50] PAYROLL_PROCESSED - Processed payroll batch for period 2026-08-01 to 2026-08-31 (0 created, 1 skipped)
+[2026-08-21 14:39:50] PROJECT_CREATED - Project 'Cloud Platform caf2aa' created (Public ID: e3af0070-3a3d-49f4-aed1-5dcfa48ab0a7)
+[2026-08-21 14:39:50] PROJECT_UPDATED - Project 'Cloud Platform caf2aa' updated
+[2026-08-21 14:39:50] PROJECT_MEMBER_ADDED - Employee 'Employee' added to project 'Cloud Platform caf2aa' as 'Lead Developer'
+[2026-08-21 14:39:50] PROJECT_MEMBER_REMOVED - Employee 'Employee' removed from project 'Cloud Platform caf2aa'
+[2026-08-21 14:39:50] PROJECT_DELETED - Project 'Cloud Platform caf2aa' deleted
+[2026-08-21 14:39:51] REVIEW_CREATED - Performance review created for employee ID 28 by reviewer ID 29
+[2026-08-21 14:39:51] REVIEW_UPDATED - Performance review '8fa0ebd2-4328-406e-9f63-ec70d57fe358' updated (Status: finalized)
+[2026-08-21 14:40:46] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:40:47] LEAVE_TYPE_CREATED - name=Casual-73be5c public_id=34d7b389-ebf7-4dc1-93ff-b298cbb160d6
+[2026-08-21 14:40:47] LEAVE_ALLOCATED - emp=0aec9a90-d915-4a1f-861a-71044db2396c type=Casual-73be5c days=10
+[2026-08-21 14:40:47] LEAVE_REQUESTED - emp_id=28 days=3.0
+[2026-08-21 14:40:47] LEAVE_PROCESSED - public_id=c833058b-489e-4859-971b-cf11cc51aaef action=approved
+[2026-08-21 14:40:47] LEAVE_CANCELLED - public_id=c833058b-489e-4859-971b-cf11cc51aaef
+[2026-08-21 14:40:47] LEAVE_REQUESTED - emp_id=28 days=2.0
+[2026-08-21 14:40:47] LEAVE_PROCESSED - public_id=41cfabfb-0755-43a8-8422-4d55fafe831f action=rejected
+[2026-08-21 14:41:05] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:41:33] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:42:04] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:42:13] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:42:13] SALARY_CREATED - Created salary revision for employee EMP-TEST-EMP (Basic: 75000.0, Net: 96400.00 INR)
+[2026-08-21 14:42:13] BANK_DETAIL_ADDED - Added savings bank account (HDFC Bank) for employee EMP-TEST-EMP
+[2026-08-21 14:42:34] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:42:34] SALARY_CREATED - Created salary revision for employee EMP-TEST-EMP (Basic: 75000.0, Net: 96400.00 INR)
+[2026-08-21 14:42:34] BANK_DETAIL_ADDED - Added savings bank account (HDFC Bank) for employee EMP-TEST-EMP
+[2026-08-21 14:42:34] PAYROLL_PROCESSED - Processed payroll batch for period 2026-07-01 to 2026-07-31 (1 created, 0 skipped)
+[2026-08-21 14:43:04] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:43:05] SALARY_CREATED - Created salary revision for employee EMP-TEST-EMP (Basic: 75000.0, Net: 96400.00 INR)
+[2026-08-21 14:43:05] BANK_DETAIL_ADDED - Added savings bank account (HDFC Bank) for employee EMP-TEST-EMP
+[2026-08-21 14:43:05] PAYROLL_PROCESSED - Processed payroll batch for period 2026-07-01 to 2026-07-31 (0 created, 1 skipped)
+[2026-08-21 14:43:30] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:43:31] ATTENDANCE_CHECK_IN - emp_id=29 date=2026-08-21 in=14:43:31 mode=in_office is_late=True
+[2026-08-21 14:43:31] ATTENDANCE_MANUAL_CREATE - emp_id=28 date=2026-06-15 in=09:00:00 out=18:00:00 status=present
+[2026-08-21 14:43:31] ATTENDANCE_DELETE - id=61
+[2026-08-21 14:43:31] HOLIDAY_CREATED - name=Test Holiday 2a409e date=2026-11-20
+[2026-08-21 14:43:31] HOLIDAY_DELETED - public_id=258cb6ca-a0d1-4b3b-8a27-c3fcad16b28b
+[2026-08-21 14:45:15] LOGIN - user=pankajsingh@gmail.com public_id=76c5e2db-5221-4ef8-8ed3-1273122430c1
+[2026-08-21 14:47:25] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:47:34] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:47:35] ATTENDANCE_CHECK_IN - emp_id=28 date=2026-08-21 in=14:47:35 mode=in_office is_late=True
+[2026-08-21 14:47:35] ATTENDANCE_CHECK_OUT - emp_id=28 date=2026-08-21 out=14:47:35 total_hours=0.0 status=absent
+[2026-08-21 14:47:35] ATTENDANCE_MANUAL_CREATE - emp_id=28 date=2026-06-15 in=09:00:00 out=18:00:00 status=present
+[2026-08-21 14:47:35] ATTENDANCE_DELETE - id=62
+[2026-08-21 14:47:35] HOLIDAY_CREATED - name=Test Holiday 617c93 date=2026-11-20
+[2026-08-21 14:47:35] HOLIDAY_DELETED - public_id=79f85d79-562a-4b63-970e-c0ae229f1146
+[2026-08-21 14:47:59] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:47:59] REVIEW_CREATED - Performance review created for employee ID 28 by reviewer ID 29
+[2026-08-21 14:48:15] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:48:22] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:48:30] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:48:36] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:49:04] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:49:05] REVIEW_CREATED - Performance review created for employee ID 28 by reviewer ID 31
+[2026-08-21 14:49:05] REVIEW_UPDATED - Performance review '27ee34da-f155-4ddd-b8fe-73a4087e89ad' updated (Status: finalized)
+[2026-08-21 14:49:44] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:49:45] DEPARTMENT_CREATED - name=Engineering-378F public_id=7c2755f9-927e-4fde-8ec9-b52c1c687073
+[2026-08-21 14:49:45] DEPARTMENT_UPDATED - name=Engineering-378F-Updated public_id=7c2755f9-927e-4fde-8ec9-b52c1c687073
+[2026-08-21 14:49:45] DEPARTMENT_DELETED - public_id=7c2755f9-927e-4fde-8ec9-b52c1c687073
+[2026-08-21 14:49:45] DESIGNATION_CREATED - title=Staff Engineer-ef7129 public_id=f48dc76c-d30b-4687-83c9-21bed2218122
+[2026-08-21 14:49:45] DESIGNATION_UPDATED - title=Staff Engineer-ef7129-Senior public_id=f48dc76c-d30b-4687-83c9-21bed2218122
+[2026-08-21 14:49:45] DESIGNATION_DELETED - public_id=f48dc76c-d30b-4687-83c9-21bed2218122
+[2026-08-21 14:50:01] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:50:01] SEARCH - first_name=None last_name=None dept_uuid=None employee_status='active' -> 19 match(es)
+[2026-08-21 14:50:01] CREATE - emp_id=41 code=EMP-1033 name=John Doe-f5a7a3
+[2026-08-21 14:50:01] CREATE_FAILED - Email 'john.doe.f5a7a3@company.com' is already in use
+[2026-08-21 14:50:32] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:50:32] SEARCH - first_name=None last_name=None dept_uuid=None employee_status='active' -> 20 match(es)
+[2026-08-21 14:50:32] CREATE - emp_id=42 code=EMP-1042 name=John Doe-3d4587
+[2026-08-21 14:50:32] CREATE_FAILED - Email 'john.doe.3d4587@company.com' is already in use
+[2026-08-21 14:50:32] UPDATE - public_id=54af5755-0aff-42dc-b2d9-05c3453d5470 updated in database
+[2026-08-21 14:50:32] ADDRESS_ADDED - emp=54af5755-0aff-42dc-b2d9-05c3453d5470 type=current
+[2026-08-21 14:50:32] EMERGENCY_CONTACT_ADDED - emp=54af5755-0aff-42dc-b2d9-05c3453d5470 name=Jane Doe
+[2026-08-21 14:50:32] DELETE - public_id=54af5755-0aff-42dc-b2d9-05c3453d5470 deleted from database
+[2026-08-21 14:50:50] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:50:50] SIGNUP - user=signup.b6496d5f@company.com public_id=617c4e63-50d2-414f-a1f0-bd6a5cfc98e3
+[2026-08-21 14:50:51] SIGNUP - user=dup.2fc46d94@company.com public_id=e557f49d-4e17-43a4-a8fa-473c335586cc
+[2026-08-21 14:50:51] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:50:51] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:51:11] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:51:12] PROJECT_CREATED - Project 'Cloud Platform 6dad68' created (Public ID: b1187a07-2466-41e6-8c9f-3b0cd271b4d3)
+[2026-08-21 14:51:12] PROJECT_UPDATED - Project 'Cloud Platform 6dad68' updated
+[2026-08-21 14:51:12] PROJECT_MEMBER_ADDED - Employee 'Employee' added to project 'Cloud Platform 6dad68' as 'Lead Developer'
+[2026-08-21 14:51:12] PROJECT_MEMBER_REMOVED - Employee 'Employee' removed from project 'Cloud Platform 6dad68'
+[2026-08-21 14:51:12] PROJECT_DELETED - Project 'Cloud Platform 6dad68' deleted
+[2026-08-21 14:52:09] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 14:52:10] ATTENDANCE_CHECK_IN - emp_id=28 date=2026-08-21 in=14:52:10 mode=in_office is_late=True
+[2026-08-21 14:52:10] ATTENDANCE_CHECK_OUT - emp_id=28 date=2026-08-21 out=14:52:10 total_hours=0.0 status=absent
+[2026-08-21 14:52:10] ATTENDANCE_MANUAL_CREATE - emp_id=28 date=2026-06-15 in=09:00:00 out=18:00:00 status=present
+[2026-08-21 14:52:10] ATTENDANCE_DELETE - id=63
+[2026-08-21 14:52:10] HOLIDAY_CREATED - name=Test Holiday ab32f2 date=2026-11-20
+[2026-08-21 14:52:10] HOLIDAY_DELETED - public_id=bf4c4eee-f507-4e7e-8290-f05c73f38382
+[2026-08-21 14:52:10] SIGNUP - user=signup.0ce13c10@company.com public_id=18143e4a-678d-4321-8948-bf9499eb8171
+[2026-08-21 14:52:10] SIGNUP - user=dup.cafaf3ed@company.com public_id=e6d7ca66-a932-4cbe-9943-32ce7caa6ee5
+[2026-08-21 14:52:10] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:52:11] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 14:52:11] DEPARTMENT_CREATED - name=Engineering-533C public_id=02041a17-d1b0-4667-928a-eb9da662205e
+[2026-08-21 14:52:11] DEPARTMENT_UPDATED - name=Engineering-533C-Updated public_id=02041a17-d1b0-4667-928a-eb9da662205e
+[2026-08-21 14:52:11] DEPARTMENT_DELETED - public_id=02041a17-d1b0-4667-928a-eb9da662205e
+[2026-08-21 14:52:11] DESIGNATION_CREATED - title=Staff Engineer-2ef9bb public_id=ee3cffe8-82a1-4feb-bf05-46342ecf1354
+[2026-08-21 14:52:11] DESIGNATION_UPDATED - title=Staff Engineer-2ef9bb-Senior public_id=ee3cffe8-82a1-4feb-bf05-46342ecf1354
+[2026-08-21 14:52:11] DESIGNATION_DELETED - public_id=ee3cffe8-82a1-4feb-bf05-46342ecf1354
+[2026-08-21 14:52:11] DOCUMENT_REGISTERED - Document 'Offer_Letter_2026.pdf' registered for employee 'Employee'
+[2026-08-21 14:52:11] ANNOUNCEMENT_POSTED - Announcement 'Townhall Meeting ff7a82' posted by employee ID 29
+[2026-08-21 14:52:11] ANNOUNCEMENT_DELETED - Announcement 'Townhall Meeting ff7a82' deleted
+[2026-08-21 14:52:11] SEARCH - first_name=None last_name=None dept_uuid=None employee_status='active' -> 20 match(es)
+[2026-08-21 14:52:11] CREATE - emp_id=43 code=EMP-1042 name=John Doe-758b13
+[2026-08-21 14:52:11] CREATE_FAILED - Email 'john.doe.758b13@company.com' is already in use
+[2026-08-21 14:52:11] UPDATE - public_id=9da33a0f-98bc-4169-b763-e65af16b6bf0 updated in database
+[2026-08-21 14:52:11] ADDRESS_ADDED - emp=9da33a0f-98bc-4169-b763-e65af16b6bf0 type=current
+[2026-08-21 14:52:11] EMERGENCY_CONTACT_ADDED - emp=9da33a0f-98bc-4169-b763-e65af16b6bf0 name=Jane Doe
+[2026-08-21 14:52:11] DELETE - public_id=9da33a0f-98bc-4169-b763-e65af16b6bf0 deleted from database
+[2026-08-21 14:52:11] LEAVE_TYPE_CREATED - name=Casual-2e733e public_id=2b528124-67dd-42e2-bdac-090f51ce0fd6
+[2026-08-21 14:52:11] LEAVE_ALLOCATED - emp=0aec9a90-d915-4a1f-861a-71044db2396c type=Casual-2e733e days=10
+[2026-08-21 14:52:11] LEAVE_REQUESTED - emp_id=28 days=3.0
+[2026-08-21 14:52:11] LEAVE_PROCESSED - public_id=dd257c0c-214c-4590-818d-12279d79d2b9 action=approved
+[2026-08-21 14:52:11] LEAVE_CANCELLED - public_id=dd257c0c-214c-4590-818d-12279d79d2b9
+[2026-08-21 14:52:11] LEAVE_REQUESTED - emp_id=28 days=2.0
+[2026-08-21 14:52:12] LEAVE_PROCESSED - public_id=8837307b-29db-4806-84bb-1dc033e33e9f action=rejected
+[2026-08-21 14:52:12] SALARY_CREATED - Created salary revision for employee EMP-TEST-EMP (Basic: 75000.0, Net: 96400.00 INR)
+[2026-08-21 14:52:12] BANK_DETAIL_ADDED - Added savings bank account (HDFC Bank) for employee EMP-TEST-EMP
+[2026-08-21 14:52:12] PAYROLL_PROCESSED - Processed payroll batch for period 2026-07-01 to 2026-07-31 (0 created, 1 skipped)
+[2026-08-21 14:52:12] PROJECT_CREATED - Project 'Cloud Platform a6d1bf' created (Public ID: a7e08d23-86e7-4933-96fb-bdb510f38b2a)
+[2026-08-21 14:52:12] PROJECT_UPDATED - Project 'Cloud Platform a6d1bf' updated
+[2026-08-21 14:52:12] PROJECT_MEMBER_ADDED - Employee 'Employee' added to project 'Cloud Platform a6d1bf' as 'Lead Developer'
+[2026-08-21 14:52:12] PROJECT_MEMBER_REMOVED - Employee 'Employee' removed from project 'Cloud Platform a6d1bf'
+[2026-08-21 14:52:12] PROJECT_DELETED - Project 'Cloud Platform a6d1bf' deleted
+[2026-08-21 14:52:12] REVIEW_CREATED - Performance review created for employee ID 28 by reviewer ID 31
+[2026-08-21 14:52:12] REVIEW_UPDATED - Performance review 'de63f644-8934-4de9-978a-12b98b4f6a5d' updated (Status: finalized)
+[2026-08-21 16:42:20] LOGIN - user=pankajsingh@gmail.com public_id=76c5e2db-5221-4ef8-8ed3-1273122430c1
+[2026-08-21 17:48:57] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 17:48:58] ATTENDANCE_CHECK_IN - emp_id=28 date=2026-08-21 in=17:48:58 mode=in_office is_late=True
+[2026-08-21 17:48:58] ATTENDANCE_CHECK_OUT - emp_id=28 date=2026-08-21 out=17:48:58 total_hours=0.0 status=absent
+[2026-08-21 17:48:58] ATTENDANCE_MANUAL_CREATE - emp_id=28 date=2026-06-15 in=09:00:00 out=18:00:00 status=present
+[2026-08-21 17:48:58] ATTENDANCE_DELETE - id=64
+[2026-08-21 17:48:58] HOLIDAY_CREATED - name=Test Holiday 72fdc4 date=2026-11-20
+[2026-08-21 17:48:58] HOLIDAY_DELETED - public_id=59cbe580-ca50-4ac6-988a-6305e96027b8
+[2026-08-21 17:48:58] SIGNUP - user=signup.25973661@company.com public_id=c016f4d6-39f0-498f-8b29-a4bd1fbfe461
+[2026-08-21 17:48:59] SIGNUP - user=dup.a4b41c15@company.com public_id=a90e0733-1e7f-4d97-9eb1-1c546b9e9a4a
+[2026-08-21 17:48:59] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 17:49:00] LOGIN - user=test.admin@company.com public_id=c7b58e16-4e35-4c6d-8f5c-30972b3ec1f6
+[2026-08-21 17:49:00] DEPARTMENT_CREATED - name=Engineering-2E39 public_id=0f058b5c-2a26-4988-b2ef-54b4747058ce
+[2026-08-21 17:49:00] DEPARTMENT_UPDATED - name=Engineering-2E39-Updated public_id=0f058b5c-2a26-4988-b2ef-54b4747058ce
+[2026-08-21 17:49:00] DEPARTMENT_DELETED - public_id=0f058b5c-2a26-4988-b2ef-54b4747058ce
+[2026-08-21 17:49:00] DESIGNATION_CREATED - title=Staff Engineer-e1b9fd public_id=fcd8d22e-e4ed-45e0-ad3d-c68da6e171c7
+[2026-08-21 17:49:00] DESIGNATION_UPDATED - title=Staff Engineer-e1b9fd-Senior public_id=fcd8d22e-e4ed-45e0-ad3d-c68da6e171c7
+[2026-08-21 17:49:00] DESIGNATION_DELETED - public_id=fcd8d22e-e4ed-45e0-ad3d-c68da6e171c7
+[2026-08-21 17:49:00] DOCUMENT_REGISTERED - Document 'Offer_Letter_2026.pdf' registered for employee 'Employee'
+[2026-08-21 17:49:00] ANNOUNCEMENT_POSTED - Announcement 'Townhall Meeting 632f0b' posted by employee ID 29
+[2026-08-21 17:49:00] ANNOUNCEMENT_DELETED - Announcement 'Townhall Meeting 632f0b' deleted
+[2026-08-21 17:49:00] SEARCH - first_name=None last_name=None dept_uuid=None employee_status='active' -> 20 match(es)
+[2026-08-21 17:49:00] CREATE - emp_id=44 code=EMP-1042 name=John Doe-0c7de4
+[2026-08-21 17:49:00] CREATE_FAILED - Email 'john.doe.0c7de4@company.com' is already in use
+[2026-08-21 17:49:01] UPDATE - public_id=101b9ee6-1446-4d21-8cdd-fdd491835d90 updated in database
+[2026-08-21 17:49:01] ADDRESS_ADDED - emp=101b9ee6-1446-4d21-8cdd-fdd491835d90 type=current
+[2026-08-21 17:49:01] EMERGENCY_CONTACT_ADDED - emp=101b9ee6-1446-4d21-8cdd-fdd491835d90 name=Jane Doe
+[2026-08-21 17:49:01] DELETE - public_id=101b9ee6-1446-4d21-8cdd-fdd491835d90 deleted from database
+[2026-08-21 17:49:01] LEAVE_TYPE_CREATED - name=Casual-7f5146 public_id=49698e3f-0dcc-4eb1-8150-e3880196e28c
+[2026-08-21 17:49:01] LEAVE_ALLOCATED - emp=0aec9a90-d915-4a1f-861a-71044db2396c type=Casual-7f5146 days=10
+[2026-08-21 17:49:01] LEAVE_REQUESTED - emp_id=28 days=3.0
+[2026-08-21 17:49:01] LEAVE_PROCESSED - public_id=d148eaac-f1c3-4d79-9d79-f07606b3034b action=approved
+[2026-08-21 17:49:01] LEAVE_CANCELLED - public_id=d148eaac-f1c3-4d79-9d79-f07606b3034b
+[2026-08-21 17:49:01] LEAVE_REQUESTED - emp_id=28 days=2.0
+[2026-08-21 17:49:01] LEAVE_PROCESSED - public_id=599f39a7-4e07-40fe-a087-8f9ef9053a59 action=rejected
+[2026-08-21 17:49:01] SALARY_CREATED - Created salary revision for employee EMP-TEST-EMP (Basic: 75000.0, Net: 96400.00 INR)
+[2026-08-21 17:49:01] BANK_DETAIL_ADDED - Added savings bank account (HDFC Bank) for employee EMP-TEST-EMP
+[2026-08-21 17:49:01] PAYROLL_PROCESSED - Processed payroll batch for period 2026-07-01 to 2026-07-31 (0 created, 1 skipped)
+[2026-08-21 17:49:01] PROJECT_CREATED - Project 'Cloud Platform 37c0cf' created (Public ID: 58ed2024-3df9-4234-bc16-feac2b94558c)
+[2026-08-21 17:49:02] PROJECT_UPDATED - Project 'Cloud Platform 37c0cf' updated
+[2026-08-21 17:49:02] PROJECT_MEMBER_ADDED - Employee 'Employee' added to project 'Cloud Platform 37c0cf' as 'Lead Developer'
+[2026-08-21 17:49:02] PROJECT_MEMBER_REMOVED - Employee 'Employee' removed from project 'Cloud Platform 37c0cf'
+[2026-08-21 17:49:02] PROJECT_DELETED - Project 'Cloud Platform 37c0cf' deleted
+[2026-08-21 17:49:02] REVIEW_CREATED - Performance review created for employee ID 28 by reviewer ID 31
+[2026-08-21 17:49:02] REVIEW_UPDATED - Performance review '67170fca-06bd-4017-95c7-7760b297303b' updated (Status: finalized)
+[2026-08-21 17:56:11] DATABASE_CONNECT - Connected to employee_management as postgres

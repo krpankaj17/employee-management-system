@@ -1,4 +1,4 @@
-#attendance_repository.py
+# attendance_repository.py
 import json
 import datetime
 from pathlib import Path
@@ -71,12 +71,17 @@ def next_id():
 def add(record):
     """Appends a new attendance record, stamps timestamps, and persists it."""
     data = _load()
+    if "id" not in record or not record["id"]:
+        record["id"] = next_id()
     timestamp = _now()
     record["created_at"] = timestamp
     record["updated_at"] = timestamp
     data.append(record)
     _save(data)
     return record
+
+
+create = add
 
 
 def update(a_id, updated_fields):

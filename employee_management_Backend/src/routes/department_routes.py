@@ -1,102 +1,79 @@
-#department_routes.py
+# src/routes/department_routes.py
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
+from database import get_db
+from core.permissions import require_permission
+from schemas.department_schema import (
+    DepartmentIn,
+    DepartmentOut,
+    PaginatedDepartments,
+    DepartmentEmployees,
+)
+from services import department_service
 
-from fastapi import HTTPException, status, APIRouter, Query
-from pydantic import BaseModel, Field
-import services
-
-router = APIRouter(tags=["Department Management"])
-
-
-class DepartmentIn(BaseModel):
-    name: str = Field(min_length=1)
-    head_employee_id: int | None = None
-
-
-class DepartmentOut(BaseModel):
-    id: int
-    name: str
-    head_employee_id: int | None
-    created_at: str
-    updated_at: str
+router = APIRouter(prefix="/departments", tags=["Department Management"])
 
 
-class PaginatedDepartments(BaseModel):
-    total: int
-    skip: int
-    limit: int | None
-    items: list[DepartmentOut]
-
-
-class DepartmentEmployeeOut(BaseModel):
-    id: int
-    first_name: str
-    last_name: str
-    email: str
-    employee_status: str
-
-
-class DepartmentEmployees(BaseModel):
-    department_id: int
-    total: int
-    skip: int
-    limit: int | None
-    items: list[DepartmentEmployeeOut]
-
-
-@router.get("/departments", response_model=PaginatedDepartments)
+@router.get("", response_model=PaginatedDepartments, dependencies=[Depends(require_permission("department:read"))])
 def get_all_departments(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int | None = Query(None, gt=0, description="Max number of records to return"),
+    db: Session = Depends(get_db),
 ):
-    return services.get_all_departments(skip=skip, limit=limit)
+    """Lists all departments with pagination and head employee public UUID. Requires 'department:read' permission."""
+    return department_service.get_all_departments(skip=skip, limit=limit, db=db)
 
 
-@router.get("/departments/{department_id}", response_model=DepartmentOut)
-@router.get("/department/{department_id}", response_model=DepartmentOut, include_in_schema=False)
-def get_department_by_id(department_id: int):
-    department = services.get_department_by_id(department_id)
-    if department is None:
-        raise HTTPException(status_code=404, detail=f"Department with id {department_id} not found")
-    return department
+@router.get("/{public_id}", response_model=DepartmentOut, dependencies=[Depends(require_permission("department:read"))])
+def get_department_by_public_id(public_id: str, db: Session = Depends(get_db)):
+    """Retrieves a single department by public UUID. Requires 'department:read' permission."""
+    dept = department_service.get_department_by_public_id(public_id, db=db)
+    if not dept:
+        raise HTTPException(status_code=404, detail=f"Department with public_id '{public_id}' not found")
+    return dept
 
 
-@router.post("/departments", response_model=DepartmentOut, status_code=status.HTTP_201_CREATED)
-@router.post("/department", response_model=DepartmentOut, status_code=status.HTTP_201_CREATED, include_in_schema=False)
-def create_department(department: DepartmentIn):
-    result = services.create_new_department(department.name, department.head_employee_id)
+@router.post("", response_model=DepartmentOut, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_permission("department:create"))])
+def create_department(payload: DepartmentIn, db: Session = Depends(get_db)):
+    """Creates a new department. Requires 'department:create' permission."""
+    result = department_service.create_department(payload, db=db)
     if not result["ok"]:
-        raise HTTPException(status_code=400, detail=result["message"])
-    return result["record"]
-
-
-@router.put("/departments/{department_id}", response_model=DepartmentOut)
-@router.put("/department/{department_id}", response_model=DepartmentOut, include_in_schema=False)
-def update_department(department_id: int, department: DepartmentIn):
-    result = services.update_department(department_id, department.name, department.head_employee_id)
-    if not result["ok"]:
-        code = 404 if result["error"] == "not_found" else 400
+        code = 409 if result["error"] == "conflict" else 400
         raise HTTPException(status_code=code, detail=result["message"])
-    return result["record"]
+    return result["department"]
 
 
-@router.delete("/departments/{department_id}")
-@router.delete("/department/{department_id}", include_in_schema=False)
-def delete_department_by_id(department_id: int):
-    result = services.delete_department(department_id)
+@router.put("/{public_id}", response_model=DepartmentOut, dependencies=[Depends(require_permission("department:update"))])
+def update_department(
+    public_id: str, payload: DepartmentIn, db: Session = Depends(get_db)
+):
+    """Updates an existing department. Requires 'department:update' permission."""
+    result = department_service.update_department(public_id, payload, db=db)
     if not result["ok"]:
-        code = {"not_found": 404, "conflict": 409}.get(result["error"], 400)
+        code = 404 if result["error"] == "not_found" else 409 if result["error"] == "conflict" else 400
+        raise HTTPException(status_code=code, detail=result["message"])
+    return result["department"]
+
+
+@router.delete("/{public_id}", dependencies=[Depends(require_permission("department:delete"))])
+def delete_department(public_id: str, db: Session = Depends(get_db)):
+    """Deletes a department. Requires 'department:delete' permission."""
+    result = department_service.delete_department(public_id, db=db)
+    if not result["ok"]:
+        code = 404 if result["error"] == "not_found" else 409
         raise HTTPException(status_code=code, detail=result["message"])
     return {"details": result["details"]}
 
 
-@router.get("/departments/{department_id}/employees", response_model=DepartmentEmployees)
-@router.get("/department/{department_id}/employees", response_model=DepartmentEmployees, include_in_schema=False)
+@router.get("/{public_id}/employees", response_model=DepartmentEmployees, dependencies=[Depends(require_permission("department:read"))])
 def get_department_employees(
-    department_id: int,
+    public_id: str,
     skip: int = Query(0, ge=0),
     limit: int | None = Query(None, gt=0),
+    db: Session = Depends(get_db),
 ):
-    result = services.get_department_employees(department_id, skip=skip, limit=limit)
-    if result is None:
-        raise HTTPException(status_code=404, detail=f"Department with id {department_id} not found")
+    """Lists all employees assigned to a department. Requires 'department:read' permission."""
+    result = department_service.get_department_employees(public_id, skip=skip, limit=limit, db=db)
+    if not result:
+        raise HTTPException(status_code=404, detail=f"Department with public_id '{public_id}' not found")
     return result

@@ -1,300 +1,411 @@
-#employee_services.py
+# employee_services.py
+import datetime
 import utils
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 from repository import employee_repository as repo
 from repository import department_repository as dept_repo
 from repository import attendance_repository as att_repo
+from models.department import Department
+from models.designation import Designation
+from schemas.employee_schema import EmployeeIn
 
-SORT_KEYS = {
-    "First Name": "first_name",
-    "Last Name": "last_name",
-    "Department": "department_id",
-    "Joining Date": "joining_date",
-    "Status": "employee_status",
-}
+VALID_GENDERS = {"male", "female", "other", "prefer_not_to_say"}
+VALID_EMPLOYEE_STATUSES = {"active", "inactive", "on_leave", "terminated", "resigned"}
+VALID_EMPLOYMENT_TYPES = {"full_time", "part_time", "contract", "intern"}
 
 
-def get_all_records(skip=0, limit=None):
+# ─── UUID → Internal ID Resolution ─────────────────────────────────────────────
+
+def _resolve_department_uuid(public_id: str | None, db: Session) -> tuple[int | None, str | None]:
+    """Resolves department public_id UUID → internal dept_id.
+    Returns (dept_id, error_message). error_message is None on success."""
+    if not public_id:
+        return None, None
+    dept = db.scalar(select(Department).where(Department.public_id == public_id))
+    if dept is None:
+        return None, f"Department with public_id '{public_id}' does not exist"
+    return dept.dept_id, None
+
+
+def _resolve_designation_uuid(public_id: str | None, db: Session) -> tuple[int | None, str | None]:
+    """Resolves designation public_id UUID → internal designation_id."""
+    if not public_id:
+        return None, None
+    desig = db.scalar(select(Designation).where(Designation.public_id == public_id))
+    if desig is None:
+        return None, f"Designation with public_id '{public_id}' does not exist"
+    return desig.designation_id, None
+
+
+def _resolve_manager_uuid(public_id: str | None, db: Session) -> tuple[int | None, str | None]:
+    """Resolves reporting_manager public_id UUID → internal emp_id."""
+    if not public_id:
+        return None, None
+    manager = repo.get_by_public_id(public_id, db=db)
+    if manager is None:
+        return None, f"Reporting manager with public_id '{public_id}' does not exist"
+    return manager.emp_id, None
+
+
+# ─── Public API ─────────────────────────────────────────────────────────────────
+
+def get_all_records(skip=0, limit=None, db=None):
+    if db is not None:
+        total, items = repo.get_paginated(db=db, skip=skip, limit=limit)
+        return {"total": total, "skip": skip, "limit": limit, "items": items}
     data = repo.get_all()
     total = len(data)
     paged = data[skip: skip + limit] if limit is not None else data[skip:]
     return {"total": total, "skip": skip, "limit": limit, "items": paged}
 
 
-def get_record_by_id(e_id):
-    e_id = utils.convert_string_to_integer(e_id) if isinstance(e_id, str) else e_id
-    return repo.get_by_id(e_id)
+def search_records(
+    first_name=None,
+    last_name=None,
+    department_public_id=None,
+    designation_public_id=None,
+    employee_status=None,
+    employment_type=None,
+    gender=None,
+    min_joining_date=None,
+    max_joining_date=None,
+    skip=0,
+    limit=None,
+    db=None,
+):
+    if db is not None:
+        # Resolve UUID query params to internal IDs for DB filtering
+        dept_id = None
+        if department_public_id:
+            dept_id, err = _resolve_department_uuid(department_public_id, db)
+            if err:
+                return {"total": 0, "skip": skip, "limit": limit, "items": []}
 
+        desig_id = None
+        if designation_public_id:
+            desig_id, err = _resolve_designation_uuid(designation_public_id, db)
+            if err:
+                return {"total": 0, "skip": skip, "limit": limit, "items": []}
 
-def get_record_by_email(email):
-    if utils.is_none(email):
-        return None
-    return repo.get_by_email(email)
-
-
-def get_direct_reports(manager_id):
-    """Returns every employee whose reporting_manager_id matches manager_id.
-    Returns None if manager_id doesn't correspond to any employee, so the
-    route can tell 'manager not found' apart from 'manager has 0 reports'."""
-    manager_id = utils.convert_string_to_integer(manager_id) if isinstance(manager_id, str) else manager_id
-    if repo.get_by_id(manager_id) is None:
-        return None
-    reports = [e for e in repo.get_all() if e.get("reporting_manager_id") == manager_id]
-    return {"manager_id": manager_id, "count": len(reports), "reports": reports}
-
-
-def get_record_choices():
-    """Returns a list of (label, id) tuples for every employee, used to
-    build a questionary select list."""
-    return [(f'{e["id"]} - {e["first_name"]} {e["last_name"]}', e["id"]) for e in repo.get_all()]
-
-
-def _email_taken(email, exclude_id=None):
-    """Case-insensitive email uniqueness check across all employees,
-    excluding the record currently being updated (if any)."""
-    email = email.strip().lower()
-    for employee in repo.get_all():
-        if employee["id"] == exclude_id:
-            continue
-        if employee.get("email", "").strip().lower() == email:
-            return True
-    return False
-
-
-def _validate_common_fields(e_id, first_name, last_name, dob, email, phone, address, pincode,
-                             department_id, joining_date, employee_status, reporting_manager_id):
-    """Shared validation for create and update. Returns None if every field
-    is valid, or {"error": ..., "message": ...} describing the first
-    failure found."""
-    if utils.is_none(first_name):
-        return {"error": "validation", "message": "First name is empty or null"}
-    if utils.is_integer(first_name):
-        return {"error": "validation", "message": "First name must be Text, Integer not allowed"}
-
-    if utils.is_none(last_name):
-        return {"error": "validation", "message": "Last name is empty or null"}
-    if utils.is_integer(last_name):
-        return {"error": "validation", "message": "Last name must be Text, Integer not allowed"}
-
-    if not utils.is_valid_date(dob):
-        return {"error": "validation", "message": "Invalid date of birth, expected format YYYY-MM-DD"}
-    if not utils.is_not_future_date(dob):
-        return {"error": "validation", "message": "Date of birth cannot be in the future"}
-
-    if not utils.is_valid_email(email):
-        return {"error": "validation", "message": "Invalid email address"}
-    if _email_taken(email, exclude_id=e_id):
-        return {"error": "validation", "message": f"Email '{email}' is already in use"}
-
-    if not utils.is_valid_phone(phone):
-        return {"error": "validation", "message": "Invalid phone number, must be exactly 10 digits"}
-
-    if utils.is_none(address):
-        return {"error": "validation", "message": "Address is empty or null"}
-
-    if not utils.is_valid_pincode(pincode):
-        return {"error": "validation", "message": "Invalid pincode"}
-
-    if not utils.is_positive_integer(department_id):
-        return {"error": "validation", "message": "Invalid department id"}
-    dept_id = utils.convert_string_to_integer(department_id) if isinstance(department_id, str) else department_id
-    if dept_repo.get_by_id(dept_id) is None:
-        existing_ids = sorted(d["id"] for d in dept_repo.get_all())
-        return {
-            "error": "validation",
-            "message": f"Department with id {dept_id} does not exist. Existing department ids: {existing_ids}",
-        }
-
-    if not utils.is_valid_date(joining_date):
-        return {"error": "validation", "message": "Invalid joining date, expected format YYYY-MM-DD"}
-
-    if not utils.is_valid_employee_status(employee_status):
-        return {"error": "validation", "message": f"Employee status must be one of {sorted(utils.VALID_EMPLOYEE_STATUSES)}"}
-
-    if reporting_manager_id is not None and not utils.is_none(reporting_manager_id):
-        if not utils.is_positive_integer(reporting_manager_id):
-            return {"error": "validation", "message": "Invalid reporting manager id"}
-        manager_id = utils.convert_string_to_integer(reporting_manager_id)
-        if manager_id == e_id:
-            return {"error": "validation", "message": "An employee cannot be their own reporting manager"}
-        if repo.get_by_id(manager_id) is None:
-            existing_ids = sorted(e["id"] for e in repo.get_all())
-            return {
-                "error": "validation",
-                "message": f"Reporting manager with id {manager_id} does not exist. Existing employee ids: {existing_ids}",
-            }
-
-    return None
-
-
-def create_new_record(first_name, last_name, dob, email, phone, address, pincode,
-                       department_id, joining_date, employee_status, reporting_manager_id=None):
-    """Returns a dict: {"ok": True, "record": employee} on success,
-    or {"ok": False, "error": "validation" | "server", "message": str} on failure."""
-    try:
-        error = _validate_common_fields(
-            None, first_name, last_name, dob, email, phone, address, pincode,
-            department_id, joining_date, employee_status, reporting_manager_id,
+        total, items = repo.search(
+            db=db,
+            first_name=first_name,
+            last_name=last_name,
+            dept_id=dept_id,
+            designation_id=desig_id,
+            employee_status=employee_status,
+            employment_type=employment_type,
+            gender=gender,
+            min_joining_date=min_joining_date,
+            max_joining_date=max_joining_date,
+            skip=skip,
+            limit=limit,
         )
-        if error:
-            utils.log_action("CREATE_FAILED", error["message"])
-            return {"ok": False, **error}
-
-        new_employee = {
-            "id": repo.next_id(),
-            "first_name": first_name.strip(),
-            "last_name": last_name.strip(),
-            "dob": str(utils.convert_string_to_date(dob)),
-            "email": email.strip().lower(),
-            "phone": phone.strip(),
-            "address": address.strip(),
-            "pincode": utils.convert_string_to_integer(pincode) if isinstance(pincode, str) else pincode,
-            "department_id": utils.convert_string_to_integer(department_id) if isinstance(department_id, str) else department_id,
-            "joining_date": str(utils.convert_string_to_date(joining_date)),
-            "employee_status": employee_status.strip().lower(),
-            "reporting_manager_id": (
-                utils.convert_string_to_integer(reporting_manager_id)
-                if reporting_manager_id is not None and not utils.is_none(reporting_manager_id)
-                else None
-            ),
-        }
-        repo.add(new_employee)
-
-        utils.log_action("CREATE", f"id={new_employee['id']} name={first_name} {last_name} email={email}")
-        return {"ok": True, "record": new_employee}
-    except Exception as e:
-        utils.log_action("CREATE_FAILED", f"unexpected error: {e}")
-        return {"ok": False, "error": "server", "message": str(e)}
-
-
-def update_records(e_id, first_name, last_name, dob, email, phone, address, pincode,
-                    department_id, joining_date, employee_status, reporting_manager_id=None):
-    """Returns a dict: {"ok": True, "record": employee} on success,
-    or {"ok": False, "error": "not_found" | "validation" | "server", "message": str} on failure."""
-    try:
-        e_id = utils.convert_string_to_integer(e_id) if isinstance(e_id, str) else e_id
-
-        before = repo.get_by_id(e_id)
-        if before is None:
-            msg = f"Employee record does not exist with id {e_id}"
-            utils.log_action("UPDATE_FAILED", f"id={e_id} does not exist")
-            return {"ok": False, "error": "not_found", "message": msg}
-
-        error = _validate_common_fields(
-            e_id, first_name, last_name, dob, email, phone, address, pincode,
-            department_id, joining_date, employee_status, reporting_manager_id,
+        utils.log_action(
+            "SEARCH",
+            f"first_name={first_name!r} last_name={last_name!r} dept_uuid={department_public_id} "
+            f"employee_status={employee_status!r} -> {total} match(es)",
         )
-        if error:
-            utils.log_action("UPDATE_FAILED", f"id={e_id} {error['message']}")
-            return {"ok": False, **error}
+        return {"total": total, "skip": skip, "limit": limit, "items": items}
 
-        updated_fields = {
-            "first_name": first_name.strip(),
-            "last_name": last_name.strip(),
-            "dob": str(utils.convert_string_to_date(dob)),
-            "email": email.strip().lower(),
-            "phone": phone.strip(),
-            "address": address.strip(),
-            "pincode": utils.convert_string_to_integer(pincode) if isinstance(pincode, str) else pincode,
-            "department_id": utils.convert_string_to_integer(department_id) if isinstance(department_id, str) else department_id,
-            "joining_date": str(utils.convert_string_to_date(joining_date)),
-            "employee_status": employee_status.strip().lower(),
-            "reporting_manager_id": (
-                utils.convert_string_to_integer(reporting_manager_id)
-                if reporting_manager_id is not None and not utils.is_none(reporting_manager_id)
-                else None
-            ),
-        }
-        after = repo.update(e_id, updated_fields)
-
-        utils.log_action("UPDATE", f"id={e_id} before={before} after={after}")
-        return {"ok": True, "record": after}
-    except Exception as e:
-        utils.log_action("UPDATE_FAILED", f"id={e_id} unexpected error: {e}")
-        return {"ok": False, "error": "server", "message": str(e)}
-
-
-def delete_record(e_id):
-    """Deletes an employee and maintains referential integrity:
-    1. Cascades deletion to attendance records.
-    2. Nullifies reporting_manager_id for direct reports.
-    3. Nullifies head_employee_id for any department where this employee was head.
-    """
-    try:
-        e_id = utils.convert_string_to_integer(e_id) if isinstance(e_id, str) else e_id
-        employee = repo.get_by_id(e_id)
-        if employee is None:
-            utils.log_action("DELETE_FAILED", f"id={e_id} does not exist")
-            return {"ok": False, "error": "not_found", "message": f"Employee with id {e_id} not found"}
-
-        # 1. Nullify reporting_manager_id on direct reports
-        for report in repo.get_all():
-            if report.get("reporting_manager_id") == e_id:
-                repo.update(report["id"], {"reporting_manager_id": None})
-
-        # 2. Nullify head_employee_id on departments
-        for dept in dept_repo.get_all():
-            if dept.get("head_employee_id") == e_id:
-                dept_repo.update(dept["id"], {"head_employee_id": None})
-
-        # 3. Cascade delete attendance records
-        att_repo.delete_by_employee_id(e_id)
-
-        # 4. Delete the employee record
-        deleted = repo.delete(e_id)
-        utils.log_action("DELETE", f"id={e_id} record={deleted}")
-        return {"ok": True, "details": f"Employee with id {e_id} deleted"}
-    except Exception as e:
-        utils.log_action("DELETE_FAILED", f"id={e_id} unexpected error: {e}")
-        return {"ok": False, "error": "server", "message": str(e)}
-
-
-def search_records(first_name=None, last_name=None, department_id=None, employee_status=None,
-                    min_joining_date=None, max_joining_date=None, skip=0, limit=None):
-    """Filtering logic lives HERE, not in the repository.
-
-    - first_name / last_name: case-insensitive substring match
-    - department_id / employee_status: exact match
-    - min_joining_date / max_joining_date: inclusive bounds (strings in
-      YYYY-MM-DD sort correctly lexicographically, so no date parsing needed)
-    Any argument left as None is ignored (not filtered on).
-    """
+    # Fallback: in-memory filtering (no DB session)
     data = repo.get_all()
     results = []
-    for employee in data:
-        if first_name and first_name.strip().lower() not in employee["first_name"].lower():
+    for emp in data:
+        if first_name and first_name.strip().lower() not in emp.get("first_name", "").lower():
             continue
-        if last_name and last_name.strip().lower() not in employee["last_name"].lower():
+        if last_name and last_name.strip().lower() not in emp.get("last_name", "").lower():
             continue
-        if department_id is not None and employee["department_id"] != department_id:
+        if department_public_id and emp.get("department_public_id") != department_public_id:
             continue
-        if employee_status and employee["employee_status"].lower() != employee_status.strip().lower():
+        if designation_public_id and emp.get("designation_public_id") != designation_public_id:
             continue
-        if min_joining_date and employee["joining_date"] < min_joining_date:
+        if employee_status and emp.get("employee_status", "").lower() != employee_status.strip().lower():
             continue
-        if max_joining_date and employee["joining_date"] > max_joining_date:
+        if employment_type and emp.get("employment_type", "").lower() != employment_type.strip().lower():
             continue
-        results.append(employee)
-
-    utils.log_action(
-        "SEARCH",
-        f"first_name={first_name!r} last_name={last_name!r} department_id={department_id} "
-        f"employee_status={employee_status!r} -> {len(results)} match(es)",
-    )
+        if gender and emp.get("gender", "").lower() != gender.strip().lower():
+            continue
+        if min_joining_date and emp.get("joining_date", "") < min_joining_date:
+            continue
+        if max_joining_date and emp.get("joining_date", "") > max_joining_date:
+            continue
+        results.append(emp)
 
     total = len(results)
     paged = results[skip: skip + limit] if limit is not None else results[skip:]
     return {"total": total, "skip": skip, "limit": limit, "items": paged}
 
 
+def get_record_by_id(e_id, db: Session | None = None):
+    """Internal use only — looks up by integer emp_id."""
+    e_id = int(e_id)
+    return repo.get_by_id(e_id, db=db)
+
+
+def get_record_by_public_id(public_id: str, db: Session):
+    """Looks up an employee by their public UUID."""
+    return repo.get_by_public_id(public_id, db=db)
+
+
+def get_record_by_code(code, db=None):
+    if utils.is_none(code):
+        return None
+    return repo.get_by_code(code, db=db)
+
+
+def get_record_by_email(email, db=None):
+    if utils.is_none(email):
+        return None
+    return repo.get_by_email(email, db=db)
+
+
+def get_direct_reports(manager_public_id: str, db: Session):
+    """Returns direct reports for a manager identified by public_id UUID."""
+    manager, reports = repo.get_direct_reports(manager_public_id, db=db)
+    if manager is None:
+        return None
+    return {
+        "manager_public_id": str(manager.public_id),
+        "count": len(reports),
+        "reports": reports,
+    }
+
+
+def _validate_employee_payload(
+    emp_data: EmployeeIn,
+    current_emp_id: int | None = None,
+    db: Session | None = None,
+) -> dict | None:
+    """Validates employee input against business rules and DB check constraints.
+    Resolves UUID FK references to internal IDs for existence checks."""
+    if utils.is_none(emp_data.first_name) or not emp_data.first_name.strip():
+        return {"error": "validation", "message": "First name cannot be empty"}
+    if utils.is_none(emp_data.last_name) or not emp_data.last_name.strip():
+        return {"error": "validation", "message": "Last name cannot be empty"}
+
+    # Date of birth checks
+    if not utils.is_valid_date(emp_data.date_of_birth):
+        return {"error": "validation", "message": "Invalid date_of_birth, expected format YYYY-MM-DD"}
+    dob_d = datetime.date.fromisoformat(emp_data.date_of_birth.strip())
+    if dob_d >= datetime.date.today():
+        return {"error": "validation", "message": "Date of birth must be in the past"}
+
+    # Joining date checks
+    if not utils.is_valid_date(emp_data.joining_date):
+        return {"error": "validation", "message": "Invalid joining_date, expected format YYYY-MM-DD"}
+    join_d = datetime.date.fromisoformat(emp_data.joining_date.strip())
+
+    # 18-year minimum age constraint
+    min_joining_age = dob_d.replace(year=dob_d.year + 18)
+    if join_d < min_joining_age:
+        return {
+            "error": "validation",
+            "message": f"Employee must be at least 18 years old on joining date (DOB: {dob_d}, min joining: {min_joining_age})",
+        }
+
+    # Gender check
+    gender_clean = emp_data.gender.strip().lower()
+    if gender_clean not in VALID_GENDERS:
+        return {"error": "validation", "message": f"Gender must be one of {sorted(VALID_GENDERS)}"}
+
+    # Status check
+    status_clean = emp_data.employee_status.strip().lower()
+    if status_clean not in VALID_EMPLOYEE_STATUSES:
+        return {"error": "validation", "message": f"Employee status must be one of {sorted(VALID_EMPLOYEE_STATUSES)}"}
+
+    # Employment type check
+    type_clean = emp_data.employment_type.strip().lower()
+    if type_clean not in VALID_EMPLOYMENT_TYPES:
+        return {"error": "validation", "message": f"Employment type must be one of {sorted(VALID_EMPLOYMENT_TYPES)}"}
+
+    # Email check
+    if not utils.is_valid_email(emp_data.email):
+        return {"error": "validation", "message": "Invalid email address"}
+    existing_by_email = repo.get_by_email(emp_data.email, db=db)
+    if existing_by_email is not None:
+        existing_id = (
+            existing_by_email.emp_id
+            if hasattr(existing_by_email, "emp_id")
+            else existing_by_email.get("emp_id") or existing_by_email.get("id")
+        )
+        if existing_id != current_emp_id:
+            return {"error": "validation", "message": f"Email '{emp_data.email}' is already in use"}
+
+    # Phone check
+    phone_clean = emp_data.phone.strip()
+    if len(phone_clean) < 7 or len(phone_clean) > 15:
+        return {"error": "validation", "message": "Phone number must be between 7 and 15 digits"}
+
+    # Department UUID existence check
+    if emp_data.department_public_id is not None and db is not None:
+        _, err = _resolve_department_uuid(emp_data.department_public_id, db)
+        if err:
+            return {"error": "validation", "message": err}
+
+    # Designation UUID existence check
+    if emp_data.designation_public_id is not None and db is not None:
+        _, err = _resolve_designation_uuid(emp_data.designation_public_id, db)
+        if err:
+            return {"error": "validation", "message": err}
+
+    # Reporting manager UUID check
+    if emp_data.reporting_manager_public_id is not None and db is not None:
+        mgr_id, err = _resolve_manager_uuid(emp_data.reporting_manager_public_id, db)
+        if err:
+            return {"error": "validation", "message": err}
+        if current_emp_id is not None and mgr_id == current_emp_id:
+            return {"error": "validation", "message": "An employee cannot be their own reporting manager"}
+
+    return None
+
+
+def _resolve_fk_uuids(emp_data: EmployeeIn, db: Session) -> dict:
+    """Resolves all FK UUID references in EmployeeIn to internal integer IDs.
+    Returns dict with dept_id, designation_id, reporting_manager_id."""
+    dept_id, _ = _resolve_department_uuid(emp_data.department_public_id, db)
+    desig_id, _ = _resolve_designation_uuid(emp_data.designation_public_id, db)
+    mgr_id, _ = _resolve_manager_uuid(emp_data.reporting_manager_public_id, db)
+    return {
+        "dept_id": dept_id,
+        "designation_id": desig_id,
+        "reporting_manager_id": mgr_id,
+    }
+
+
+def create_new_record(employee_in: EmployeeIn, db: Session | None = None):
+    """Creates a new employee record. Resolves UUID FK references to internal IDs."""
+    try:
+        error = _validate_employee_payload(employee_in, None, db=db)
+        if error:
+            utils.log_action("CREATE_FAILED", error["message"])
+            return {"ok": False, **error}
+
+        if db is not None:
+            fk_ids = _resolve_fk_uuids(employee_in, db)
+            emp = repo.create_employee(
+                db=db,
+                first_name=employee_in.first_name,
+                last_name=employee_in.last_name,
+                date_of_birth=employee_in.date_of_birth,
+                gender=employee_in.gender,
+                email=employee_in.email,
+                phone=employee_in.phone,
+                joining_date=employee_in.joining_date,
+                employee_status=employee_in.employee_status,
+                employment_type=employee_in.employment_type,
+                dept_id=fk_ids["dept_id"],
+                designation_id=fk_ids["designation_id"],
+                reporting_manager_id=fk_ids["reporting_manager_id"],
+                is_active=employee_in.is_active,
+                employee_code=employee_in.employee_code,
+            )
+            utils.log_action(
+                "CREATE",
+                f"emp_id={emp.emp_id} code={emp.employee_code} name={emp.first_name} {emp.last_name}",
+            )
+            return {"ok": True, "record": emp}
+
+        return {"ok": False, "error": "server", "message": "Database session required"}
+
+    except Exception as e:
+        utils.log_action("CREATE_FAILED", f"unexpected error: {e}")
+        return {"ok": False, "error": "server", "message": str(e)}
+
+
+def update_records(public_id: str, employee_in: EmployeeIn, db: Session):
+    """Updates an existing employee record identified by public_id UUID."""
+    try:
+        emp = repo.get_by_public_id(public_id, db=db)
+        if emp is None:
+            msg = f"Employee with public_id '{public_id}' does not exist"
+            utils.log_action("UPDATE_FAILED", msg)
+            return {"ok": False, "error": "not_found", "message": msg}
+
+        e_id = emp.emp_id
+
+        error = _validate_employee_payload(employee_in, e_id, db=db)
+        if error:
+            utils.log_action("UPDATE_FAILED", f"public_id={public_id} {error['message']}")
+            return {"ok": False, **error}
+
+        fk_ids = _resolve_fk_uuids(employee_in, db)
+        updated = repo.update_employee(
+            db=db,
+            e_id=e_id,
+            first_name=employee_in.first_name,
+            last_name=employee_in.last_name,
+            date_of_birth=employee_in.date_of_birth,
+            gender=employee_in.gender,
+            email=employee_in.email,
+            phone=employee_in.phone,
+            joining_date=employee_in.joining_date,
+            employee_status=employee_in.employee_status,
+            employment_type=employee_in.employment_type,
+            dept_id=fk_ids["dept_id"],
+            designation_id=fk_ids["designation_id"],
+            reporting_manager_id=fk_ids["reporting_manager_id"],
+            is_active=employee_in.is_active,
+            employee_code=employee_in.employee_code,
+        )
+        utils.log_action("UPDATE", f"public_id={public_id} updated in database")
+        return {"ok": True, "record": updated}
+
+    except Exception as e:
+        utils.log_action("UPDATE_FAILED", f"public_id={public_id} unexpected error: {e}")
+        return {"ok": False, "error": "server", "message": str(e)}
+
+
+def delete_record(public_id: str, db: Session):
+    """Deletes an employee identified by public_id UUID from the database."""
+    try:
+        emp = repo.get_by_public_id(public_id, db=db)
+        if emp is None:
+            utils.log_action("DELETE_FAILED", f"public_id={public_id} does not exist")
+            return {"ok": False, "error": "not_found", "message": f"Employee with public_id '{public_id}' not found"}
+
+        repo.delete_employee(db=db, e_id=emp.emp_id)
+        utils.log_action("DELETE", f"public_id={public_id} deleted from database")
+        return {"ok": True, "details": f"Employee with public_id '{public_id}' deleted"}
+
+    except Exception as e:
+        utils.log_action("DELETE_FAILED", f"public_id={public_id} unexpected error: {e}")
+        return {"ok": False, "error": "server", "message": str(e)}
+
+
+SORT_KEYS = {
+    "First Name": "first_name",
+    "Last Name": "last_name",
+    "Department": "dept_id",
+    "Joining Date": "joining_date",
+    "Status": "employee_status",
+}
+
+
+def get_record_choices(db=None):
+    """Returns a list of (label, id) tuples for every employee."""
+    employees = repo.get_all(db=db)
+    return [
+        (
+            f"{e.get('emp_id') or e.get('id')} - {e.get('first_name')} {e.get('last_name')}",
+            e.get("emp_id") or e.get("id"),
+        )
+        for e in employees
+    ]
+
+
 def sort_records(key="first_name", reverse=False, data=None):
-    """Sort-key logic safely handles strings and numeric fields without raising TypeError on None values."""
+    """Sort-key logic safely handles strings and numeric fields."""
     if data is None:
         data = repo.get_all()
 
     def sort_key(employee):
+        if hasattr(employee, "to_dict"):
+            employee = employee.to_dict()
         value = employee.get(key)
         if value is None:
-            return "" if key in ("first_name", "last_name", "email", "employee_status", "joining_date", "dob", "address", "phone") else float("-inf")
+            return "" if key in ("first_name", "last_name", "email", "employee_status", "joining_date", "date_of_birth", "phone") else float("-inf")
         if isinstance(value, str):
             return value.lower()
         return value

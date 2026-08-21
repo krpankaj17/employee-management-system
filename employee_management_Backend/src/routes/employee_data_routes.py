@@ -1,143 +1,209 @@
-#employee_data_routes.py
+# src/routes/employee_data_routes.py
+from fastapi import HTTPException, status, APIRouter, Query, Depends
+from sqlalchemy.orm import Session
+from database import get_db
+from core.permissions import require_permission
+from schemas import (
+    EmployeeIn,
+    EmployeeOut,
+    PaginatedEmployees,
+    DirectReports,
+    AddressIn,
+    AddressOut,
+    EmergencyContactIn,
+    EmergencyContactOut,
+)
+from services import employee_services as emp_services
+from services import address_service
 
-from fastapi import HTTPException, status, APIRouter, Query
-from pydantic import BaseModel, Field
-import services
-
-router = APIRouter(tags=["Employee Management"])
-
-
-class EmployeeIn(BaseModel):
-    first_name: str = Field(min_length=1)
-    last_name: str = Field(min_length=1)
-    dob: str = Field(description="Format YYYY-MM-DD")
-    email: str
-    phone: str
-    address: str
-    pincode: int
-    department_id: int
-    joining_date: str = Field(description="Format YYYY-MM-DD")
-    employee_status: str
-    reporting_manager_id: int | None = None
+router = APIRouter(prefix="/employees", tags=["Employee Management"])
 
 
-class EmployeeOut(BaseModel):
-    id: int
-    first_name: str
-    last_name: str
-    dob: str
-    email: str
-    phone: str
-    address: str
-    pincode: int
-    department_id: int
-    joining_date: str
-    employee_status: str
-    reporting_manager_id: int | None
-    created_at: str
-    updated_at: str
-
-
-class PaginatedEmployees(BaseModel):
-    total: int
-    skip: int
-    limit: int | None
-    items: list[EmployeeOut]
-
-
-class DirectReports(BaseModel):
-    manager_id: int
-    count: int
-    reports: list[EmployeeOut]
-
-
-@router.get("/employees", response_model=PaginatedEmployees)
+@router.get("", response_model=PaginatedEmployees, dependencies=[Depends(require_permission("employee:view"))])
 def get_all_employees(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int | None = Query(None, gt=0, description="Max number of records to return"),
+    db: Session = Depends(get_db),
 ):
-    return services.get_all_records(skip=skip, limit=limit)
+    """Lists all employees with pagination. Requires 'employee:view' permission."""
+    return emp_services.get_all_records(skip=skip, limit=limit, db=db)
 
 
-@router.get("/employees/search", response_model=PaginatedEmployees)
+@router.get("/search", response_model=PaginatedEmployees, dependencies=[Depends(require_permission("employee:view"))])
 def search(
     first_name: str | None = None,
     last_name: str | None = None,
-    department_id: int | None = None,
-    employee_status: str | None = None,
+    department_public_id: str | None = Query(None, description="Department UUID"),
+    designation_public_id: str | None = Query(None, description="Designation UUID"),
+    employee_status: str | None = Query(
+        None, description="active, inactive, on_leave, terminated, resigned"
+    ),
+    employment_type: str | None = Query(
+        None, description="full_time, part_time, contract, intern"
+    ),
+    gender: str | None = Query(None, description="male, female, other, prefer_not_to_say"),
     min_joining_date: str | None = Query(None, description="Format YYYY-MM-DD"),
     max_joining_date: str | None = Query(None, description="Format YYYY-MM-DD"),
     skip: int = Query(0, ge=0),
     limit: int | None = Query(None, gt=0),
+    db: Session = Depends(get_db),
 ):
-    return services.search_records(
-        first_name=first_name, last_name=last_name, department_id=department_id,
-        employee_status=employee_status, min_joining_date=min_joining_date,
-        max_joining_date=max_joining_date, skip=skip, limit=limit,
+    """Searches employee directory with multi-field filtering. Requires 'employee:view' permission."""
+    return emp_services.search_records(
+        first_name=first_name,
+        last_name=last_name,
+        department_public_id=department_public_id,
+        designation_public_id=designation_public_id,
+        employee_status=employee_status,
+        employment_type=employment_type,
+        gender=gender,
+        min_joining_date=min_joining_date,
+        max_joining_date=max_joining_date,
+        skip=skip,
+        limit=limit,
+        db=db,
     )
 
 
-@router.get("/employees/by-email/{email}", response_model=EmployeeOut)
-@router.get("/employee/by-email/{email}", response_model=EmployeeOut, include_in_schema=False)
-def get_employee_by_email(email: str):
-    employee = services.get_record_by_email(email)
+@router.get("/by-email/{email}", response_model=EmployeeOut, dependencies=[Depends(require_permission("employee:view"))])
+def get_employee_by_email(email: str, db: Session = Depends(get_db)):
+    """Retrieves an employee by company email. Requires 'employee:view' permission."""
+    employee = emp_services.get_record_by_email(email, db=db)
     if employee is None:
-        raise HTTPException(status_code=404, detail=f"No employee found with email '{email}'")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No employee found with email '{email}'",
+        )
     return employee
 
 
-@router.get("/employees/{employee_id}/reports", response_model=DirectReports)
-@router.get("/employee/{employee_id}/reports", response_model=DirectReports, include_in_schema=False)
-def get_employee_direct_reports(employee_id: int):
-    result = services.get_direct_reports(employee_id)
+@router.get("/by-code/{employee_code}", response_model=EmployeeOut, dependencies=[Depends(require_permission("employee:view"))])
+def get_employee_by_code(employee_code: str, db: Session = Depends(get_db)):
+    """Retrieves an employee by employee code. Requires 'employee:view' permission."""
+    employee = emp_services.get_record_by_code(employee_code, db=db)
+    if employee is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No employee found with code '{employee_code}'",
+        )
+    return employee
+
+
+@router.get("/{public_id}/reports", response_model=DirectReports, dependencies=[Depends(require_permission("employee:view"))])
+def get_employee_direct_reports(public_id: str, db: Session = Depends(get_db)):
+    """Lists all direct reports under a manager. Requires 'employee:view' permission."""
+    result = emp_services.get_direct_reports(public_id, db=db)
     if result is None:
-        raise HTTPException(status_code=404, detail=f"Employee with id {employee_id} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Employee with public_id '{public_id}' not found",
+        )
     return result
 
 
-@router.get("/employees/{employee_id}", response_model=EmployeeOut)
-@router.get("/employee/{employee_id}", response_model=EmployeeOut, include_in_schema=False)
-def get_employee_by_id(employee_id: int):
-    employee = services.get_record_by_id(employee_id)
+@router.get("/{public_id}", response_model=EmployeeOut, dependencies=[Depends(require_permission("employee:view"))])
+def get_employee_by_public_id(public_id: str, db: Session = Depends(get_db)):
+    """Retrieves single employee profile by public UUID. Requires 'employee:view' permission."""
+    employee = emp_services.get_record_by_public_id(public_id, db=db)
     if employee is None:
-        raise HTTPException(status_code=404, detail=f"Employee with id {employee_id} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Employee with public_id '{public_id}' not found",
+        )
     return employee
 
 
-@router.post("/employees", response_model=EmployeeOut, status_code=status.HTTP_201_CREATED)
-@router.post("/employee", response_model=EmployeeOut, status_code=status.HTTP_201_CREATED, include_in_schema=False)
-def create_employee(employee: EmployeeIn):
-    result = services.create_new_record(
-        employee.first_name, employee.last_name, employee.dob, employee.email,
-        employee.phone, employee.address, employee.pincode, employee.department_id,
-        employee.joining_date, employee.employee_status, employee.reporting_manager_id,
-    )
+@router.post("", response_model=EmployeeOut, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_permission("employee:create"))])
+def create_employee(employee: EmployeeIn, db: Session = Depends(get_db)):
+    """Onboards a new employee record. Requires 'employee:create' permission."""
+    result = emp_services.create_new_record(employee_in=employee, db=db)
     if not result["ok"]:
-        code = 404 if result["error"] == "not_found" else 400
+        code = 404 if result.get("error") == "not_found" else 400
         raise HTTPException(status_code=code, detail=result["message"])
     return result["record"]
 
 
-@router.put("/employees/{employee_id}", response_model=EmployeeOut)
-@router.put("/employee/{employee_id}", response_model=EmployeeOut, include_in_schema=False)
-def update_employee_data(employee_id: int, employee: EmployeeIn):
-    result = services.update_records(
-        employee_id, employee.first_name, employee.last_name, employee.dob, employee.email,
-        employee.phone, employee.address, employee.pincode, employee.department_id,
-        employee.joining_date, employee.employee_status, employee.reporting_manager_id,
-    )
+@router.put("/{public_id}", response_model=EmployeeOut, dependencies=[Depends(require_permission("employee:update"))])
+def update_employee_data(
+    public_id: str, employee: EmployeeIn, db: Session = Depends(get_db)
+):
+    """Updates an existing employee record. Requires 'employee:update' permission."""
+    result = emp_services.update_records(public_id=public_id, employee_in=employee, db=db)
     if not result["ok"]:
-        code = 404 if result["error"] == "not_found" else 400
+        code = 404 if result.get("error") == "not_found" else 400
         raise HTTPException(status_code=code, detail=result["message"])
     return result["record"]
 
 
-@router.delete("/employees/{employee_id}")
-@router.delete("/employee/{employee_id}", include_in_schema=False)
-def delete_employee_by_id(employee_id: int):
-    result = services.delete_record(employee_id)
+@router.delete("/{public_id}", dependencies=[Depends(require_permission("employee:delete"))])
+def delete_employee_by_public_id(public_id: str, db: Session = Depends(get_db)):
+    """Offboards / deletes an employee. Requires 'employee:delete' permission."""
+    result = emp_services.delete_record(public_id, db=db)
     if not result["ok"]:
         code_map = {"not_found": 404, "conflict": 409, "validation": 400}
-        code = code_map.get(result.get("error"), 500)
-        raise HTTPException(status_code=code, detail=result.get("message", "Failed to delete employee"))
+        code = code_map.get(str(result.get("error")), 500)
+        raise HTTPException(
+            status_code=code,
+            detail=result.get("message", "Failed to delete employee"),
+        )
+    return {"details": result["details"]}
+
+
+# ─── Address Sub-Routes ─────────────────────────────────────────────────────────
+
+@router.get("/{public_id}/addresses", response_model=list[AddressOut], dependencies=[Depends(require_permission("employee:view"))])
+def get_employee_addresses(public_id: str, db: Session = Depends(get_db)):
+    """Lists all current and permanent addresses for an employee. Requires 'employee:view' permission."""
+    result = address_service.get_addresses(public_id, db=db)
+    if not result["ok"]:
+        raise HTTPException(status_code=404, detail=result["message"])
+    return result["addresses"]
+
+
+@router.post("/{public_id}/addresses", response_model=AddressOut, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_permission("employee:update"))])
+def add_employee_address(public_id: str, payload: AddressIn, db: Session = Depends(get_db)):
+    """Adds or updates an address for an employee. Requires 'employee:update' permission."""
+    result = address_service.add_address(public_id, payload, db=db)
+    if not result["ok"]:
+        code = 404 if result.get("error") == "not_found" else 400
+        raise HTTPException(status_code=code, detail=result["message"])
+    return result["address"]
+
+
+@router.delete("/{public_id}/addresses/{address_public_id}", dependencies=[Depends(require_permission("employee:update"))])
+def delete_employee_address(public_id: str, address_public_id: str, db: Session = Depends(get_db)):
+    """Deletes an address from an employee. Requires 'employee:update' permission."""
+    result = address_service.delete_address(public_id, address_public_id, db=db)
+    if not result["ok"]:
+        raise HTTPException(status_code=404, detail=result["message"])
+    return {"details": result["details"]}
+
+
+# ─── Emergency Contact Sub-Routes ──────────────────────────────────────────────
+
+@router.get("/{public_id}/emergency-contacts", response_model=list[EmergencyContactOut], dependencies=[Depends(require_permission("employee:view"))])
+def get_employee_emergency_contacts(public_id: str, db: Session = Depends(get_db)):
+    """Lists all emergency contacts for an employee. Requires 'employee:view' permission."""
+    result = address_service.get_emergency_contacts(public_id, db=db)
+    if not result["ok"]:
+        raise HTTPException(status_code=404, detail=result["message"])
+    return result["contacts"]
+
+
+@router.post("/{public_id}/emergency-contacts", response_model=EmergencyContactOut, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_permission("employee:update"))])
+def add_employee_emergency_contact(public_id: str, payload: EmergencyContactIn, db: Session = Depends(get_db)):
+    """Adds an emergency contact for an employee. Requires 'employee:update' permission."""
+    result = address_service.add_emergency_contact(public_id, payload, db=db)
+    if not result["ok"]:
+        code = 404 if result.get("error") == "not_found" else 400
+        raise HTTPException(status_code=code, detail=result["message"])
+    return result["contact"]
+
+
+@router.delete("/{public_id}/emergency-contacts/{contact_id}", dependencies=[Depends(require_permission("employee:update"))])
+def delete_employee_emergency_contact(public_id: str, contact_id: int, db: Session = Depends(get_db)):
+    """Deletes an emergency contact. Requires 'employee:update' permission."""
+    result = address_service.delete_emergency_contact(public_id, contact_id, db=db)
+    if not result["ok"]:
+        raise HTTPException(status_code=404, detail=result["message"])
     return {"details": result["details"]}
