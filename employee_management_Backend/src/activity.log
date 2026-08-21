@@ -1448,3 +1448,7 @@ DETAIL:  Failing row contains (17, 15, 13, primary, t, 2026-08-20 19:11:55.20695
 [2026-08-21 17:49:02] REVIEW_CREATED - Performance review created for employee ID 28 by reviewer ID 31
 [2026-08-21 17:49:02] REVIEW_UPDATED - Performance review '67170fca-06bd-4017-95c7-7760b297303b' updated (Status: finalized)
 [2026-08-21 18:08:49] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 18:21:26] DATABASE_CONNECT - Connected to employee_management as postgres
+[2026-08-21 18:22:54] LOGIN - user=pankajsingh@gmail.com public_id=76c5e2db-5221-4ef8-8ed3-1273122430c1
+[2026-08-21 18:30:25] CREATE_FAILED - Invalid date_of_birth, expected format YYYY-MM-DD
+[2026-08-21 18:30:48] CREATE - emp_id=45 code=EMP017 name=Pankaj Singh
