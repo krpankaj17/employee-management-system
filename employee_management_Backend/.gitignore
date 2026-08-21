@@ -69,3 +69,10 @@ logs/
 *~
 .DS_Store
 Thumbs.db
+
+# =========================
+# Local & Scratch Directories
+# =========================
+database/
+scratch/
+
