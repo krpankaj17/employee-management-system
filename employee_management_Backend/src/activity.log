@@ -1447,4 +1447,3 @@ DETAIL:  Failing row contains (17, 15, 13, primary, t, 2026-08-20 19:11:55.20695
 [2026-08-21 17:49:02] PROJECT_DELETED - Project 'Cloud Platform 37c0cf' deleted
 [2026-08-21 17:49:02] REVIEW_CREATED - Performance review created for employee ID 28 by reviewer ID 31
 [2026-08-21 17:49:02] REVIEW_UPDATED - Performance review '67170fca-06bd-4017-95c7-7760b297303b' updated (Status: finalized)
-[2026-08-21 17:56:11] DATABASE_CONNECT - Connected to employee_management as postgres
