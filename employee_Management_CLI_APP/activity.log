@@ -1,0 +1,97 @@
+[2026-08-07 11:32:09] VIEW_ALL - 16 record(s) shown
+[2026-08-07 11:32:49] SEARCH - name='Pankaj' city=None min_age=None max_age=None min_salary=None max_salary=None -> 0 match(es)
+[2026-08-07 11:33:01] SEARCH - name='Ram' city=None min_age=None max_age=None min_salary=None max_salary=None -> 0 match(es)
+[2026-08-07 11:33:36] SEARCH - name='Aditya' city=None min_age=None max_age=None min_salary=None max_salary=None -> 1 match(es)
+[2026-08-07 11:33:57] SEARCH - name='raj' city=None min_age=None max_age=None min_salary=None max_salary=None -> 1 match(es)
+[2026-08-07 11:34:15] SORT - key=salary reverse=False -> 16 record(s)
+[2026-08-07 11:38:08] SEARCH - name=None city='jaipur' min_age=None max_age=None min_salary=None max_salary=None -> 2 match(es)
+[2026-08-07 14:03:53] VIEW_ALL - 16 record(s) shown
+[2026-08-07 14:05:31] SEARCH - name='Rose' city='Y' min_age=8 max_age=None min_salary=None max_salary=None -> 1 match(es)
+[2026-08-07 14:05:46] SEARCH - name='R' city=None min_age=None max_age=None min_salary=None max_salary=None -> 11 match(es)
+[2026-08-07 14:06:45] SORT - key=age reverse=True -> 16 record(s)
+[2026-08-07 14:07:38] SEARCH - name='z' city=None min_age=None max_age=None min_salary=None max_salary=None -> 0 match(es)
+[2026-08-07 14:11:11] SORT - key=city reverse=False -> 16 record(s)
+[2026-08-07 14:12:13] SORT - key=salary reverse=True -> 16 record(s)
+[2026-08-07 14:13:04] CREATE - id=21 name=abc age=25 city=gandhinagar salary=50000.0
+[2026-08-07 14:13:07] VIEW_ALL - 17 record(s) shown
+[2026-08-07 14:14:11] CREATE - id=22 name=riya age=30 city=hyderabad salary=1000000000000.0
+[2026-08-07 14:14:17] VIEW_ALL - 18 record(s) shown
+[2026-08-07 14:16:04] UPDATE - id=22 before={'id': 22, 'name': 'riya', 'age': 30, 'city': 'hyderabad', 'salary': 1000000000000.0} after={'id': 22, 'name': 'siya', 'age': 30, 'city': 'hyderabad', 'salary': 1000000000000.0}
+[2026-08-07 14:16:06] VIEW_ALL - 18 record(s) shown
+[2026-08-07 14:18:08] DELETE - id=21 record={'id': 21, 'name': 'abc', 'age': 25, 'city': 'gandhinagar', 'salary': 50000.0}
+[2026-08-07 14:18:13] VIEW_ALL - 17 record(s) shown
+[2026-08-07 14:21:09] SORT - key=salary reverse=True -> 17 record(s)
+[2026-08-07 14:24:08] CREATE - id=23 name=siya age=30 city=hyderabad salary=1000000000000.0
+[2026-08-07 14:30:38] VIEW_ALL - 18 record(s) shown
+[2026-08-07 14:31:06] CREATE - id=24 name=Ram age=19 city=Dehradun salary=30000.0
+[2026-08-07 14:31:56] CREATE - id=25 name=Dinesh  age=34 city=Vegas salary=400000.0
+[2026-08-07 14:33:05] UPDATE - id=17 before={'id': 17, 'name': 'ishita ', 'age': 34, 'city': 'delhi', 'salary': 15000.0} after={'id': 17, 'name': 'Ishita jain', 'age': 22, 'city': 'delhi', 'salary': 15000.0}
+[2026-08-07 14:33:07] VIEW_ALL - 20 record(s) shown
+[2026-08-07 14:36:53] VIEW_ALL - 20 record(s) shown
+[2026-08-07 14:38:09] SEARCH - name=None city=None min_age=None max_age=None min_salary=None max_salary=None -> 20 match(es)
+[2026-08-07 15:11:47] VIEW_ALL - 20 record(s) shown
+[2026-08-10 15:01:29] DELETE_FAILED - id=400 does not exist
+[2026-08-10 15:03:07] DELETE_FAILED - id=400 does not exist
+[2026-08-10 15:03:16] DELETE - id=2 record={'id': 2, 'name': 'Rose Gatlin', 'age': 8, 'city': 'Yuanjue', 'salary': 279643}
+[2026-08-10 15:03:16] DELETE_FAILED - id=2 does not exist
+[2026-08-10 15:04:33] DELETE - id=4 record={'id': 4, 'name': 'Coralyn Harpin', 'age': 72, 'city': 'Reuleuet', 'salary': 524387}
+[2026-08-10 15:04:33] DELETE_FAILED - id=4 does not exist
+[2026-08-10 15:05:28] DELETE_FAILED - id=4 does not exist
+[2026-08-10 15:05:33] DELETE - id=19 record={'id': 19, 'name': 'Divyansh ', 'age': 23, 'city': 'Jaipur', 'salary': 70000.0}
+[2026-08-10 15:06:01] DELETE - id=20 record={'id': 20, 'name': 'Aditya', 'age': 21, 'city': 'Goa', 'salary': 150000.0}
+[2026-08-10 15:06:19] DELETE_FAILED - id=21 does not exist
+[2026-08-10 15:06:27] DELETE_FAILED - id=18 does not exist
+[2026-08-10 15:06:34] DELETE - id=17 record={'id': 17, 'name': 'Ishita jain', 'age': 22, 'city': 'delhi', 'salary': 15000.0}
+[2026-08-10 15:08:55] DELETE_FAILED - id=17 does not exist
+[2026-08-10 15:11:58] DELETE_FAILED - id=17 does not exist
+[2026-08-10 15:36:06] CREATE_FAILED - invalid age '21'
+[2026-08-10 15:36:53] CREATE_FAILED - invalid age '21'
+[2026-08-10 15:41:29] CREATE_FAILED - invalid age '21'
+[2026-08-10 15:42:28] CREATE_FAILED - invalid age '21'
+[2026-08-10 15:45:34] CREATE_FAILED - unexpected error: 'int' object has no attribute 'strip'
+[2026-08-10 15:51:28] CREATE - id=26 name=Pankaj Singh age=21 city=Jaipur salary=200000.0
+[2026-08-10 15:58:02] CREATE_FAILED - invalid age '0'
+[2026-08-10 16:31:10] UPDATE - id=27 before={'id': 27, 'name': 'Karan singh', 'age': 21, 'city': 'Jaipur', 'salary': 200000.0} after={'id': 27, 'name': 'Digvijay Singh', 'age': 23, 'city': 'Raipur', 'salary': 670000.0}
+[2026-08-10 16:44:05] UPDATE - id=27 before={'id': 27, 'name': 'Digvijay Singh', 'age': 23, 'city': 'Raipur', 'salary': 670000.0} after={'id': 27, 'name': 'Vijay Singh', 'age': 23, 'city': 'Raipur', 'salary': 670000.0}
+[2026-08-10 16:45:56] UPDATE_FAILED - id=27 age '3' out of range 18-70
+[2026-08-10 16:50:23] CREATE_FAILED - age '3' out of range 18-70
+[2026-08-10 16:53:54] CREATE_FAILED - age '3' out of range 18-70
+[2026-08-10 16:55:07] CREATE_FAILED - age '3' out of range 18-70
+[2026-08-10 16:56:14] CREATE_FAILED - age '3' out of range 18-70
+[2026-08-10 16:56:22] CREATE - id=28 name=Vijay Singh age=38 city=Raipur salary=670000.0
+[2026-08-10 16:57:38] CREATE_FAILED - age '1' out of range 18-70
+[2026-08-10 17:01:56] CREATE - id=29 name=Vijay Singh age=49 city=Raipur salary=1.0
+[2026-08-10 17:02:53] UPDATE_FAILED - id=2 does not exist
+[2026-08-10 17:03:03] UPDATE_FAILED - id=4 does not exist
+[2026-08-10 17:03:08] UPDATE - id=5 before={'id': 5, 'name': 'Ruthann Peffer', 'age': 42, 'city': 'Portmore', 'salary': 40334.0} after={'id': 5, 'name': 'Vijay Singh', 'age': 49, 'city': 'Raipur', 'salary': 1.0}
+[2026-08-10 17:03:25] UPDATE - id=5 before={'id': 5, 'name': 'Vijay Singh', 'age': 49, 'city': 'Raipur', 'salary': 1.0} after={'id': 5, 'name': 'Vijay Ram', 'age': 49, 'city': 'Raipur', 'salary': 14000.0}
+[2026-08-10 17:03:38] UPDATE_FAILED - id=5 age '4' out of range 18-70
+[2026-08-10 17:03:44] UPDATE_FAILED - id=5 name empty or null
+[2026-08-10 17:05:50] UPDATE_FAILED - id=5 name empty or null
+[2026-08-10 17:06:43] UPDATE_FAILED - id=5 age '4' out of range 18-70
+[2026-08-10 17:24:47] SEARCH - name='jaipur' city=None min_age=None max_age=None min_salary=None max_salary=None -> 0 match(es)
+[2026-08-10 17:25:20] SEARCH - name='Jaipur' city=None min_age=None max_age=None min_salary=None max_salary=None -> 0 match(es)
+[2026-08-10 17:25:28] SEARCH - name='Raipur' city=None min_age=None max_age=None min_salary=None max_salary=None -> 0 match(es)
+[2026-08-10 17:26:26] SEARCH - name=None city='Raipur' min_age=None max_age=None min_salary=None max_salary=None -> 4 match(es)
+[2026-08-11 10:55:39] VIEW_ALL - 19 record(s) shown
+[2026-08-11 10:56:30] CREATE - id=30 name=Ram singh age=23 city=Canada salary=400000.0
+[2026-08-11 10:56:32] VIEW_ALL - 20 record(s) shown
+[2026-08-11 10:57:02] UPDATE - id=3 before={'id': 3, 'name': 'Raj', 'age': 29, 'city': 'jaipur', 'salary': 70000.0} after={'id': 3, 'name': 'Raj', 'age': 29, 'city': 'Gurugram', 'salary': 70000.0}
+[2026-08-11 16:21:41] VIEW_ALL - 20 record(s) shown
+[2026-08-11 16:27:58] VIEW_ALL - 20 record(s) shown
+[2026-08-11 16:28:50] VIEW_ALL - 20 record(s) shown
+[2026-08-11 16:29:42] VIEW_ALL - 20 record(s) shown
+[2026-08-11 16:29:52] SEARCH - name='ram' city=None min_age=None max_age=None min_salary=None max_salary=None -> 3 match(es)
+[2026-08-11 16:30:37] CREATE - id=31 name=Divya Kanwar age=29 city=Dispur salary=939939.0
+[2026-08-11 16:31:58] UPDATE - id=3 before={'id': 3, 'name': 'Raj', 'age': 29, 'city': 'Gurugram', 'salary': 70000.0} after={'id': 3, 'name': 'Raj', 'age': 29, 'city': 'Gurugram', 'salary': 70000.0}
+[2026-08-11 16:32:57] DELETE - id=3 record={'id': 3, 'name': 'Raj', 'age': 29, 'city': 'Gurugram', 'salary': 70000.0}
+[2026-08-11 16:36:57] UPDATE - id=5 before={'id': 5, 'name': 'Vijay Ram', 'age': 49, 'city': 'Raipur', 'salary': 14000.0} after={'id': 5, 'name': 'Vijay Ram', 'age': 49, 'city': 'Raipur', 'salary': 14000.0}
+[2026-08-11 16:36:58] VIEW_ALL - 20 record(s) shown
+[2026-08-11 18:02:45] SEARCH - name='ram' city=None min_age=None max_age=None min_salary=None max_salary=None -> 3 match(es)
+[2026-08-11 18:03:03] SEARCH - name=None city='jaipur' min_age=None max_age=None min_salary=None max_salary=None -> 1 match(es)
+[2026-08-11 18:03:21] SEARCH - name=None city=None min_age=None max_age=None min_salary=None max_salary=None -> 20 match(es)
+[2026-08-11 18:03:33] SEARCH - name=None city=None min_age=None max_age=None min_salary=None max_salary=None -> 20 match(es)
+[2026-08-11 18:03:46] SEARCH - name=None city=None min_age=None max_age=None min_salary=None max_salary=None -> 20 match(es)
+[2026-08-11 18:04:41] SEARCH - name=None city=None min_age=None max_age=None min_salary=None max_salary=None -> 20 match(es)
+[2026-08-11 18:05:02] SEARCH - name=None city=None min_age=20 max_age=None min_salary=None max_salary=None -> 17 match(es)
+[2026-08-11 18:05:17] SEARCH - name=None city=None min_age=50 max_age=None min_salary=None max_salary=None -> 4 match(es)
