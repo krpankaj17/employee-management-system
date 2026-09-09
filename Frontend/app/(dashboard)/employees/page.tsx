@@ -1,0 +1,658 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import {
+  Search,
+  Filter,
+  LayoutGrid,
+  List as ListIcon,
+  Plus,
+  Mail,
+  Phone,
+  Building,
+  Briefcase,
+  ChevronRight,
+  UserPlus,
+  ShieldAlert,
+  Info,
+  Edit3,
+} from "lucide-react";
+import { api } from "@/lib/apiClient";
+import { Employee } from "@/types/employee";
+import { Department, Designation } from "@/types/department";
+import { StatusBadge } from "@/components/ui/Badge";
+import { Avatar } from "@/components/ui/Avatar";
+import { Modal } from "@/components/ui/Modal";
+import { Pagination } from "@/components/ui/Pagination";
+import { hasPermission, useAuth, canViewAllEmployees } from "@/lib/auth";
+import { EditEmployeeModal } from "@/components/employee/EditEmployeeModal";
+
+export default function EmployeesPage() {
+  const { role, isHR, isAdmin, mounted } = useAuth();
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [designations, setDesignations] = useState<Designation[]>([]);
+  const [search, setSearch] = useState("");
+  const [selectedDept, setSelectedDept] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const canAdd = isAdmin || isHR || hasPermission("employee:create");
+  const canEdit = isAdmin || isHR || hasPermission("employee:update");
+  const isRestrictedView = mounted ? !canViewAllEmployees() : false;
+  const [selectedEditEmp, setSelectedEditEmp] = useState<Employee | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [onboardSubmitting, setOnboardSubmitting] = useState(false);
+  const [onboardError, setOnboardError] = useState<string | null>(null);
+  const [onboardSuccess, setOnboardSuccess] = useState<string | null>(null);
+
+  // New employee form state
+  const [newEmp, setNewEmp] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone_number: "",
+    department_public_id: "",
+    designation_public_id: "",
+    employment_type: "full_time",
+    gender: "male",
+    joining_date: new Date().toISOString().split("T")[0],
+    employee_code: "",
+  });
+
+  // Check URL query param for ?onboard=true
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("onboard") === "true") {
+        setIsAddModalOpen(true);
+      }
+    }
+  }, []);
+
+  // Reset page to 1 on filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedDept, selectedStatus]);
+
+  useEffect(() => {
+    loadData();
+  }, [role, search, selectedDept, selectedStatus, currentPage, pageSize]);
+
+  const loadData = async () => {
+    try {
+      const res = await api.employees.search({
+        search: search || undefined,
+        department_public_id: selectedDept || undefined,
+        employee_status: selectedStatus || undefined,
+        skip: (currentPage - 1) * pageSize,
+        limit: pageSize,
+      });
+      setEmployees(res.items);
+      setTotalItems(res.total);
+
+      const [depts, desigs] = await Promise.all([
+        api.departments.list().catch(() => []),
+        api.designations.list().catch(() => []),
+      ]);
+      setDepartments(depts);
+      setDesignations(desigs);
+      if (depts.length > 0 && !newEmp.department_public_id) {
+        setNewEmp((prev) => ({ ...prev, department_public_id: depts[0].public_id }));
+      }
+      if (desigs.length > 0 && !newEmp.designation_public_id) {
+        setNewEmp((prev) => ({ ...prev, designation_public_id: desigs[0].public_id }));
+      }
+    } catch (err: any) {
+      console.error("Failed to load employee directory data:", err);
+    }
+  };
+
+  const handleAddSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setOnboardError(null);
+    setOnboardSubmitting(true);
+    try {
+      await api.employees.create({
+        first_name: newEmp.first_name.trim(),
+        last_name: newEmp.last_name.trim(),
+        email: newEmp.email.trim().toLowerCase(),
+        phone: newEmp.phone_number.trim() || undefined,
+        department_public_id: newEmp.department_public_id || (departments[0]?.public_id),
+        designation_public_id: newEmp.designation_public_id || (designations[0]?.public_id),
+        employment_type: newEmp.employment_type as any,
+        gender: newEmp.gender as any,
+        joining_date: newEmp.joining_date || new Date().toISOString().split("T")[0],
+        employee_code: newEmp.employee_code ? newEmp.employee_code.trim() : undefined,
+        employee_status: "active",
+      });
+      setOnboardSuccess(`Successfully onboarded ${newEmp.first_name} ${newEmp.last_name}!`);
+      setIsAddModalOpen(false);
+      setNewEmp({
+        first_name: "",
+        last_name: "",
+        email: "",
+        phone_number: "",
+        department_public_id: departments[0]?.public_id || "",
+        designation_public_id: designations[0]?.public_id || "",
+        employment_type: "full_time",
+        gender: "male",
+        joining_date: new Date().toISOString().split("T")[0],
+        employee_code: "",
+      });
+      await loadData();
+      setTimeout(() => setOnboardSuccess(null), 5000);
+    } catch (err: any) {
+      setOnboardError(err.message || "Failed to onboard employee");
+    } finally {
+      setOnboardSubmitting(false);
+    }
+  };
+
+  if (role === "Employee") {
+    return (
+      <div className="card" style={{ textAlign: "center", padding: "60px 20px", maxWidth: 650, margin: "40px auto" }}>
+        <ShieldAlert size={48} style={{ color: "var(--color-rose-400)", margin: "0 auto 16px" }} />
+        <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: 8 }}>
+          Access Restricted
+        </h2>
+        <p style={{ color: "var(--text-secondary)", maxWidth: 480, margin: "0 auto" }}>
+          The enterprise employee directory and personnel records management are reserved for <strong>Management</strong> and <strong>HR</strong>. You can inspect and update your personal credentials in <Link href="/profile" style={{ color: "var(--color-primary-400)", textDecoration: "underline" }}>Settings & Profile</Link>.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      {/* Header Bar */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
+        <div>
+          <h1 suppressHydrationWarning style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+            {isRestrictedView ? "My Employee Profile" : "Employee Directory"}
+          </h1>
+          <p suppressHydrationWarning style={{ fontSize: "0.88rem", color: "var(--text-secondary)" }}>
+            {isRestrictedView
+              ? "Viewing your authorized personnel profile record"
+              : `Showing ${employees.length} of ${totalItems} enterprise team members`}
+          </p>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {/* View Toggle */}
+          <div style={{ display: "flex", background: "var(--bg-surface-elevated)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", padding: 3 }}>
+            <button
+              onClick={() => setViewMode("table")}
+              className={`btn btn-sm ${viewMode === "table" ? "btn-primary" : "btn-ghost"}`}
+              style={{ padding: "6px 10px" }}
+              title="Table View"
+            >
+              <ListIcon size={16} />
+            </button>
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`btn btn-sm ${viewMode === "grid" ? "btn-primary" : "btn-ghost"}`}
+              style={{ padding: "6px 10px" }}
+              title="Card Grid View"
+            >
+              <LayoutGrid size={16} />
+            </button>
+          </div>
+
+          {canAdd && (
+            <button onClick={() => setIsAddModalOpen(true)} className="btn btn-primary">
+              <Plus size={16} /> Onboard Employee
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Onboard Success Alert */}
+      {onboardSuccess && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "12px 18px",
+            borderRadius: "var(--radius-md)",
+            background: "rgba(16, 185, 129, 0.12)",
+            border: "1px solid var(--color-emerald-500)",
+            color: "var(--color-emerald-500)",
+            fontWeight: 600,
+            fontSize: "0.9rem",
+          }}
+        >
+          <UserPlus size={18} />
+          <span>{onboardSuccess}</span>
+        </div>
+      )}
+
+      {/* Filter & Search Toolbar (Only if multiple employees visible) */}
+      {!isRestrictedView && (
+        <div
+          className="card"
+          style={{
+            padding: "16px 20px",
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            flexWrap: "wrap",
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 260, position: "relative" }}>
+            <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+            <input
+              type="text"
+              className="input-field"
+              placeholder="Search by name, email, or employee code..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ paddingLeft: 38 }}
+            />
+          </div>
+
+          {/* Department Filter */}
+          <div style={{ minWidth: 180 }}>
+            <select
+              className="input-field"
+              value={selectedDept}
+              onChange={(e) => setSelectedDept(e.target.value)}
+            >
+              <option value="">All Departments</option>
+              {departments.map((d) => (
+                <option key={d.public_id} value={d.public_id}>
+                  {d.department_name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Status Filter */}
+          <div style={{ minWidth: 150 }}>
+            <select
+              className="input-field"
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+            >
+              <option value="">All Statuses</option>
+              <option value="Active">Active</option>
+              <option value="On_Leave">On Leave</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+      )}
+
+      {/* Table View */}
+      {viewMode === "table" ? (
+        <div className="table-container">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Employee Code</th>
+                <th>Department & Designation</th>
+                <th>Employment Type</th>
+                <th>Status</th>
+                <th>Joining Date</th>
+                <th style={{ textAlign: "right" }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {employees.map((emp) => (
+                <tr key={emp.public_id}>
+                  <td>
+                    <Link
+                      href={`/employees/${emp.public_id}`}
+                      style={{ display: "flex", alignItems: "center", gap: 12 }}
+                    >
+                      <Avatar name={`${emp.first_name} ${emp.last_name}`} size={36} />
+                      <div>
+                        <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>
+                          {emp.first_name} {emp.last_name}
+                        </div>
+                        <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                          {emp.email}
+                        </div>
+                      </div>
+                    </Link>
+                  </td>
+                  <td>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.85rem", color: "var(--color-primary-400)" }}>
+                      {emp.employee_code}
+                    </span>
+                  </td>
+                  <td>
+                    <div style={{ fontWeight: 500, color: "var(--text-primary)" }}>
+                      {emp.designation_name || designations.find((d) => d.public_id === emp.designation_public_id)?.designation_name || designations.find((d) => d.public_id === emp.designation_public_id)?.title || "—"}
+                    </div>
+                    <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                      {emp.department_name || departments.find((d) => d.public_id === emp.department_public_id)?.department_name || "—"}
+                    </div>
+                  </td>
+                  <td>
+                    <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                      {String(emp.employment_type || "Full Time").replace(/_/g, " ")}
+                    </span>
+                  </td>
+                  <td>
+                    <StatusBadge status={emp.employee_status} />
+                  </td>
+                  <td>
+                    <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                      {new Date(emp.joining_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                  </td>
+                  <td style={{ textAlign: "right" }}>
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                      {canEdit && (
+                        <button
+                          onClick={() => {
+                            setSelectedEditEmp(emp);
+                            setIsEditModalOpen(true);
+                          }}
+                          className="btn btn-ghost btn-sm"
+                          style={{ padding: "6px 8px", color: "var(--color-primary-400)" }}
+                          title="Edit Employee Details"
+                        >
+                          <Edit3 size={14} />
+                        </button>
+                      )}
+                      <Link
+                        href={`/employees/${emp.public_id}`}
+                        className="btn btn-ghost btn-sm"
+                        style={{ color: "var(--color-primary-400)", fontWeight: 600 }}
+                      >
+                        Profile <ChevronRight size={14} />
+                      </Link>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        /* Grid View */
+        <div className="grid-cols-3">
+          {employees.map((emp) => (
+            <div key={emp.public_id} className="card card-interactive" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
+                  <Avatar name={`${emp.first_name} ${emp.last_name}`} size={48} />
+                  <StatusBadge status={emp.employee_status} />
+                </div>
+
+                <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: 2 }}>
+                  {emp.first_name} {emp.last_name}
+                </h3>
+                <div style={{ fontSize: "0.85rem", color: "var(--color-primary-400)", fontWeight: 600, marginBottom: 12 }}>
+                  {emp.designation_name || designations.find((d) => d.public_id === emp.designation_public_id)?.designation_name || designations.find((d) => d.public_id === emp.designation_public_id)?.title || "—"}
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: "0.82rem", color: "var(--text-secondary)", marginBottom: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <Building size={14} style={{ color: "var(--text-muted)" }} />
+                    <span>{emp.department_name || departments.find((d) => d.public_id === emp.department_public_id)?.department_name || "—"}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <Mail size={14} style={{ color: "var(--text-muted)" }} />
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{emp.email}</span>
+                  </div>
+                  {emp.phone_number && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <Phone size={14} style={{ color: "var(--text-muted)" }} />
+                      <span>{emp.phone_number}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: 8, marginTop: "auto" }}>
+                {canEdit && (
+                  <button
+                    onClick={() => {
+                      setSelectedEditEmp(emp);
+                      setIsEditModalOpen(true);
+                    }}
+                    className="btn btn-secondary btn-sm"
+                    style={{ flex: 1, justifyContent: "center" }}
+                  >
+                    <Edit3 size={14} /> Edit
+                  </button>
+                )}
+                <Link
+                  href={`/employees/${emp.public_id}`}
+                  className="btn btn-primary btn-sm"
+                  style={{ flex: 1, justifyContent: "center" }}
+                >
+                  Profile
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      <Pagination
+        currentPage={currentPage}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        pageSizeOptions={[5, 10, 20, 50]}
+        itemLabel="employees"
+      />
+
+      {/* Add Employee Modal */}
+      <Modal
+        isOpen={isAddModalOpen}
+        onClose={() => {
+          if (!onboardSubmitting) {
+            setIsAddModalOpen(false);
+            setOnboardError(null);
+          }
+        }}
+        title="Onboard New Employee"
+      >
+        <form onSubmit={handleAddSubmit}>
+          {onboardError && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "10px 14px",
+                borderRadius: "var(--radius-md)",
+                background: "rgba(239, 68, 68, 0.1)",
+                border: "1px solid var(--color-danger-500)",
+                color: "var(--color-danger-500)",
+                fontSize: "0.85rem",
+                marginBottom: 16,
+              }}
+            >
+              <ShieldAlert size={16} />
+              <span>{onboardError}</span>
+            </div>
+          )}
+
+          <div className="grid-cols-2" style={{ marginBottom: 14 }}>
+            <div className="form-group">
+              <label className="form-label">First Name *</label>
+              <input
+                type="text"
+                required
+                className="input-field"
+                placeholder="e.g. Rahul"
+                value={newEmp.first_name}
+                onChange={(e) => setNewEmp({ ...newEmp, first_name: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Last Name *</label>
+              <input
+                type="text"
+                required
+                className="input-field"
+                placeholder="e.g. Verma"
+                value={newEmp.last_name}
+                onChange={(e) => setNewEmp({ ...newEmp, last_name: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="grid-cols-2" style={{ marginBottom: 14 }}>
+            <div className="form-group">
+              <label className="form-label">Work Email *</label>
+              <input
+                type="email"
+                required
+                className="input-field"
+                placeholder="rahul.verma@company.com"
+                value={newEmp.email}
+                onChange={(e) => setNewEmp({ ...newEmp, email: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Phone Number</label>
+              <input
+                type="tel"
+                className="input-field"
+                placeholder="+91 98765 43210"
+                value={newEmp.phone_number}
+                onChange={(e) => setNewEmp({ ...newEmp, phone_number: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="grid-cols-2" style={{ marginBottom: 14 }}>
+            <div className="form-group">
+              <label className="form-label">Department *</label>
+              <select
+                className="input-field"
+                required
+                value={newEmp.department_public_id}
+                onChange={(e) => setNewEmp({ ...newEmp, department_public_id: e.target.value })}
+              >
+                {departments.map((d) => (
+                  <option key={d.public_id} value={d.public_id}>
+                    {d.department_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Designation *</label>
+              <select
+                className="input-field"
+                required
+                value={newEmp.designation_public_id}
+                onChange={(e) => setNewEmp({ ...newEmp, designation_public_id: e.target.value })}
+              >
+                {designations.map((d) => (
+                  <option key={d.public_id} value={d.public_id}>
+                    {d.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid-cols-2" style={{ marginBottom: 14 }}>
+            <div className="form-group">
+              <label className="form-label">Employment Type</label>
+              <select
+                className="input-field"
+                value={newEmp.employment_type}
+                onChange={(e) => setNewEmp({ ...newEmp, employment_type: e.target.value })}
+              >
+                <option value="full_time">Full Time</option>
+                <option value="part_time">Part Time</option>
+                <option value="contract">Contract</option>
+                <option value="intern">Intern</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Gender</label>
+              <select
+                className="input-field"
+                value={newEmp.gender}
+                onChange={(e) => setNewEmp({ ...newEmp, gender: e.target.value })}
+              >
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+                <option value="prefer_not_to_say">Prefer not to say</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid-cols-2" style={{ marginBottom: 24 }}>
+            <div className="form-group">
+              <label className="form-label">Joining Date</label>
+              <input
+                type="date"
+                className="input-field"
+                value={newEmp.joining_date}
+                onChange={(e) => setNewEmp({ ...newEmp, joining_date: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Employee Code (Optional)</label>
+              <input
+                type="text"
+                className="input-field"
+                placeholder="Auto-generated if blank (e.g. EMP-1015)"
+                value={newEmp.employee_code}
+                onChange={(e) => setNewEmp({ ...newEmp, employee_code: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+            <button
+              type="button"
+              disabled={onboardSubmitting}
+              onClick={() => setIsAddModalOpen(false)}
+              className="btn btn-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={onboardSubmitting}
+              className="btn btn-primary"
+            >
+              {onboardSubmitting ? (
+                "Onboarding Personnel..."
+              ) : (
+                <>
+                  <UserPlus size={16} /> Complete Onboarding
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Employee Modal (HR & Admin) */}
+      <EditEmployeeModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedEditEmp(null);
+        }}
+        employee={selectedEditEmp}
+        onSuccess={(updated) => {
+          setEmployees((prev) => prev.map((e) => (e.public_id === updated.public_id ? updated : e)));
+        }}
+      />
+    </div>
+  );
+}
