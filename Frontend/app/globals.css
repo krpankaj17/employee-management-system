@@ -2744,6 +2744,331 @@ input, textarea {
   width: 100%;
 }
 
+/* ==========================================================================
+   STUDIO FLOATING ISLAND TOP NAVIGATION (MATCHING SCREENSHOT)
+   ========================================================================== */
+
+.studio-floating-nav-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 20px 8px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+}
+
+.studio-floating-nav-island {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 9999px;
+  padding: 5px 8px;
+  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.07), 0 2px 6px -1px rgba(0, 0, 0, 0.03);
+  max-width: 96vw;
+  overflow-x: auto;
+  scrollbar-width: none; /* Hide scrollbars */
+}
+
+.studio-floating-nav-island::-webkit-scrollbar {
+  display: none;
+}
+
+[data-theme="dark"] .studio-floating-nav-island {
+  background: rgba(22, 27, 38, 0.94);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.55);
+}
+
+.studio-nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #52525b;
+  text-decoration: none;
+  transition: all 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+
+[data-theme="dark"] .studio-nav-item {
+  color: #94a3b8;
+}
+
+.studio-nav-item:hover {
+  color: #111827;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .studio-nav-item:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Active Pill: Solid Dark Navy/Black Capsule */
+.studio-nav-item.active {
+  background: #0e1726 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  border-radius: 9999px;
+  padding: 8px 24px;
+  box-shadow: 0 4px 14px rgba(14, 23, 38, 0.25);
+}
+
+[data-theme="dark"] .studio-nav-item.active {
+  background: #f8fafc !important;
+  color: #0f121a !important;
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
+}
+
+/* ==========================================================================
+   SALARY PAGE METRICS, FILTERS & TABLE (MATCHING SCREENSHOT)
+   ========================================================================== */
+
+.salary-metrics-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.salary-metric-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 20px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 9999px;
+  padding: 10px 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="dark"] .salary-metric-pill {
+  background: #161b26;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.salary-metric-pill .pill-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #52525b;
+}
+
+[data-theme="dark"] .salary-metric-pill .pill-label {
+  color: #94a3b8;
+}
+
+.salary-metric-pill .pill-value {
+  font-size: 1.18rem;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.02em;
+}
+
+[data-theme="dark"] .salary-metric-pill .pill-value {
+  color: #f8fafc;
+}
+
+/* Signature Soft Butter-Yellow Next Payout Pill */
+.salary-metric-pill-yellow {
+  background: #fef08a !important;
+  border: 1px solid #facc15 !important;
+  box-shadow: 0 4px 14px rgba(234, 179, 8, 0.28) !important;
+}
+
+.salary-metric-pill-yellow .pill-label {
+  color: #27272a !important;
+  font-weight: 600 !important;
+}
+
+.salary-metric-pill-yellow .pill-value {
+  color: #09090b !important;
+  font-weight: 800 !important;
+}
+
+[data-theme="dark"] .salary-metric-pill-yellow {
+  background: #423207 !important;
+  border-color: rgba(253, 224, 71, 0.4) !important;
+  box-shadow: 0 0 16px rgba(253, 224, 71, 0.2) !important;
+}
+
+[data-theme="dark"] .salary-metric-pill-yellow .pill-label {
+  color: #fef08a !important;
+}
+
+[data-theme="dark"] .salary-metric-pill-yellow .pill-value {
+  color: #fef9c3 !important;
+}
+
+/* Salary Filter Toolbar */
+.salary-filter-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.salary-pill-dropdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 9999px;
+  padding: 8px 18px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #111827;
+  cursor: pointer;
+  outline: none;
+  transition: all 150ms ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="dark"] .salary-pill-dropdown {
+  background: #161b26;
+  border-color: rgba(255, 255, 255, 0.09);
+  color: #f8fafc;
+}
+
+.salary-pill-dropdown:hover {
+  border-color: #cbd5e1;
+  background: #fafaf9;
+}
+
+[data-theme="dark"] .salary-pill-dropdown:hover {
+  background: #1f2636;
+}
+
+.salary-pill-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 9999px;
+  padding: 0 16px;
+  height: 40px;
+  width: 280px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="dark"] .salary-pill-search {
+  background: #161b26;
+  border-color: rgba(255, 255, 255, 0.09);
+}
+
+.salary-pill-search input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.86rem;
+  color: #111827;
+  width: 100%;
+}
+
+[data-theme="dark"] .salary-pill-search input {
+  color: #f8fafc;
+}
+
+.salary-pill-search:focus-within {
+  border-color: #eab308;
+  box-shadow: 0 0 0 3px rgba(254, 224, 71, 0.25);
+}
+
+/* Studio Salary Table Card Container */
+.salary-card-table {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 24px;
+  box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+  overflow: hidden;
+  padding: 12px 18px 20px;
+}
+
+[data-theme="dark"] .salary-card-table {
+  background: #161b26;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.salary-data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 4px;
+  font-size: 0.88rem;
+}
+
+.salary-data-table th {
+  padding: 14px 16px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #52525b;
+  text-align: left;
+  border: none;
+  background: transparent;
+  user-select: none;
+}
+
+[data-theme="dark"] .salary-data-table th {
+  color: #94a3b8;
+}
+
+.salary-data-table tbody tr {
+  border-radius: 12px;
+  transition: all 150ms ease;
+}
+
+.salary-data-table tbody tr:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="dark"] .salary-data-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.salary-data-table td {
+  padding: 14px 16px;
+  color: #111827;
+  border: none;
+  vertical-align: middle;
+}
+
+[data-theme="dark"] .salary-data-table td {
+  color: #f8fafc;
+}
+
+/* Selected Row in Soft Canary/Butter Yellow */
+.salary-data-table tbody tr.row-selected {
+  background: #fef9c3 !important;
+}
+
+.salary-data-table tbody tr.row-selected td {
+  color: #1e293b !important;
+}
+
+[data-theme="dark"] .salary-data-table tbody tr.row-selected {
+  background: rgba(66, 50, 7, 0.7) !important;
+}
+
+[data-theme="dark"] .salary-data-table tbody tr.row-selected td {
+  color: #fef08a !important;
+}
+
+
 
 
 

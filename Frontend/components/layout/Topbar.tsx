@@ -4,23 +4,21 @@ import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Bell,
-  Search,
   ChevronDown,
-  Shield,
-  LogOut,
+  Bell,
   Settings,
   ShieldCheck,
+  UserCheck,
   Megaphone,
-  CheckCheck,
+  CalendarCheck2,
   ExternalLink,
-  Clock,
+  LogOut,
+  Shield,
+  CheckCheck,
   AlertCircle,
-  Sparkles,
 } from "lucide-react";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { Avatar } from "../ui/Avatar";
-import { CapsuleNav } from "./CapsuleNav";
 import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/apiClient";
 import { Announcement } from "@/types/announcement";
@@ -29,13 +27,29 @@ export function Topbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, role, isHR, isAdmin, logout, mounted } = useAuth();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
 
-  // Search input state
-  const [searchQuery, setSearchQuery] = useState("");
+  // Navigation Items
+  const navItems = [
+    { label: "Dashboard", href: "/dashboard" },
+    { label: "People", href: "/employees" },
+    { label: "Hiring", href: "/onboarding-pending" },
+    { label: "Attendance", href: "/attendance" },
+    { label: "Leaves", href: "/leaves" },
+    { label: "Salary", href: "/payroll" },
+    { label: "Projects", href: "/projects" },
+    { label: "Reviews", href: "/reviews" },
+    { label: "Departments", href: "/departments" },
+  ];
 
-  // Notification Center Popover
+  // More Dropdown State
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
+
+  // User Account Popover
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Notification Popover
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -55,11 +69,14 @@ export function Topbar() {
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
+    const handleClickOutside = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setIsMoreOpen(false);
       }
-      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setIsNotifOpen(false);
       }
     };
@@ -67,193 +84,187 @@ export function Topbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && searchQuery.trim()) {
-      router.push(`/employees?search=${encodeURIComponent(searchQuery.trim())}`);
-    }
+  const isNavActive = (href: string) => {
+    if (href === "/dashboard") return pathname === "/dashboard";
+    return pathname.startsWith(href);
   };
+
+  const moreItems = [
+    ...(isAdmin || isHR
+      ? [{ label: "User Approvals", href: "/approvals", icon: UserCheck }]
+      : []),
+    { label: "Company Bulletin", href: "/announcements", icon: Megaphone },
+    { label: "Holiday Calendar", href: "/holidays", icon: CalendarCheck2 },
+    ...(isAdmin
+      ? [
+          { label: "Roles & Governance", href: "/roles", icon: ShieldCheck },
+          { label: "Security Audit Logs", href: "/audit-logs", icon: ShieldCheck },
+        ]
+      : []),
+  ];
+
+  const isMoreActive = moreItems.some((item) => pathname.startsWith(item.href));
 
   const handleSignOut = () => {
     logout(router);
   };
 
   return (
-    <header
-      style={{
-        height: "var(--topbar-height, 64px)",
-        background: "var(--bg-glass, rgba(247, 245, 238, 0.92))",
-        backdropFilter: "blur(24px) saturate(180%)",
-        WebkitBackdropFilter: "blur(24px) saturate(180%)",
-        borderBottom: "1px solid var(--border-subtle)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 28px",
-        position: "sticky",
-        top: 0,
-        zIndex: 40,
-        transition: "background-color var(--transition-base)",
-        gap: 16,
-      }}
-    >
-      {/* ── Left Area: Crextio Brand Capsule ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 180 }}>
-        <Link href="/dashboard" className="crextio-brand-pill" title="Crextio Studio Workspace">
-          <span className="crextio-brand-icon">✦</span>
-          <span className="crextio-brand-text">Crextio</span>
-          <span
+    <div className="studio-floating-nav-wrapper">
+      <nav className="studio-floating-nav-island" aria-label="Main floating navigation">
+        {/* Core Primary Navigation Pills */}
+        {navItems.map((item) => {
+          const active = isNavActive(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`studio-nav-item ${active ? "active" : ""}`}
+              aria-current={active ? "page" : undefined}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
+
+        {/* More ▾ Dropdown Capsule */}
+        <div className="capsule-dropdown-trigger" ref={moreRef} style={{ position: "relative" }}>
+          <button
+            type="button"
+            onClick={() => setIsMoreOpen(!isMoreOpen)}
+            className={`studio-nav-item ${isMoreActive ? "active" : ""}`}
             style={{
-              fontSize: "0.68rem",
-              padding: "1px 7px",
-              borderRadius: 9999,
-              background: "#fef08a",
-              color: "#713f12",
-              fontWeight: 700,
-              letterSpacing: "0.03em",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              background: isMoreOpen ? "rgba(0, 0, 0, 0.06)" : undefined,
             }}
+            aria-expanded={isMoreOpen}
           >
-            EMS
-          </span>
-        </Link>
-      </div>
-
-      {/* ── Center Area: Floating Studio Capsule Navigation (All Features) ── */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          flex: 2,
-          minWidth: 0,
-        }}
-      >
-        <CapsuleNav />
-      </div>
-
-      {/* ── Right Area: Fast Search, Settings, Notifications, Theme, User Profile ── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          minWidth: 260,
-          justifyContent: "flex-end",
-        }}
-      >
-        {/* Search Bar Pill */}
-        <div style={{ maxWidth: 210, width: "100%" }}>
-          <div className="glass-search-pill">
-            <Search size={15} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
-            <input
-              type="text"
-              placeholder="Search people..."
-              className="glass-search-input"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
-              aria-label="Search people"
+            <span>More</span>
+            <ChevronDown
+              size={13}
+              style={{
+                transform: isMoreOpen ? "rotate(180deg)" : "none",
+                transition: "transform 150ms ease",
+              }}
             />
-          </div>
+          </button>
+
+          {isMoreOpen && (
+            <div className="capsule-dropdown-menu">
+              {moreItems.map((item) => {
+                const active = pathname.startsWith(item.href);
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsMoreOpen(false)}
+                    className={`capsule-dropdown-item ${active ? "active" : ""}`}
+                  >
+                    <Icon size={16} />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Quick Settings Shortcut */}
+        {/* Settings Pill (Direct link to Settings/Profile) */}
         <Link
           href="/profile"
-          className="action-icon-btn"
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: "50%",
-            background: pathname === "/profile" ? "var(--bg-surface-active)" : "var(--bg-surface-elevated)",
-            border: "1px solid var(--border-subtle)",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "var(--text-secondary)",
-            textDecoration: "none",
-            flexShrink: 0,
-          }}
-          title="Account Settings & Profile"
-          aria-label="Settings"
+          className={`studio-nav-item ${pathname.startsWith("/profile") ? "active" : ""}`}
         >
-          <Settings size={17} />
+          Settings
         </Link>
 
-        {/* Notifications Icon & Popover */}
+        {/* Subtle Divider */}
+        <div
+          style={{
+            width: 1,
+            height: 20,
+            background: "var(--border-subtle, rgba(0, 0, 0, 0.1))",
+            margin: "0 4px",
+            flexShrink: 0,
+          }}
+        />
+
+        {/* Notification Bell Popover */}
         <div style={{ position: "relative" }} ref={notifRef}>
           <button
             onClick={() => setIsNotifOpen(!isNotifOpen)}
             className="action-icon-btn"
             style={{
-              width: 38,
-              height: 38,
+              width: 34,
+              height: 34,
               borderRadius: "50%",
-              background: isNotifOpen ? "var(--bg-surface-active)" : "var(--bg-surface-elevated)",
-              border: "1px solid var(--border-subtle)",
+              background: isNotifOpen ? "var(--bg-surface-active)" : "transparent",
+              border: "none",
               position: "relative",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               cursor: "pointer",
+              color: isNotifOpen ? "#ca8a04" : "#52525b",
             }}
-            title="Bulletins & Notifications"
+            title="Notifications"
             aria-label="View notifications"
           >
-            <Bell size={17} style={{ color: isNotifOpen ? "#ca8a04" : "var(--text-secondary)" }} />
+            <Bell size={16} />
             {unreadCount > 0 && (
               <span
                 style={{
                   position: "absolute",
-                  top: 7,
-                  right: 8,
-                  width: 7,
-                  height: 7,
+                  top: 6,
+                  right: 6,
+                  width: 6,
+                  height: 6,
                   borderRadius: "50%",
                   background: "#f43f5e",
-                  boxShadow: "0 0 8px #f43f5e",
                 }}
               />
             )}
           </button>
 
-          {/* Notifications Popover Menu */}
           {isNotifOpen && (
             <div
               style={{
                 position: "absolute",
                 top: "calc(100% + 12px)",
                 right: 0,
-                width: 380,
+                width: 360,
                 maxWidth: "calc(100vw - 32px)",
-                background: "var(--bg-card)",
-                borderRadius: "var(--radius-lg)",
-                border: "1px solid var(--border-strong)",
-                boxShadow: "var(--shadow-xl)",
+                background: "var(--bg-card, #ffffff)",
+                borderRadius: "var(--radius-lg, 16px)",
+                border: "1px solid var(--border-strong, rgba(0,0,0,0.1))",
+                boxShadow: "var(--shadow-xl, 0 20px 48px -8px rgba(0,0,0,0.12))",
                 zIndex: 60,
                 overflow: "hidden",
                 animation: "modalEnter 0.18s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
             >
-              {/* Header */}
               <div
                 style={{
-                  padding: "14px 18px",
+                  padding: "12px 16px",
                   borderBottom: "1px solid var(--border-subtle)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  background: "var(--bg-surface-elevated)",
+                  background: "var(--bg-surface-elevated, #f7f5ee)",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: "0.92rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                  <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--text-primary)" }}>
                     Notifications
                   </span>
                   {unreadCount > 0 && (
                     <span
                       style={{
-                        fontSize: "0.7rem",
+                        fontSize: "0.68rem",
                         fontWeight: 700,
-                        padding: "1px 7px",
+                        padding: "1px 6px",
                         borderRadius: 10,
                         background: "#fef08a",
                         color: "#713f12",
@@ -263,7 +274,6 @@ export function Topbar() {
                     </span>
                   )}
                 </div>
-
                 {unreadCount > 0 && (
                   <button
                     type="button"
@@ -272,7 +282,7 @@ export function Topbar() {
                       background: "transparent",
                       border: "none",
                       color: "#b45309",
-                      fontSize: "0.75rem",
+                      fontSize: "0.72rem",
                       fontWeight: 600,
                       cursor: "pointer",
                       display: "flex",
@@ -280,14 +290,13 @@ export function Topbar() {
                       gap: 4,
                     }}
                   >
-                    <CheckCheck size={14} />
+                    <CheckCheck size={13} />
                     Mark all read
                   </button>
                 )}
               </div>
 
-              {/* Announcements List */}
-              <div style={{ maxHeight: 320, overflowY: "auto" }}>
+              <div style={{ maxHeight: 280, overflowY: "auto" }}>
                 {announcements.map((ann, idx) => (
                   <Link
                     key={ann.public_id}
@@ -295,65 +304,48 @@ export function Topbar() {
                     onClick={() => setIsNotifOpen(false)}
                     style={{
                       display: "flex",
-                      gap: 12,
-                      padding: "14px 18px",
+                      gap: 10,
+                      padding: "12px 16px",
                       borderBottom: "1px solid var(--border-subtle)",
                       textDecoration: "none",
                       background: idx < unreadCount ? "rgba(254, 240, 138, 0.14)" : "transparent",
-                      transition: "background var(--transition-fast)",
                     }}
                   >
                     <div
                       style={{
-                        width: 32,
-                        height: 32,
+                        width: 28,
+                        height: 28,
                         borderRadius: "50%",
                         background: ann.priority === "Urgent" ? "rgba(244, 63, 94, 0.15)" : "#fef08a",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         flexShrink: 0,
-                        marginTop: 2,
                       }}
                     >
                       {ann.priority === "Urgent" ? (
-                        <AlertCircle size={15} style={{ color: "#e11d48" }} />
+                        <AlertCircle size={14} style={{ color: "#e11d48" }} />
                       ) : (
-                        <Megaphone size={15} style={{ color: "#713f12" }} />
+                        <Megaphone size={14} style={{ color: "#713f12" }} />
                       )}
                     </div>
-
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 2 }}>
-                        <h4
-                          style={{
-                            fontSize: "0.84rem",
-                            fontWeight: idx < unreadCount ? 700 : 600,
-                            color: "var(--text-primary)",
-                            margin: 0,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {ann.title}
-                        </h4>
-                        {idx < unreadCount && (
-                          <span
-                            style={{
-                              width: 6,
-                              height: 6,
-                              borderRadius: "50%",
-                              background: "#eab308",
-                              flexShrink: 0,
-                            }}
-                          />
-                        )}
-                      </div>
-
+                      <h4
+                        style={{
+                          fontSize: "0.82rem",
+                          fontWeight: idx < unreadCount ? 700 : 600,
+                          color: "var(--text-primary)",
+                          margin: 0,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {ann.title}
+                      </h4>
                       <p
                         style={{
-                          fontSize: "0.78rem",
+                          fontSize: "0.74rem",
                           color: "var(--text-secondary)",
                           margin: 0,
                           lineHeight: 1.4,
@@ -365,105 +357,48 @@ export function Topbar() {
                       >
                         {ann.content}
                       </p>
-
-                      <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: 4 }}>
-                        {ann.author_name} • {new Date(ann.published_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                      </div>
                     </div>
                   </Link>
                 ))}
-
-                {announcements.length === 0 && (
-                  <div style={{ padding: "28px 16px", textAlign: "center", color: "var(--text-muted)", fontSize: "0.84rem" }}>
-                    No new company announcements or notifications.
-                  </div>
-                )}
-              </div>
-
-              {/* Footer */}
-              <div
-                style={{
-                  padding: "10px 16px",
-                  background: "var(--bg-surface-elevated)",
-                  borderTop: "1px solid var(--border-subtle)",
-                  textAlign: "center",
-                }}
-              >
-                <Link
-                  href="/announcements"
-                  onClick={() => setIsNotifOpen(false)}
-                  style={{
-                    fontSize: "0.8rem",
-                    fontWeight: 600,
-                    color: "#854d0e",
-                    textDecoration: "none",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                  }}
-                >
-                  View all bulletins & announcements <ExternalLink size={13} />
-                </Link>
               </div>
             </div>
           )}
         </div>
 
-        {/* Theme Toggle (Sun/Moon) */}
+        {/* Subtle Theme Toggle */}
         <ThemeToggle />
 
-        {/* User Account Menu Capsule */}
-        <div style={{ position: "relative" }} ref={menuRef}>
+        {/* User Avatar Circle */}
+        <div style={{ position: "relative" }} ref={userMenuRef}>
           <button
-            suppressHydrationWarning
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            type="button"
+            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
             style={{
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
               display: "flex",
               alignItems: "center",
-              gap: 8,
-              padding: "4px 10px 4px 4px",
-              borderRadius: "9999px",
-              border: "1px solid var(--border-subtle)",
-              background: isMenuOpen ? "var(--bg-surface-active)" : "var(--bg-surface-elevated)",
-              backdropFilter: "blur(16px)",
-              cursor: "pointer",
-              transition: "all var(--transition-fast)",
+              padding: 2,
             }}
-            title="User Profile & Session"
+            title={mounted ? (user?.display_name || "Account") : "Account"}
             aria-label="User Account"
           >
-            <Avatar name={mounted ? (user?.display_name || "User") : "Corporate User"} size={32} ring={true} />
-            <div suppressHydrationWarning style={{ display: "flex", flexDirection: "column", lineHeight: 1.15, textAlign: "left" }}>
-              <span suppressHydrationWarning style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text-primary)" }}>
-                {mounted ? (user?.display_name || "User") : "Corporate User"}
-              </span>
-              <span suppressHydrationWarning style={{ fontSize: "0.68rem", color: "var(--text-secondary)", fontWeight: 500 }}>
-                {mounted ? String(role || "Employee").replace(/_/g, " ") : "Employee"}
-              </span>
-            </div>
-            <ChevronDown
-              size={13}
-              style={{
-                color: "var(--text-muted)",
-                transition: "transform var(--transition-fast)",
-                transform: isMenuOpen ? "rotate(180deg)" : "rotate(0deg)",
-              }}
-            />
+            <Avatar name={mounted ? (user?.display_name || "User") : "User"} size={30} ring={true} />
           </button>
 
-          {/* Elevated Account Menu */}
-          {isMenuOpen && (
+          {isUserMenuOpen && (
             <div
               style={{
                 position: "absolute",
-                top: "calc(100% + 8px)",
+                top: "calc(100% + 10px)",
                 right: 0,
-                width: 250,
+                width: 240,
                 background: "var(--bg-card, #ffffff)",
                 backdropFilter: "blur(24px)",
-                border: "1px solid var(--border-strong)",
-                borderRadius: "var(--radius-lg)",
-                boxShadow: "var(--shadow-xl)",
+                border: "1px solid var(--border-strong, rgba(0,0,0,0.1))",
+                borderRadius: "var(--radius-lg, 16px)",
+                boxShadow: "var(--shadow-xl, 0 20px 48px -8px rgba(0,0,0,0.12))",
                 padding: "8px",
                 zIndex: 1000,
                 display: "flex",
@@ -472,18 +407,17 @@ export function Topbar() {
                 animation: "modalEnter 0.15s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
             >
-              {/* Account Header */}
               <div
                 style={{
-                  padding: "10px 12px 12px",
+                  padding: "10px 12px",
                   borderBottom: "1px solid var(--border-subtle)",
                   marginBottom: 4,
                 }}
               >
-                <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--text-primary)" }}>
-                  {user?.display_name}
+                <div style={{ fontSize: "0.86rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                  {user?.display_name || "Corporate User"}
                 </div>
-                <div style={{ fontSize: "0.76rem", color: "var(--text-muted)", marginBottom: 6 }}>
+                <div style={{ fontSize: "0.74rem", color: "var(--text-muted)", marginBottom: 6 }}>
                   {user?.email}
                 </div>
                 <div
@@ -495,25 +429,24 @@ export function Topbar() {
                     borderRadius: 12,
                     background: "#fef08a",
                     color: "#713f12",
-                    fontSize: "0.72rem",
+                    fontSize: "0.7rem",
                     fontWeight: 700,
                   }}
                 >
-                  <Shield size={12} />
+                  <Shield size={11} />
                   <span>{String(role || "Employee").replace(/_/g, " ")}</span>
                 </div>
               </div>
 
-              {/* Links */}
               <Link
                 href="/profile"
-                onClick={() => setIsMenuOpen(false)}
+                onClick={() => setIsUserMenuOpen(false)}
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
                   padding: "8px 10px",
-                  borderRadius: "var(--radius-md)",
+                  borderRadius: "var(--radius-md, 10px)",
                   color: "var(--text-secondary)",
                   fontSize: "0.82rem",
                   fontWeight: 500,
@@ -527,13 +460,13 @@ export function Topbar() {
               {isAdmin && (
                 <Link
                   href="/roles"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={() => setIsUserMenuOpen(false)}
                   style={{
                     display: "flex",
                     alignItems: "center",
                     gap: 8,
                     padding: "8px 10px",
-                    borderRadius: "var(--radius-md)",
+                    borderRadius: "var(--radius-md, 10px)",
                     color: "var(--text-secondary)",
                     fontSize: "0.82rem",
                     fontWeight: 500,
@@ -554,7 +487,7 @@ export function Topbar() {
                   alignItems: "center",
                   gap: 8,
                   padding: "8px 10px",
-                  borderRadius: "var(--radius-md)",
+                  borderRadius: "var(--radius-md, 10px)",
                   color: "var(--color-rose-500)",
                   fontSize: "0.82rem",
                   fontWeight: 600,
@@ -571,7 +504,7 @@ export function Topbar() {
             </div>
           )}
         </div>
-      </div>
-    </header>
+      </nav>
+    </div>
   );
 }
