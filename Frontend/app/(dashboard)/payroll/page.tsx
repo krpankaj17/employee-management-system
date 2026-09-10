@@ -135,6 +135,330 @@ export default function PayrollPage() {
     }
   };
 
+  const handlePrintPayslip = (payslip: PayslipDetail) => {
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "none";
+    iframe.setAttribute("aria-hidden", "true");
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) {
+      window.print();
+      return;
+    }
+
+    const earningsRows = (payslip.earnings || [])
+      .map(
+        (e) => `
+        <tr>
+          <td style="padding: 7px 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; color: #334155;">${e.label}</td>
+          <td style="padding: 7px 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600; font-size: 12px; color: #0f172a;">₹${(Number(e.amount) || 0).toLocaleString("en-IN")}</td>
+        </tr>`
+      )
+      .join("");
+
+    const deductionsRows = (payslip.deductions || [])
+      .map(
+        (d) => `
+        <tr>
+          <td style="padding: 7px 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; color: #334155;">${d.label}</td>
+          <td style="padding: 7px 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600; font-size: 12px; color: #b91c1c;">- ₹${(Number(d.amount) || 0).toLocaleString("en-IN")}</td>
+        </tr>`
+      )
+      .join("");
+
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Payslip_${payslip.employee_code}_${(payslip.pay_period || "Statement").replace(/\\s+/g, "_")}</title>
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 12mm;
+            }
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            }
+            body {
+              background: #ffffff;
+              color: #0f172a;
+              font-size: 12px;
+              line-height: 1.5;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .payslip-container {
+              max-width: 800px;
+              margin: 0 auto;
+              border: 1px solid #cbd5e1;
+              border-radius: 8px;
+              padding: 24px;
+            }
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              border-bottom: 2px solid #0f172a;
+              padding-bottom: 14px;
+              margin-bottom: 16px;
+            }
+            .company-name {
+              font-size: 19px;
+              font-weight: 800;
+              color: #0f172a;
+              letter-spacing: -0.02em;
+            }
+            .company-sub {
+              font-size: 10.5px;
+              color: #475569;
+              margin-top: 2px;
+            }
+            .period-box {
+              text-align: right;
+            }
+            .period-label {
+              font-size: 10px;
+              font-weight: 700;
+              color: #4f46e5;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+            }
+            .period-val {
+              font-size: 15px;
+              font-weight: 800;
+              color: #0f172a;
+              margin-top: 2px;
+            }
+            .info-grid {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 16px;
+              border: 1px solid #e2e8f0;
+              background: #f8fafc;
+              border-radius: 6px;
+              overflow: hidden;
+            }
+            .info-grid td {
+              padding: 7px 12px;
+              border: 1px solid #e2e8f0;
+              font-size: 11.5px;
+              vertical-align: top;
+            }
+            .info-label {
+              display: block;
+              font-size: 9.5px;
+              text-transform: uppercase;
+              color: #64748b;
+              font-weight: 600;
+              margin-bottom: 1px;
+            }
+            .info-val {
+              font-weight: 700;
+              color: #0f172a;
+            }
+            .tables-container {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 14px;
+              margin-bottom: 16px;
+            }
+            .table-wrap {
+              border: 1px solid #cbd5e1;
+              border-radius: 6px;
+              overflow: hidden;
+            }
+            .table-title {
+              padding: 7px 12px;
+              font-weight: 700;
+              font-size: 11.5px;
+              border-bottom: 1px solid #cbd5e1;
+            }
+            .earnings-title {
+              background: #ecfdf5;
+              color: #047857;
+            }
+            .deductions-title {
+              background: #fef2f2;
+              color: #b91c1c;
+            }
+            table.item-table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+            .total-row td {
+              padding: 8px 12px;
+              font-weight: 700;
+              font-size: 12px;
+              border-top: 2px solid #cbd5e1;
+              background: #f8fafc;
+            }
+            .net-box {
+              background: #f0fdf4;
+              border: 1.5px solid #86efac;
+              border-radius: 8px;
+              padding: 14px 18px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 18px;
+            }
+            .net-title {
+              font-size: 10px;
+              font-weight: 700;
+              color: #15803d;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+            }
+            .net-val {
+              font-size: 20px;
+              font-weight: 800;
+              color: #166534;
+            }
+            .net-words {
+              font-size: 11px;
+              color: #334155;
+              font-style: italic;
+              margin-top: 2px;
+            }
+            .footer-disclaimer {
+              border-top: 1px solid #e2e8f0;
+              padding-top: 10px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              font-size: 9.5px;
+              color: #64748b;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="payslip-container">
+            <div class="header">
+              <div>
+                <div class="company-name">Employee Management System</div>
+                <div class="company-sub">Corporate Technology Park, Outer Ring Road, Bengaluru - 560103</div>
+                <div class="company-sub">Tax Assessment Unit: Bengaluru Division VII | CIN: U72200KA2024PTC123456</div>
+              </div>
+              <div class="period-box">
+                <div class="period-label">Official Payslip</div>
+                <div class="period-val">${payslip.pay_period}</div>
+              </div>
+            </div>
+
+            <table class="info-grid">
+              <tr>
+                <td style="width: 25%;">
+                  <span class="info-label">Employee Name</span>
+                  <span class="info-val">${payslip.employee_name}</span>
+                </td>
+                <td style="width: 25%;">
+                  <span class="info-label">Employee Code</span>
+                  <span class="info-val" style="font-family: monospace;">${payslip.employee_code}</span>
+                </td>
+                <td style="width: 25%;">
+                  <span class="info-label">Designation</span>
+                  <span class="info-val">${payslip.designation}</span>
+                </td>
+                <td style="width: 25%;">
+                  <span class="info-label">Department</span>
+                  <span class="info-val">${payslip.department}</span>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="info-label">Bank Account</span>
+                  <span class="info-val" style="font-family: monospace;">${payslip.bank_account_masked || "N/A"}</span>
+                </td>
+                <td>
+                  <span class="info-label">PAN Number</span>
+                  <span class="info-val" style="font-family: monospace;">${payslip.pan_masked || "N/A"}</span>
+                </td>
+                <td>
+                  <span class="info-label">Calendar / Paid Days</span>
+                  <span class="info-val">${payslip.days_worked || 30} / ${payslip.days_in_month || 30} Days</span>
+                </td>
+                <td>
+                  <span class="info-label">Payment Date</span>
+                  <span class="info-val">${payslip.disbursed_on || "Processed"}</span>
+                </td>
+              </tr>
+              ${payslip.transaction_ref ? `
+              <tr>
+                <td colspan="4">
+                  <span class="info-label">Transaction Reference (UTR / Bank Ref)</span>
+                  <span class="info-val" style="font-family: monospace;">${payslip.transaction_ref}</span>
+                </td>
+              </tr>` : ""}
+            </table>
+
+            <div class="tables-container">
+              <div class="table-wrap">
+                <div class="table-title earnings-title">Earnings (Salary Components)</div>
+                <table class="item-table">
+                  ${earningsRows}
+                  <tr class="total-row">
+                    <td>Gross Earnings</td>
+                    <td style="text-align: right; color: #047857;">₹${(Number(payslip.gross_earnings) || 0).toLocaleString("en-IN")}</td>
+                  </tr>
+                </table>
+              </div>
+
+              <div class="table-wrap">
+                <div class="table-title deductions-title">Statutory Deductions</div>
+                <table class="item-table">
+                  ${deductionsRows}
+                  <tr class="total-row">
+                    <td>Total Deductions</td>
+                    <td style="text-align: right; color: #b91c1c;">- ₹${(Number(payslip.total_deductions) || 0).toLocaleString("en-IN")}</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <div class="net-box">
+              <div>
+                <div class="net-title">Net Salary Transferred</div>
+                <div class="net-val">₹${(Number(payslip.net_pay) || 0).toLocaleString("en-IN")}</div>
+                <div class="net-words">${payslip.net_pay_words || ""}</div>
+              </div>
+              <div style="text-align: right; font-size: 11px; color: #166534;">
+                <strong>Payment Status: PAID</strong>
+                <div>Mode: Direct Bank Transfer</div>
+              </div>
+            </div>
+
+            <div class="footer-disclaimer">
+              <div>* Note: This is an authentic computer-generated statement and does not require a physical seal or signature.</div>
+              <div>Generated: ${new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    setTimeout(() => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+        }
+      }, 2000);
+    }, 250);
+  };
+
   const handleDisburse = async (runId: string) => {
     try {
       await api.payroll.disburse(runId);
@@ -1103,7 +1427,15 @@ export default function PayrollPage() {
               </div>
               <div>
                 <span style={{ color: "var(--text-muted)", display: "block", fontSize: "0.75rem" }}>Bank Account (Masked)</span>
-                <span style={{ fontFamily: "var(--font-mono)" }}>{selectedPayslip.bank_account_masked}</span>
+                <span style={{ fontFamily: "var(--font-mono)" }}>{selectedPayslip.bank_account_masked || "N/A"}</span>
+              </div>
+              <div>
+                <span style={{ color: "var(--text-muted)", display: "block", fontSize: "0.75rem" }}>PAN Number (Masked)</span>
+                <span style={{ fontFamily: "var(--font-mono)" }}>{selectedPayslip.pan_masked || "N/A"}</span>
+              </div>
+              <div>
+                <span style={{ color: "var(--text-muted)", display: "block", fontSize: "0.75rem" }}>Paid / Working Days</span>
+                <span>{selectedPayslip.days_worked || 30} / {selectedPayslip.days_in_month || 30} Days</span>
               </div>
             </div>
 
@@ -1167,11 +1499,19 @@ export default function PayrollPage() {
             </div>
 
             {/* Modal Actions */}
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
-              <button onClick={() => window.print()} className="btn btn-secondary btn-sm">
+            <div className="no-print" style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+              <button
+                type="button"
+                onClick={() => handlePrintPayslip(selectedPayslip)}
+                className="btn btn-secondary btn-sm"
+              >
                 <Printer size={15} /> Print / Save as PDF
               </button>
-              <button onClick={() => setIsPayslipModalOpen(false)} className="btn btn-primary btn-sm">
+              <button
+                type="button"
+                onClick={() => setIsPayslipModalOpen(false)}
+                className="btn btn-primary btn-sm"
+              >
                 Close
               </button>
             </div>
