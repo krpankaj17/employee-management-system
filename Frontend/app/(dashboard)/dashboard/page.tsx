@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/apiClient";
+import { showToast } from "@/components/ui/Toast";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { Pagination } from "@/components/ui/Pagination";
@@ -99,10 +100,11 @@ export default function DashboardPage() {
   }, [checkedIn]);
 
   const loadDashboardData = async (isManual = false) => {
+    const minDelay = isManual ? new Promise((res) => setTimeout(res, 550)) : Promise.resolve();
     if (isManual) {
       setRefreshing(true);
       if (typeof api.invalidateCache === "function") {
-        api.invalidateCache("/dashboard");
+        api.invalidateCache(); // Bust ALL cached responses so metrics are 100% freshly fetched
       }
     } else {
       setLoading(true);
@@ -184,8 +186,12 @@ export default function DashboardPage() {
           }
         }
 
+        await minDelay;
         setLoading(false);
         setRefreshing(false);
+        if (isManual) {
+          showToast.success("Dashboard metrics refreshed.");
+        }
         return;
       }
 
@@ -329,8 +335,12 @@ export default function DashboardPage() {
     } catch (err: any) {
       console.error("Dashboard hydration error:", err);
     } finally {
+      await minDelay;
       setLoading(false);
       setRefreshing(false);
+      if (isManual) {
+        showToast.success("Dashboard metrics refreshed.");
+      }
     }
   };
 
@@ -557,10 +567,12 @@ export default function DashboardPage() {
 
           {/* Refresh Button */}
           <button
+            type="button"
             onClick={() => loadDashboardData(true)}
             disabled={refreshing}
             className="action-icon-btn"
             title="Refresh dashboard metrics"
+            aria-label="Refresh dashboard metrics"
             style={{
               width: 38,
               height: 38,
@@ -568,13 +580,35 @@ export default function DashboardPage() {
               border: "1px solid #e2e8f0",
               background: "#ffffff",
               boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
-              cursor: "pointer",
+              cursor: refreshing ? "wait" : "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              transition: "all 150ms ease",
+            }}
+            onMouseEnter={(e) => {
+              if (!refreshing) {
+                e.currentTarget.style.background = "#f8fafc";
+                e.currentTarget.style.borderColor = "#cbd5e1";
+                e.currentTarget.style.transform = "rotate(45deg)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!refreshing) {
+                e.currentTarget.style.background = "#ffffff";
+                e.currentTarget.style.borderColor = "#e2e8f0";
+                e.currentTarget.style.transform = "rotate(0deg)";
+              }
             }}
           >
-            <RefreshCw size={14} className={refreshing ? "spin" : ""} style={{ color: "#475569" }} />
+            <RefreshCw
+              size={15}
+              className={refreshing ? "spin" : ""}
+              style={{
+                color: refreshing ? "#4f46e5" : "#475569",
+                transition: "color 150ms ease",
+              }}
+            />
           </button>
         </div>
       </div>
