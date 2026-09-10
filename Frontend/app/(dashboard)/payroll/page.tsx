@@ -746,7 +746,7 @@ export default function PayrollPage() {
               <Plus size={15} /> New Salary Structure
             </button>
           )}
-          {canProcess && (
+          {!isEmployeeRole && canProcess && (
             <button
               onClick={() => setIsProcessModalOpen(true)}
               className="btn btn-primary"
@@ -758,13 +758,15 @@ export default function PayrollPage() {
         </div>
       </div>
 
-      {/* ── Four Horizontal Rounded Pill Metrics (Matching Screenshot) ── */}
+      {/* ── Four Horizontal Rounded Pill Metrics (Matching Studio Design in INR) ── */}
       <div className="salary-metrics-row">
-        {/* Pill 1: Total Payroll */}
+        {/* Pill 1: Total Payroll (Admin) or My Net Salary (Employee) */}
         <div className="salary-metric-pill">
-          <span className="pill-label">Total Payroll</span>
+          <span className="pill-label">{isEmployeeRole ? "My Net Salary" : "Total Payroll"}</span>
           <span className="pill-value tabular-figures">
-            ${(disbursedTotal > 0 ? disbursedTotal : salaryRows.reduce((sum, r) => sum + r.baseSalary, 0)).toLocaleString("en-US")}
+            ₹{isEmployeeRole
+              ? (employeeTakeHome || salaryRows[0]?.netPay || 0).toLocaleString("en-IN")
+              : (disbursedTotal > 0 ? disbursedTotal : salaryRows.reduce((sum, r) => sum + r.baseSalary, 0)).toLocaleString("en-IN")}
           </span>
         </div>
 
@@ -774,11 +776,13 @@ export default function PayrollPage() {
           <span className="pill-value">Oct 1</span>
         </div>
 
-        {/* Pill 3: Taxes */}
+        {/* Pill 3: Taxes / Deductions */}
         <div className="salary-metric-pill">
-          <span className="pill-label">Taxes</span>
+          <span className="pill-label">{isEmployeeRole ? "Deductions" : "Taxes"}</span>
           <span className="pill-value tabular-figures">
-            ${(pendingTotal > 0 ? pendingTotal : salaryRows.reduce((sum, r) => sum + r.deductions, 0)).toLocaleString("en-US")}
+            ₹{isEmployeeRole
+              ? (employeeDeductions || salaryRows[0]?.deductions || 0).toLocaleString("en-IN")
+              : (pendingTotal > 0 ? pendingTotal : salaryRows.reduce((sum, r) => sum + r.deductions, 0)).toLocaleString("en-IN")}
           </span>
         </div>
 
@@ -905,21 +909,6 @@ export default function PayrollPage() {
           <table className="salary-data-table">
             <thead>
               <tr>
-                <th style={{ width: 44 }}>
-                  <input
-                    type="checkbox"
-                    checked={filteredSalaryRows.length > 0 && selectedRowIds.size === filteredSalaryRows.length}
-                    onChange={() => {
-                      if (selectedRowIds.size === filteredSalaryRows.length) {
-                        setSelectedRowIds(new Set());
-                      } else {
-                        setSelectedRowIds(new Set(filteredSalaryRows.map((r) => r.id)));
-                      }
-                    }}
-                    style={{ cursor: "pointer", width: 16, height: 16, accentColor: "#111827" }}
-                    aria-label="Select all rows"
-                  />
-                </th>
                 <th>Employee Name</th>
                 <th>Role</th>
                 <th>Base Salary</th>
@@ -933,7 +922,7 @@ export default function PayrollPage() {
             <tbody>
               {filteredSalaryRows.length === 0 ? (
                 <tr>
-                  <td colSpan={9} style={{ textAlign: "center", padding: "48px 16px" }}>
+                  <td colSpan={8} style={{ textAlign: "center", padding: "48px 16px" }}>
                     <p style={{ color: "var(--text-muted)", fontSize: "0.92rem" }}>
                       No salary records match your current filters.
                     </p>
@@ -941,23 +930,14 @@ export default function PayrollPage() {
                 </tr>
               ) : (
                 filteredSalaryRows.map((row) => {
-                  const isSelected = selectedRowIds.has(row.id);
                   return (
                     <tr
                       key={row.id}
-                      className={isSelected ? "row-selected" : ""}
-                      onClick={() => toggleRowSelect(row.id)}
-                      style={{ cursor: "pointer" }}
+                      style={{ cursor: row.rawRun ? "pointer" : "default" }}
+                      onClick={() => {
+                        if (row.rawRun) handleViewPayslip(row.rawRun);
+                      }}
                     >
-                      <td onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleRowSelect(row.id)}
-                          style={{ cursor: "pointer", width: 16, height: 16, accentColor: "#111827" }}
-                          aria-label={`Select ${row.name}`}
-                        />
-                      </td>
                       <td>
                         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                           <Avatar name={row.name} size={32} />
@@ -972,14 +952,14 @@ export default function PayrollPage() {
                       </td>
                       <td>
                         <span style={{ fontWeight: 700 }} className="tabular-figures">
-                          ${row.baseSalary.toLocaleString("en-US")}
+                          ₹{row.baseSalary.toLocaleString("en-IN")}
                         </span>
                       </td>
-                      <td className="tabular-figures">${row.bonus.toFixed(2)}</td>
-                      <td className="tabular-figures">${row.deductions.toFixed(2)}</td>
+                      <td className="tabular-figures">₹{row.bonus.toLocaleString("en-IN")}</td>
+                      <td className="tabular-figures">₹{row.deductions.toLocaleString("en-IN")}</td>
                       <td>
                         <span style={{ fontWeight: 700 }} className="tabular-figures">
-                          ${row.netPay.toLocaleString("en-US")}
+                          ₹{row.netPay.toLocaleString("en-IN")}
                         </span>
                       </td>
                       <td>{row.payoutMethod}</td>

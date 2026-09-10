@@ -293,30 +293,30 @@ export default function ProfilePage() {
   if (!user) return null;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 1000 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 24, width: "100%" }}>
       {/* Header */}
       <div>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
-          My Account & Personnel Profile
+        <h1 style={{ fontSize: "1.65rem", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+          Settings & Profile
         </h1>
-        <p style={{ fontSize: "0.88rem", color: "var(--text-secondary)" }}>
-          Manage your personal details, residential addresses, emergency contacts, credentials, and verification records
+        <p style={{ fontSize: "0.86rem", color: "var(--text-secondary)", marginTop: 4 }}>
+          Manage your personal account details, residential addresses, emergency contacts, credentials, and verification records
         </p>
       </div>
 
       {savedSuccess && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 16px", borderRadius: "var(--radius-md)", background: "rgba(16, 185, 129, 0.15)", border: "1px solid rgba(16, 185, 129, 0.3)", color: "var(--color-emerald-400)", fontSize: "0.88rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 16px", borderRadius: "var(--radius-md)", background: "rgba(16, 185, 129, 0.12)", border: "1px solid rgba(16, 185, 129, 0.25)", color: "var(--color-emerald-400)", fontSize: "0.88rem" }}>
           <CheckCircle2 size={16} /> Personal contact and address details saved successfully.
         </div>
       )}
       {saveError && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 16px", borderRadius: "var(--radius-md)", background: "rgba(239, 68, 68, 0.15)", border: "1px solid rgba(239, 68, 68, 0.3)", color: "var(--color-rose-400)", fontSize: "0.88rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 16px", borderRadius: "var(--radius-md)", background: "rgba(239, 68, 68, 0.12)", border: "1px solid rgba(239, 68, 68, 0.25)", color: "var(--color-rose-400)", fontSize: "0.88rem" }}>
           <AlertCircle size={16} /> {saveError}
         </div>
       )}
 
       {/* Profile Overview Card */}
-      <div className="card" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 20 }}>
+      <div className="card" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 20, padding: "24px 28px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           <Avatar name={user.display_name} size={64} />
           <div>
@@ -335,16 +335,16 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--bg-surface-elevated)", padding: "8px 14px", borderRadius: "var(--radius-md)", border: "1px solid var(--border-subtle)", fontSize: "0.8rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#f8fafc", padding: "8px 14px", borderRadius: "9999px", border: "1px solid #e2e8f0", fontSize: "0.8rem", color: "#334155", fontWeight: 600 }}>
           <ShieldCheck size={16} style={{ color: "var(--color-emerald-400)" }} />
-          <span>Email Verified</span>
+          <span>Verified Account</span>
         </div>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: "flex", borderBottom: "1px solid var(--border-subtle)", gap: 20 }}>
+      <div style={{ display: "flex", borderBottom: "1px solid #e2e8f0", gap: 24 }}>
         {[
-          { key: "personal", label: "Personal & Contacts (Self-Service)" },
+          { key: "personal", label: "Personal & Contacts" },
           { key: "corporate", label: "Corporate & Compensation" },
           { key: "documents", label: `Documents (${documents.length})` },
           { key: "security", label: "Security & Credentials" },
@@ -353,13 +353,13 @@ export default function ProfilePage() {
             key={t.key}
             onClick={() => setActiveTab(t.key as any)}
             style={{
-              padding: "12px 4px",
+              padding: "12px 2px",
               background: "transparent",
-              color: activeTab === t.key ? "var(--color-primary-400)" : "var(--text-secondary)",
+              color: activeTab === t.key ? "var(--text-primary)" : "var(--text-secondary)",
               fontWeight: activeTab === t.key ? 700 : 500,
-              fontSize: "0.9rem",
+              fontSize: "0.88rem",
               border: "none",
-              borderBottom: activeTab === t.key ? "2px solid var(--color-primary-400)" : "2px solid transparent",
+              borderBottom: activeTab === t.key ? "2px solid #0e1726" : "2px solid transparent",
               cursor: "pointer",
             }}
           >
