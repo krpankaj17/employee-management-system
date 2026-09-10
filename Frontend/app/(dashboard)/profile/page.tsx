@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useAuth, hasPermission } from "@/lib/auth";
 import { api } from "@/lib/apiClient";
+import { showToast } from "@/components/ui/Toast";
 import { Avatar } from "@/components/ui/Avatar";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
@@ -283,8 +284,9 @@ export default function ProfilePage() {
         const docs = await api.documents.list(employee.public_id);
         setDocuments(docs);
       }
+      showToast.success(`Document marked as ${status}.`);
     } catch (err: any) {
-      alert(err.message || "Failed to update document verification status.");
+      showToast.error(err.message || "Failed to update document verification status.");
     }
   };
 

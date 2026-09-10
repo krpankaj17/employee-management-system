@@ -256,16 +256,6 @@ export function Sidebar() {
         overflow: "visible",
       }}
     >
-      {/* Sleek Floating Edge Toggle Button on the sidebar border */}
-      <button
-        type="button"
-        onClick={toggleCollapse}
-        className="sidebar-edge-toggle"
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-      >
-        {collapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
-      </button>
 
       {/* Header / Brand */}
       <div
@@ -388,18 +378,6 @@ export function Sidebar() {
           gap: 6,
         }}
       >
-        {collapsed && (
-          <button
-            type="button"
-            onClick={toggleCollapse}
-            className="sidebar-expand-action-pill"
-            title="Expand sidebar"
-            aria-label="Expand sidebar"
-          >
-            <ChevronRight size={16} />
-            <span className="sidebar-hover-tooltip">Expand Sidebar</span>
-          </button>
-        )}
 
         {visibleItems.map((item) => {
           const effectivePath = optimisticPath || pathname;
@@ -515,54 +493,28 @@ export function Sidebar() {
           </div>
         )}
         {collapsed && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center", width: "100%" }}>
-            <button
-              type="button"
-              onClick={toggleCollapse}
-              className="action-icon-btn sidebar-footer-toggle"
-              title="Expand sidebar"
-              aria-label="Expand sidebar"
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: "10px",
-                border: "1px solid var(--border-subtle)",
-                background: "var(--bg-surface-elevated)",
-                color: "var(--color-primary-400)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                position: "relative",
-              }}
-            >
-              <ChevronRight size={17} />
-              <span className="sidebar-hover-tooltip">Expand Sidebar</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => logout(router)}
-              className="action-icon-btn"
-              title="Sign out"
-              aria-label="Sign out"
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: "10px",
-                border: "1px solid var(--border-subtle)",
-                color: "var(--text-muted)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                position: "relative",
-              }}
-            >
-              <LogOut size={16} />
-              <span className="sidebar-hover-tooltip">Sign Out</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => logout(router)}
+            className="action-icon-btn"
+            title="Sign out"
+            aria-label="Sign out"
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: "10px",
+              border: "1px solid var(--border-subtle)",
+              color: "var(--text-muted)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              position: "relative",
+            }}
+          >
+            <LogOut size={16} />
+            <span className="sidebar-hover-tooltip">Sign Out</span>
+          </button>
         )}
       </div>
     </aside>

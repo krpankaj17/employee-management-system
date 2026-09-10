@@ -22,6 +22,7 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { Modal } from "@/components/ui/Modal";
 import { Pagination } from "@/components/ui/Pagination";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { hasPermission, useAuth } from "@/lib/auth";
 
 /**
@@ -118,6 +119,27 @@ export default function AttendancePage() {
   const [actionFeedback, setActionFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [submittingManual, setSubmittingManual] = useState(false);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const [isResettingPunch, setIsResettingPunch] = useState(false);
+
+  const handleResetTodayPunch = async () => {
+    if (!todayRecordId) return;
+    setIsResettingPunch(true);
+    try {
+      await api.attendance.deleteRecord(String(todayRecordId));
+      setTodayRecordId(null);
+      await checkTodayPunchStatus();
+      await loadAttendance();
+      setActionFeedback({ type: "success", message: "Today's attendance record deleted. You can check in again." });
+      setIsResetConfirmOpen(false);
+      setTimeout(() => setActionFeedback(null), 5000);
+    } catch (err: any) {
+      setActionFeedback({ type: "error", message: err.message || "Failed to delete attendance record." });
+      setTimeout(() => setActionFeedback(null), 5000);
+    } finally {
+      setIsResettingPunch(false);
+    }
+  };
 
   // Manual record form
   const [manualForm, setManualForm] = useState({
@@ -579,22 +601,9 @@ export default function AttendancePage() {
                   type="button"
                   className="btn btn-sm btn-ghost"
                   style={{ width: "100%", justifyContent: "center", color: "var(--color-rose-400)", fontSize: "0.78rem", display: "flex", alignItems: "center", gap: 6 }}
-                  onClick={async () => {
-                    if (!confirm("Delete today\'s attendance record and reset punch clock? This cannot be undone.")) return;
-                    try {
-                      await api.attendance.deleteRecord(String(todayRecordId));
-                      setTodayRecordId(null);
-                      await checkTodayPunchStatus();
-                      await loadAttendance();
-                      setActionFeedback({ type: "success", message: "Today\'s attendance record deleted. You can check in again." });
-                      setTimeout(() => setActionFeedback(null), 5000);
-                    } catch (err: any) {
-                      setActionFeedback({ type: "error", message: err.message || "Failed to delete attendance record." });
-                      setTimeout(() => setActionFeedback(null), 5000);
-                    }
-                  }}
+                  onClick={() => setIsResetConfirmOpen(true)}
                 >
-                  <X size={13} /> Reset Today\'s Attendance (Admin)
+                  <X size={13} /> Reset Today's Attendance (Admin)
                 </button>
               )}
             </div>
@@ -1075,6 +1084,22 @@ export default function AttendancePage() {
           </div>
         </form>
       </Modal>
+
+      {/* Admin Reset Attendance Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isResetConfirmOpen}
+        onClose={() => {
+          if (!isResettingPunch) setIsResetConfirmOpen(false);
+        }}
+        onConfirm={handleResetTodayPunch}
+        title="Reset Today's Attendance"
+        message="Delete today's attendance record and reset the punch clock? This cannot be undone."
+        confirmText="Reset Record"
+        cancelText="Cancel"
+        variant="danger"
+        icon="trash"
+        isLoading={isResettingPunch}
+      />
     </div>
   );
 }

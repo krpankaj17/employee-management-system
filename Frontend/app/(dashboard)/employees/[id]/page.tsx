@@ -33,6 +33,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { api } from "@/lib/apiClient";
+import { showToast } from "@/components/ui/Toast";
 import { Employee, Address } from "@/types/employee";
 import { SalaryStructure, BankDetail } from "@/types/payroll";
 import { LeaveBalance } from "@/types/leave";
@@ -80,8 +81,9 @@ export default function EmployeeDetailPage() {
       const updated = await api.employees.toggleStatus(employee.public_id, nextStatus);
       setEmployee(updated);
       setIsDeactivateConfirmOpen(false);
+      showToast.success(`Employee lifecycle status updated to ${nextStatus}.`);
     } catch (e: any) {
-      alert(e.message || "Failed to update employee lifecycle status.");
+      showToast.error(e.message || "Failed to update employee lifecycle status.");
     } finally {
       setStatusLoading(false);
     }
@@ -261,8 +263,9 @@ export default function EmployeeDetailPage() {
         verification_notes: defaultNote,
       });
       loadEmployeeData();
+      showToast.success(`Document status updated to ${status}.`);
     } catch (err: any) {
-      alert(err.message || "Failed to update document verification status.");
+      showToast.error(err.message || "Failed to update document verification status.");
     }
   };
 

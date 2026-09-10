@@ -10,6 +10,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Pagination } from "@/components/ui/Pagination";
 import { Employee } from "@/types/employee";
 import { useAuth, hasPermission } from "@/lib/auth";
+import { showToast } from "@/components/ui/Toast";
 
 export default function ReviewsPage() {
   const { role, user } = useAuth();
@@ -95,9 +96,10 @@ export default function ReviewsPage() {
       });
       setIsCreateModalOpen(false);
       loadReviews();
+      showToast.success("Performance review submitted successfully.");
     } catch (err: any) {
       console.error("Create review error:", err);
-      alert(err.message || "Failed to submit review.");
+      showToast.error(err.message || "Failed to submit review.");
     }
   };
 

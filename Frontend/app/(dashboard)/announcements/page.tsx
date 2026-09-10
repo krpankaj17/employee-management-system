@@ -20,6 +20,7 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { Pagination } from "@/components/ui/Pagination";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { showToast } from "@/components/ui/Toast";
 import { hasPermission, useAuth } from "@/lib/auth";
 
 export default function AnnouncementsPage() {
@@ -95,9 +96,10 @@ export default function AnnouncementsPage() {
         target_audience: "All",
         is_pinned: false,
       });
+      showToast.success("Announcement published successfully.");
     } catch (err: any) {
       console.warn("Create announcement failed:", err);
-      alert(err.message || "Failed to publish notice.");
+      showToast.error(err.message || "Failed to publish notice.");
     }
   };
 
