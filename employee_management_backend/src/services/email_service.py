@@ -70,8 +70,9 @@ def _dispatch_email(to_email: str, subject: str, html_content: str, text_content
 def send_otp_email(to_email: str, otp_code: str, expires_in_seconds: int = 150) -> None:
     """Sends a responsive HTML email containing the 6-digit OTP code via SMTP.
     Raises Exception if SMTP delivery fails."""
-    if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
-        logger.warning(f"[DEMO MODE] SMTP credentials not set. Simulated OTP for {to_email}: {otp_code}")
+    # Only fallback to demo mode if NEITHER Resend API key NOR SMTP credentials are configured
+    if not settings.RESEND_API_KEY and (not settings.SMTP_USER or not settings.SMTP_PASSWORD):
+        logger.warning(f"[DEMO MODE] No email provider configured. Simulated OTP for {to_email}: {otp_code}")
         print(f"\n[DEMO MODE OTP] Verification code for {to_email}: {otp_code}\n")
         return
 
@@ -161,8 +162,9 @@ def send_otp_email(to_email: str, otp_code: str, expires_in_seconds: int = 150) 
 
 def send_password_reset_otp_email(to_email: str, otp_code: str, expires_in_seconds: int = 150) -> None:
     """Sends a responsive HTML email containing the 6-digit password reset OTP code via SMTP."""
-    if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
-        logger.warning(f"[DEMO MODE] SMTP credentials not set. Simulated Password Reset OTP for {to_email}: {otp_code}")
+    # Only fallback to demo mode if NEITHER Resend API key NOR SMTP credentials are configured
+    if not settings.RESEND_API_KEY and (not settings.SMTP_USER or not settings.SMTP_PASSWORD):
+        logger.warning(f"[DEMO MODE] No email provider configured. Simulated Password Reset OTP for {to_email}: {otp_code}")
         print(f"\n[DEMO MODE OTP] Password Reset code for {to_email}: {otp_code}\n")
         return
 
