@@ -16,6 +16,7 @@ import {
   ExternalLink,
   Clock,
   AlertCircle,
+  PanelLeft,
 } from "lucide-react";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { Avatar } from "../ui/Avatar";
@@ -100,16 +101,46 @@ export function Topbar() {
         gap: 20,
       }}
     >
-      {/* Search Bar Pill */}
-      <div style={{ flex: 1, maxWidth: 360 }}>
-        <div className="glass-search-pill">
-          <Search size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
-          <input
-            type="text"
-            placeholder="Search..."
-            className="glass-search-input"
-            aria-label="Search"
-          />
+      {/* Left Area: Sidebar Toggle & Search Bar */}
+      <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, maxWidth: 420 }}>
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new Event("ems_toggle_sidebar"));
+            }
+          }}
+          className="action-icon-btn"
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: "10px",
+            border: "1px solid var(--border-subtle)",
+            background: "var(--bg-surface-elevated)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "var(--text-secondary)",
+            flexShrink: 0,
+          }}
+          title="Toggle sidebar (Expand / Collapse)"
+          aria-label="Toggle sidebar"
+        >
+          <PanelLeft size={18} />
+        </button>
+
+        {/* Search Bar Pill */}
+        <div style={{ flex: 1 }}>
+          <div className="glass-search-pill">
+            <Search size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+            <input
+              type="text"
+              placeholder="Search..."
+              className="glass-search-input"
+              aria-label="Search"
+            />
+          </div>
         </div>
       </div>
 

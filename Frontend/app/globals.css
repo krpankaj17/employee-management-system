@@ -32,8 +32,9 @@
   /* Typography & Layout Metrics */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  --sidebar-width: 94px;
-  --sidebar-width-collapsed: 94px;
+  --sidebar-width: 72px;
+  --sidebar-width-collapsed: 72px;
+  --sidebar-width-expanded: 250px;
   --topbar-height: 64px;
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -2050,6 +2051,137 @@ button.glass-submit:hover:not(:disabled) .glass-btn-arrow {
 [data-theme="light"] .glass-custom-checkbox.checked {
   background: #6366f1;
   border-color: #6366f1;
+}
+
+/* ==========================================================================
+   SIDEBAR COMPONENT STYLES & EXPAND AFFORDANCES
+   ========================================================================== */
+
+.app-sidebar {
+  transition: width var(--transition-smooth);
+}
+
+/* Completely suppress browser scrollbar track while keeping full scrollability */
+.sidebar-nav-container {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE/Edge */
+}
+
+.sidebar-nav-container::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Edge */
+  width: 0px !important;
+  height: 0px !important;
+}
+
+/* Floating Edge Toggle Button on the sidebar boundary */
+.sidebar-edge-toggle {
+  position: absolute;
+  top: 20px;
+  right: -12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--bg-surface-elevated, #1e2238);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+  color: var(--text-secondary, #94a3b8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 60;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: all var(--transition-fast);
+}
+
+.sidebar-edge-toggle:hover {
+  background: var(--color-primary-500) !important;
+  color: #ffffff !important;
+  border-color: var(--color-primary-400) !important;
+  transform: scale(1.12);
+  box-shadow: 0 0 14px var(--color-primary-glow) !important;
+}
+
+/* Collapsed Header Expand Pill */
+.sidebar-expand-action-pill {
+  width: 100%;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px dashed var(--border-subtle);
+  background: transparent;
+  color: var(--color-primary-400);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-bottom: 6px;
+  position: relative;
+  transition: all var(--transition-fast);
+}
+
+.sidebar-expand-action-pill:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--color-primary-500);
+  color: var(--color-primary-300);
+}
+
+/* Instant Hover Tooltip for Collapsed Sidebar Items */
+.sidebar-nav-link {
+  position: relative;
+}
+
+.sidebar-hover-tooltip {
+  position: absolute;
+  left: calc(100% + 14px);
+  top: 50%;
+  transform: translateY(-50%) scale(0.92);
+  background: var(--bg-surface-elevated, #1e2238);
+  color: var(--text-primary, #ffffff);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms ease, transform 150ms ease, visibility 150ms ease;
+  box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-subtle);
+  z-index: 1000;
+}
+
+.sidebar-hover-tooltip::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: var(--bg-surface-elevated, #1e2238);
+  border-left: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sidebar-nav-link:hover .sidebar-hover-tooltip,
+.sidebar-expand-action-pill:hover .sidebar-hover-tooltip,
+.sidebar-footer-toggle:hover .sidebar-hover-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) scale(1);
+}
+
+/* Light mode specific tooltip styling */
+[data-theme="light"] .sidebar-hover-tooltip {
+  background: #0f172a;
+  color: #f8fafc;
+  border-color: #334155;
+}
+
+[data-theme="light"] .sidebar-hover-tooltip::before {
+  background: #0f172a;
+  border-left-color: #334155;
+  border-bottom-color: #334155;
 }
 
 /* ==========================================================================

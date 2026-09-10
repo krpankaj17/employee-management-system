@@ -129,6 +129,16 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(true);
   const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
 
+  // Load saved preference from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("ems_sidebar_collapsed");
+      if (saved !== null) {
+        setCollapsed(saved === "true");
+      }
+    } catch (e) {}
+  }, []);
+
   // Clear optimistic active state when route finishes navigating
   useEffect(() => {
     setOptimisticPath(null);
@@ -136,18 +146,30 @@ export function Sidebar() {
 
   useEffect(() => {
     if (typeof document !== "undefined") {
-      document.documentElement.style.setProperty("--sidebar-width", collapsed ? "94px" : "256px");
+      document.documentElement.style.setProperty("--sidebar-width", collapsed ? "72px" : "250px");
+      document.documentElement.setAttribute("data-sidebar-collapsed", collapsed ? "true" : "false");
     }
   }, [collapsed]);
 
   const toggleCollapse = () => {
     const next = !collapsed;
     setCollapsed(next);
+    try {
+      localStorage.setItem("ems_sidebar_collapsed", String(next));
+    } catch (e) {}
     if (typeof document !== "undefined") {
-      document.documentElement.style.setProperty("--sidebar-width", next ? "94px" : "256px");
+      document.documentElement.style.setProperty("--sidebar-width", next ? "72px" : "250px");
       document.documentElement.setAttribute("data-sidebar-collapsed", next ? "true" : "false");
     }
   };
+
+  useEffect(() => {
+    const handleGlobalToggle = () => {
+      toggleCollapse();
+    };
+    window.addEventListener("ems_toggle_sidebar", handleGlobalToggle);
+    return () => window.removeEventListener("ems_toggle_sidebar", handleGlobalToggle);
+  }, [collapsed]);
 
   const [pendingCount, setPendingCount] = useState<number>(0);
 
@@ -208,73 +230,100 @@ export function Sidebar() {
 
   return (
     <aside
+      className="app-sidebar"
       style={{
-        width: collapsed ? "74px" : "240px",
-        background: "var(--bg-sidebar, rgba(14, 16, 28, 0.70))",
-        border: "1px solid var(--border-glass, rgba(255, 255, 255, 0.09))",
-        borderRadius: "24px",
+        width: collapsed ? "72px" : "250px",
+        background: "var(--bg-sidebar, var(--bg-surface))",
+        borderRight: "1px solid var(--border-subtle)",
+        borderTop: "none",
+        borderLeft: "none",
+        borderBottom: "none",
+        borderRadius: 0,
         display: "flex",
         flexDirection: "column",
         position: "fixed",
-        top: "16px",
-        bottom: "16px",
-        left: "16px",
-        height: "calc(100vh - 32px)",
+        top: 0,
+        bottom: 0,
+        left: 0,
+        height: "100vh",
         zIndex: 50,
         transition: "width var(--transition-smooth)",
         backdropFilter: "blur(28px) saturate(180%)",
         WebkitBackdropFilter: "blur(28px) saturate(180%)",
-        boxShadow: "0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 1px 0 rgba(255, 255, 255, 0.12)",
-        overflow: "hidden",
+        boxShadow: collapsed
+          ? "2px 0 16px rgba(0, 0, 0, 0.08)"
+          : "4px 0 24px rgba(0, 0, 0, 0.14)",
+        overflow: "visible",
       }}
     >
+      {/* Sleek Floating Edge Toggle Button on the sidebar border */}
+      <button
+        type="button"
+        onClick={toggleCollapse}
+        className="sidebar-edge-toggle"
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+      >
+        {collapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
+      </button>
+
       {/* Header / Brand */}
       <div
         style={{
-          height: "64px",
+          height: "var(--topbar-height, 64px)",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
-          padding: "0 14px",
-          borderBottom: "1px solid var(--border-glass, rgba(255, 255, 255, 0.06))",
+          justifyContent: collapsed ? "center" : "space-between",
+          padding: collapsed ? "0 10px" : "0 16px",
+          borderBottom: "1px solid var(--border-subtle)",
+          flexShrink: 0,
         }}
       >
         {collapsed ? (
           <div
             style={{
-              width: 36,
-              height: 36,
-              borderRadius: "12px",
-              background: "linear-gradient(135deg, #6366f1 0%, #06b6d4 100%)",
               display: "flex",
+              flexDirection: "column",
               alignItems: "center",
-              justifyContent: "center",
-              fontSize: "0.78rem",
-              fontWeight: 800,
-              color: "#fff",
-              letterSpacing: "-0.02em",
+              gap: 4,
               cursor: "pointer",
-              flexShrink: 0,
-              boxShadow: "0 0 16px rgba(6, 182, 212, 0.4)",
             }}
             onClick={toggleCollapse}
-            title="Expand sidebar"
+            title="Click to expand sidebar"
           >
-            EMS
+            <div
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: "12px",
+                background: "linear-gradient(135deg, #6366f1 0%, #06b6d4 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "0.82rem",
+                fontWeight: 800,
+                color: "#fff",
+                letterSpacing: "-0.02em",
+                boxShadow: "0 0 16px rgba(6, 182, 212, 0.4)",
+                transition: "transform var(--transition-fast)",
+              }}
+            >
+              EMS
+            </div>
           </div>
         ) : (
           <>
             <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
               <div
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 34,
+                  height: 34,
                   borderRadius: "10px",
                   background: "linear-gradient(135deg, #6366f1 0%, #06b6d4 100%)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: "0.72rem",
+                  fontSize: "0.76rem",
                   fontWeight: 800,
                   color: "#fff",
                   flexShrink: 0,
@@ -287,7 +336,7 @@ export function Sidebar() {
                 <span
                   style={{
                     fontWeight: 700,
-                    fontSize: "0.85rem",
+                    fontSize: "0.86rem",
                     color: "var(--text-primary)",
                     letterSpacing: "-0.01em",
                     lineHeight: 1.2,
@@ -298,16 +347,27 @@ export function Sidebar() {
                 >
                   Employee Management
                 </span>
-                <span style={{ fontSize: "0.68rem", color: "var(--color-cyan-400)", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                  System
+                <span style={{ fontSize: "0.68rem", color: "var(--color-cyan-400)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                  System Portal
                 </span>
               </div>
             </div>
             <button
+              type="button"
               onClick={toggleCollapse}
-              className="btn btn-ghost"
-              style={{ padding: 6, borderRadius: "50%", color: "var(--text-muted)", cursor: "pointer" }}
+              className="action-icon-btn"
+              style={{
+                width: 30,
+                height: 30,
+                borderRadius: "8px",
+                color: "var(--text-secondary)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
               title="Collapse sidebar"
+              aria-label="Collapse sidebar"
             >
               <ChevronLeft size={16} />
             </button>
@@ -317,15 +377,30 @@ export function Sidebar() {
 
       {/* Navigation Links */}
       <nav
+        className="sidebar-nav-container"
         style={{
           flex: 1,
           overflowY: "auto",
-          padding: "16px 10px",
+          overflowX: "hidden",
+          padding: collapsed ? "14px 8px" : "14px 12px",
           display: "flex",
           flexDirection: "column",
           gap: 6,
         }}
       >
+        {collapsed && (
+          <button
+            type="button"
+            onClick={toggleCollapse}
+            className="sidebar-expand-action-pill"
+            title="Expand sidebar"
+            aria-label="Expand sidebar"
+          >
+            <ChevronRight size={16} />
+            <span className="sidebar-hover-tooltip">Expand Sidebar</span>
+          </button>
+        )}
+
         {visibleItems.map((item) => {
           const effectivePath = optimisticPath || pathname;
           const isActive = effectivePath === item.href || (item.href !== "/dashboard" && effectivePath.startsWith(item.href));
@@ -345,15 +420,14 @@ export function Sidebar() {
                 try { router.prefetch(item.href); } catch (e) {}
               }}
               onClick={() => setOptimisticPath(item.href)}
-              title={collapsed ? item.label : undefined}
               className={`sidebar-nav-link ${isActive ? "active" : ""}`}
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: 12,
-                padding: collapsed ? "11px 0" : "10px 14px",
+                padding: collapsed ? "10px 0" : "10px 14px",
                 justifyContent: collapsed ? "center" : "flex-start",
-                borderRadius: "14px",
+                borderRadius: "12px",
                 color: isActive ? "var(--text-primary)" : "var(--text-secondary)",
                 background: isActive ? "var(--bg-surface-active)" : "transparent",
                 border: isActive ? "1px solid var(--border-subtle)" : "1px solid transparent",
@@ -363,6 +437,7 @@ export function Sidebar() {
                 position: "relative",
                 transition: "all var(--transition-fast)",
                 width: "100%",
+                textDecoration: "none",
               }}
             >
               <span
@@ -395,6 +470,14 @@ export function Sidebar() {
                   {item.badge}
                 </span>
               )}
+
+              {/* Instant sleek tooltip when collapsed */}
+              {collapsed && (
+                <span className="sidebar-hover-tooltip">
+                  {item.label}
+                  {item.badge ? ` (${item.badge})` : ""}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -403,17 +486,18 @@ export function Sidebar() {
       {/* Footer */}
       <div
         style={{
-          padding: "14px 10px",
-          borderTop: "1px solid var(--border-glass, rgba(255, 255, 255, 0.06))",
+          padding: collapsed ? "12px 6px" : "14px 14px",
+          borderTop: "1px solid var(--border-subtle)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           flexDirection: "column",
           gap: 8,
+          flexShrink: 0,
         }}
       >
         {!collapsed && (
-          <div style={{ paddingInline: 8, width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--color-emerald-400)", boxShadow: "0 0 8px var(--color-emerald-400)" }} />
               <span style={{ fontSize: "0.74rem", fontWeight: 600, color: "var(--text-secondary)" }}>
@@ -431,14 +515,54 @@ export function Sidebar() {
           </div>
         )}
         {collapsed && (
-          <button
-            type="button"
-            onClick={() => logout(router)}
-            className="action-icon-btn"
-            title="Sign out"
-          >
-            <LogOut size={16} />
-          </button>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center", width: "100%" }}>
+            <button
+              type="button"
+              onClick={toggleCollapse}
+              className="action-icon-btn sidebar-footer-toggle"
+              title="Expand sidebar"
+              aria-label="Expand sidebar"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "10px",
+                border: "1px solid var(--border-subtle)",
+                background: "var(--bg-surface-elevated)",
+                color: "var(--color-primary-400)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                position: "relative",
+              }}
+            >
+              <ChevronRight size={17} />
+              <span className="sidebar-hover-tooltip">Expand Sidebar</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => logout(router)}
+              className="action-icon-btn"
+              title="Sign out"
+              aria-label="Sign out"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "10px",
+                border: "1px solid var(--border-subtle)",
+                color: "var(--text-muted)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                position: "relative",
+              }}
+            >
+              <LogOut size={16} />
+              <span className="sidebar-hover-tooltip">Sign Out</span>
+            </button>
+          </div>
         )}
       </div>
     </aside>
