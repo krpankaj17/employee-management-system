@@ -75,8 +75,14 @@ export function isMockData(): boolean {
 }
 
 /**
- * Get active backend base URL (Python FastAPI backend)
+ * Get active backend base URL (Python FastAPI backend).
+ * When running in the browser, routes via the Next.js Reverse Proxy (/api/proxy)
+ * to hide the raw Render backend URL and eliminate CORS issues.
+ * On the server side (SSR), falls back to the absolute backend URL.
  */
 export function getBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    return "/api/proxy";
+  }
   return BACKEND_SERVERS.python.url;
 }

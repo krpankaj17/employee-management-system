@@ -34,8 +34,9 @@ export function BackendOfflineBanner() {
   const handleRetry = async () => {
     setReconnecting(true);
     try {
-      const res = await fetch(`${currentServer.url}/health`, { method: "GET" }).catch(() =>
-        fetch(`${currentServer.url}/`)
+      const baseUrl = getBaseUrl();
+      const res = await fetch(`${baseUrl}/health`, { method: "GET" }).catch(() =>
+        fetch(`${baseUrl}/`)
       );
       if (res && res.ok) {
         setIsOffline(false);
@@ -92,10 +93,10 @@ export function BackendOfflineBanner() {
         </div>
         <div>
           <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)" }}>
-            Backend Connection Offline ({currentServer.name})
+            Backend Connection Offline
           </div>
           <div style={{ fontSize: "0.76rem", color: "var(--text-secondary)" }}>
-            Cannot reach <code style={{ color: "var(--color-primary-400)" }}>{currentServer.url}</code>. Serving resilient fallback data without crashes.
+            Cannot reach backend API services. Serving resilient fallback data without crashes.
           </div>
         </div>
       </div>
