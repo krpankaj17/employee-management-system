@@ -535,8 +535,8 @@ export function Sidebar() {
         }}
       >
         {!collapsed && (
-          <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 4px" }}>
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--color-emerald-400)", boxShadow: "0 0 8px var(--color-emerald-400)" }} />
               <span style={{ fontSize: "0.74rem", fontWeight: 600, color: "var(--text-secondary)" }}>
                 {String(role || "Employee").replace(/_/g, " ")}
@@ -545,10 +545,34 @@ export function Sidebar() {
             <button
               type="button"
               onClick={() => logout(router)}
-              className="action-icon-btn"
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                padding: "8px 12px",
+                fontSize: "0.82rem",
+                fontWeight: 600,
+                borderRadius: "8px",
+                color: "#e11d48",
+                background: "rgba(244, 63, 94, 0.08)",
+                border: "1px solid rgba(244, 63, 94, 0.22)",
+                cursor: "pointer",
+                transition: "all 140ms ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(244, 63, 94, 0.16)";
+                e.currentTarget.style.borderColor = "rgba(244, 63, 94, 0.4)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(244, 63, 94, 0.08)";
+                e.currentTarget.style.borderColor = "rgba(244, 63, 94, 0.22)";
+              }}
               title="Sign out"
             >
               <LogOut size={16} />
+              <span>Sign Out</span>
             </button>
           </div>
         )}
@@ -556,23 +580,32 @@ export function Sidebar() {
           <button
             type="button"
             onClick={() => logout(router)}
-            className="action-icon-btn"
             title="Sign out"
             aria-label="Sign out"
             style={{
-              width: 36,
-              height: 36,
+              width: 42,
+              height: 42,
               borderRadius: "10px",
-              border: "1px solid var(--border-subtle)",
-              color: "var(--text-muted)",
+              border: "1px solid rgba(244, 63, 94, 0.25)",
+              background: "rgba(244, 63, 94, 0.08)",
+              color: "#e11d48",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               cursor: "pointer",
               position: "relative",
+              transition: "all 140ms ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(244, 63, 94, 0.18)";
+              e.currentTarget.style.borderColor = "rgba(244, 63, 94, 0.45)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(244, 63, 94, 0.08)";
+              e.currentTarget.style.borderColor = "rgba(244, 63, 94, 0.25)";
             }}
           >
-            <LogOut size={16} />
+            <LogOut size={18} />
             <span className="sidebar-hover-tooltip">Sign Out</span>
           </button>
         )}

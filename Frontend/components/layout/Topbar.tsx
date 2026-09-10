@@ -164,20 +164,40 @@ export function Topbar() {
           Settings
         </Link>
 
-        {/* Clean Sign Out */}
+        {/* Prominent, accessible Sign Out button */}
         <button
           type="button"
           onClick={() => logout(router)}
-          className="studio-nav-item"
           style={{
-            padding: "8px 12px",
-            color: "var(--color-rose-500, #f43f5e)",
-            opacity: 0.85,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "7px",
+            padding: "6px 14px",
+            fontSize: "0.82rem",
+            fontWeight: 600,
+            borderRadius: "8px",
+            color: "#e11d48",
+            background: "rgba(244, 63, 94, 0.08)",
+            border: "1px solid rgba(244, 63, 94, 0.22)",
+            cursor: "pointer",
+            transition: "all 140ms ease",
+            boxShadow: "0 1px 2px rgba(244, 63, 94, 0.05)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(244, 63, 94, 0.16)";
+            e.currentTarget.style.borderColor = "rgba(244, 63, 94, 0.4)";
+            e.currentTarget.style.transform = "translateY(-1px)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(244, 63, 94, 0.08)";
+            e.currentTarget.style.borderColor = "rgba(244, 63, 94, 0.22)";
+            e.currentTarget.style.transform = "translateY(0)";
           }}
           title={mounted && user?.display_name ? `Sign out (${user.display_name})` : "Sign out"}
           aria-label="Sign out"
         >
           <LogOut size={15} />
+          <span>Sign Out</span>
         </button>
       </nav>
     </div>
