@@ -10,9 +10,40 @@ logger = logging.getLogger("email_service")
 
 
 def _dispatch_email(to_email: str, subject: str, html_content: str, text_content: str, from_header: str) -> None:
-    """Dispatches email via Resend HTTP API (HTTPS port 443) or direct SMTP (port 587/465).
+    """Dispatches email via Google Apps Script Webhook (Gmail), Resend HTTP API, or direct SMTP.
     Bypasses cloud platform firewall blocks against outbound SMTP."""
-    # 1. Prefer HTTP-based Resend API (HTTPS port 443 - not blocked by Render/cloud)
+    # 1. Prefer Google Apps Script Webhook (Sends natively from Gmail over HTTPS port 443 to ANY recipient)
+    if settings.GMAIL_WEBHOOK_URL:
+        try:
+            res = httpx.post(
+                settings.GMAIL_WEBHOOK_URL,
+                json={
+                    "secret": settings.GMAIL_WEBHOOK_SECRET,
+                    "to": to_email,
+                    "subject": subject,
+                    "html": html_content,
+                    "text": text_content,
+                },
+                follow_redirects=True,
+                timeout=20.0,
+            )
+            if res.status_code in (200, 201):
+                data = res.json()
+                if data.get("status") == "success":
+                    logger.info(f"Email successfully delivered to {to_email} via Google Apps Script")
+                    return
+                else:
+                    logger.error(f"Google Apps Script relay error: {data.get('message')}")
+                    raise RuntimeError(f"Google Mail Relay: {data.get('message')}")
+            else:
+                logger.error(f"Google Apps Script returned HTTP {res.status_code}: {res.text}")
+                raise RuntimeError(f"Google Mail Relay HTTP error ({res.status_code})")
+        except Exception as e:
+            logger.error(f"Failed to dispatch email via Google Apps Script: {e}")
+            if not settings.RESEND_API_KEY and not settings.SMTP_USER:
+                raise
+
+    # 2. Try HTTP-based Resend API (HTTPS port 443)
     if settings.RESEND_API_KEY:
         # Resend requires their default test domain unless a custom domain is verified
         from_sender = "Datansh EMS <onboarding@resend.dev>"
@@ -70,8 +101,8 @@ def _dispatch_email(to_email: str, subject: str, html_content: str, text_content
 def send_otp_email(to_email: str, otp_code: str, expires_in_seconds: int = 150) -> None:
     """Sends a responsive HTML email containing the 6-digit OTP code via SMTP.
     Raises Exception if SMTP delivery fails."""
-    # Only fallback to demo mode if NEITHER Resend API key NOR SMTP credentials are configured
-    if not settings.RESEND_API_KEY and (not settings.SMTP_USER or not settings.SMTP_PASSWORD):
+    # Only fallback to demo mode if NO email providers (Google Relay, Resend, SMTP) are configured
+    if not settings.GMAIL_WEBHOOK_URL and not settings.RESEND_API_KEY and (not settings.SMTP_USER or not settings.SMTP_PASSWORD):
         logger.warning(f"[DEMO MODE] No email provider configured. Simulated OTP for {to_email}: {otp_code}")
         print(f"\n[DEMO MODE OTP] Verification code for {to_email}: {otp_code}\n")
         return
@@ -162,8 +193,8 @@ def send_otp_email(to_email: str, otp_code: str, expires_in_seconds: int = 150) 
 
 def send_password_reset_otp_email(to_email: str, otp_code: str, expires_in_seconds: int = 150) -> None:
     """Sends a responsive HTML email containing the 6-digit password reset OTP code via SMTP."""
-    # Only fallback to demo mode if NEITHER Resend API key NOR SMTP credentials are configured
-    if not settings.RESEND_API_KEY and (not settings.SMTP_USER or not settings.SMTP_PASSWORD):
+    # Only fallback to demo mode if NO email providers (Google Relay, Resend, SMTP) are configured
+    if not settings.GMAIL_WEBHOOK_URL and not settings.RESEND_API_KEY and (not settings.SMTP_USER or not settings.SMTP_PASSWORD):
         logger.warning(f"[DEMO MODE] No email provider configured. Simulated Password Reset OTP for {to_email}: {otp_code}")
         print(f"\n[DEMO MODE OTP] Password Reset code for {to_email}: {otp_code}\n")
         return
