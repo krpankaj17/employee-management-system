@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import {
   Search,
@@ -17,6 +17,13 @@ import {
   ShieldAlert,
   Info,
   Edit3,
+  Download,
+  CheckSquare,
+  Square,
+  Sparkles,
+  SlidersHorizontal,
+  MapPin,
+  Check,
 } from "lucide-react";
 import { api } from "@/lib/apiClient";
 import { Employee } from "@/types/employee";
@@ -36,6 +43,9 @@ export default function EmployeesPage() {
   const [search, setSearch] = useState("");
   const [selectedDept, setSelectedDept] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedSite, setSelectedSite] = useState("");
+  const [selectedLifecycle, setSelectedLifecycle] = useState("");
+  const [selectedEmpIds, setSelectedEmpIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -153,6 +163,102 @@ export default function EmployeesPage() {
     }
   };
 
+  // Selection helpers
+  const toggleSelectAll = () => {
+    if (selectedEmpIds.size === employees.length && employees.length > 0) {
+      setSelectedEmpIds(new Set());
+    } else {
+      setSelectedEmpIds(new Set(employees.map((e) => e.public_id)));
+    }
+  };
+
+  const toggleSelectRow = (public_id: string) => {
+    const next = new Set(selectedEmpIds);
+    if (next.has(public_id)) {
+      next.delete(public_id);
+    } else {
+      next.add(public_id);
+    }
+    setSelectedEmpIds(next);
+  };
+
+  // Location Flag Resolver
+  const getLocationBadge = (emp: Employee) => {
+    const address = emp.addresses?.find((a) => a.is_primary) || emp.addresses?.[0];
+    const country = address?.country?.toLowerCase() || "";
+    const city = address?.city || "";
+
+    if (emp.work_mode === "remote") return { flag: "🌐", label: "Remote Global" };
+    if (country.includes("sweden") || city.toLowerCase().includes("stockholm")) return { flag: "🇸🇪", label: city || "Stockholm" };
+    if (country.includes("us") || country.includes("united states") || city.toLowerCase().includes("miami") || city.toLowerCase().includes("york")) return { flag: "🇺🇸", label: city || "Miami" };
+    if (country.includes("uk") || country.includes("united kingdom") || city.toLowerCase().includes("london")) return { flag: "🇬🇧", label: city || "London" };
+    if (country.includes("india") || city.toLowerCase().includes("bangalore") || city.toLowerCase().includes("delhi") || city.toLowerCase().includes("pune")) return { flag: "🇮🇳", label: city || "Bangalore" };
+    if (country.includes("canada") || city.toLowerCase().includes("ottawa") || city.toLowerCase().includes("toronto")) return { flag: "🇨🇦", label: city || "Ottawa" };
+    if (country.includes("brazil") || city.toLowerCase().includes("paulo")) return { flag: "🇧🇷", label: city || "Sao Paulo" };
+    if (country.includes("ukraine") || city.toLowerCase().includes("kyiv")) return { flag: "🇺🇦", label: city || "Kyiv" };
+
+    if (city) return { flag: "📍", label: city };
+    return { flag: "🏢", label: "HQ Campus" };
+  };
+
+  // CSV Exporter
+  const exportToCSV = () => {
+    if (employees.length === 0) return;
+    const headers = ["Employee Code", "First Name", "Last Name", "Email", "Department", "Designation", "Employment Type", "Status", "Joining Date"];
+    const rows = employees.map((e) => [
+      e.employee_code,
+      `"${e.first_name}"`,
+      `"${e.last_name}"`,
+      `"${e.email}"`,
+      `"${e.department_name || ""}"`,
+      `"${e.designation_name || ""}"`,
+      `"${e.employment_type || ""}"`,
+      `"${e.employee_status || ""}"`,
+      `"${e.joining_date || ""}"`,
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `employee_directory_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Client-side filtering for Site and Lifecycle
+  const displayedEmployees = useMemo(() => {
+    return employees.filter((emp) => {
+      if (selectedSite) {
+        const badge = getLocationBadge(emp);
+        if (selectedSite === "remote" && emp.work_mode !== "remote") return false;
+        if (selectedSite === "sweden" && !badge.label.toLowerCase().includes("stockholm")) return false;
+        if (selectedSite === "us" && !badge.label.toLowerCase().includes("miami")) return false;
+        if (selectedSite === "uk" && !badge.label.toLowerCase().includes("london")) return false;
+        if (selectedSite === "india" && !badge.label.toLowerCase().includes("bangalore")) return false;
+      }
+      if (selectedLifecycle) {
+        if (String(emp.employment_type).toLowerCase() !== selectedLifecycle.toLowerCase()) return false;
+      }
+      return true;
+    });
+  }, [employees, selectedSite, selectedLifecycle]);
+
+  // Ratio metrics
+  const activeCount = employees.filter((e) => String(e.employee_status).toLowerCase() === "active").length;
+  const onLeaveCount = employees.filter((e) => String(e.employee_status).toLowerCase().includes("leave")).length;
+  const probationaryCount = employees.filter((e) => {
+    if (!e.joining_date) return false;
+    const jDate = new Date(e.joining_date);
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    return jDate >= threeMonthsAgo;
+  }).length;
+
+  const activePct = employees.length > 0 ? Math.round((activeCount / employees.length) * 100) : 84;
+  const onLeavePct = employees.length > 0 ? Math.round((onLeaveCount / employees.length) * 100) : 8;
+  const probationaryPct = employees.length > 0 ? Math.round((probationaryCount / employees.length) * 100) : 8;
+
   if (role === "Employee") {
     return (
       <div className="card" style={{ textAlign: "center", padding: "60px 20px", maxWidth: 650, margin: "40px auto" }}>
@@ -168,27 +274,61 @@ export default function EmployeesPage() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 24, maxWidth: 1400, margin: "0 auto" }}>
       {/* Header Bar */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
         <div>
-          <h1 suppressHydrationWarning style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
-            {isRestrictedView ? "My Employee Profile" : "Employee Directory"}
+          <h1
+            suppressHydrationWarning
+            style={{
+              fontSize: "1.9rem",
+              fontWeight: 800,
+              color: "var(--text-primary)",
+              letterSpacing: "-0.025em",
+              margin: 0,
+            }}
+          >
+            {isRestrictedView ? "My Employee Profile" : "People"}
           </h1>
-          <p suppressHydrationWarning style={{ fontSize: "0.88rem", color: "var(--text-secondary)" }}>
+          <p
+            suppressHydrationWarning
+            style={{
+              fontSize: "0.88rem",
+              color: "var(--text-secondary)",
+              marginTop: 4,
+            }}
+          >
             {isRestrictedView
               ? "Viewing your authorized personnel profile record"
-              : `Showing ${employees.length} of ${totalItems} enterprise team members`}
+              : `Showing ${displayedEmployees.length} of ${totalItems} enterprise team members across ${departments.length} departments`}
           </p>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Export Button */}
+          <button
+            onClick={exportToCSV}
+            className="capsule-select-btn"
+            title="Download CSV Roster"
+          >
+            <Download size={15} />
+            <span>Export</span>
+          </button>
+
           {/* View Toggle */}
-          <div style={{ display: "flex", background: "var(--bg-surface-elevated)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", padding: 3 }}>
+          <div
+            style={{
+              display: "flex",
+              background: "var(--bg-surface-elevated)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "9999px",
+              padding: 3,
+            }}
+          >
             <button
               onClick={() => setViewMode("table")}
               className={`btn btn-sm ${viewMode === "table" ? "btn-primary" : "btn-ghost"}`}
-              style={{ padding: "6px 10px" }}
+              style={{ borderRadius: "9999px", padding: "6px 12px" }}
               title="Table View"
             >
               <ListIcon size={16} />
@@ -196,7 +336,7 @@ export default function EmployeesPage() {
             <button
               onClick={() => setViewMode("grid")}
               className={`btn btn-sm ${viewMode === "grid" ? "btn-primary" : "btn-ghost"}`}
-              style={{ padding: "6px 10px" }}
+              style={{ borderRadius: "9999px", padding: "6px 12px" }}
               title="Card Grid View"
             >
               <LayoutGrid size={16} />
@@ -204,12 +344,47 @@ export default function EmployeesPage() {
           </div>
 
           {canAdd && (
-            <button onClick={() => setIsAddModalOpen(true)} className="btn btn-primary">
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="btn btn-primary"
+              style={{ borderRadius: "9999px", padding: "8px 18px", fontWeight: 600 }}
+            >
               <Plus size={16} /> Onboard Employee
             </button>
           )}
         </div>
       </div>
+
+      {/* Option 3 Studio Ratio Progress Bar (with Light Butter-Yellow Hired Pill) */}
+      {!isRestrictedView && (
+        <div className="ratio-progress-container">
+          <div className="ratio-progress-track">
+            {/* Total Personnel */}
+            <div className="ratio-segment" style={{ flex: 1 }}>
+              <span>Total Personnel</span>
+              <strong className="tabular-figures">{totalItems || employees.length}</strong>
+            </div>
+
+            {/* Active / Hired Staff in Signature Light Pastel Butter-Yellow Pill */}
+            <div className="ratio-segment ratio-segment-hired-light" style={{ flex: 2 }}>
+              <span>Hired / Active</span>
+              <strong className="tabular-figures">{activePct}%</strong>
+            </div>
+
+            {/* On Leave Segment */}
+            <div className="ratio-segment" style={{ flex: 1 }}>
+              <span>On Leave</span>
+              <strong className="tabular-figures">{onLeavePct}%</strong>
+            </div>
+
+            {/* Probationary / Hatched Segment */}
+            <div className="ratio-segment ratio-segment-hatched" style={{ flex: 1 }}>
+              <span>In Probation</span>
+              <strong className="tabular-figures">{probationaryPct}%</strong>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Onboard Success Alert */}
       {onboardSuccess && (
@@ -232,210 +407,397 @@ export default function EmployeesPage() {
         </div>
       )}
 
-      {/* Filter & Search Toolbar (Only if multiple employees visible) */}
+      {/* Studio Capsule Filter Toolbar */}
       {!isRestrictedView && (
-        <div
-          className="card"
-          style={{
-            padding: "16px 20px",
-            display: "flex",
-            alignItems: "center",
-            gap: 14,
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ flex: 1, minWidth: 260, position: "relative" }}>
-            <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+        <div className="capsule-filter-toolbar">
+          {/* Capsule Search Box */}
+          <div className="capsule-search-box">
+            <Search size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
             <input
               type="text"
-              className="input-field"
+              className="capsule-search-input"
               placeholder="Search by name, email, or employee code..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ paddingLeft: 38 }}
             />
           </div>
 
-          {/* Department Filter */}
-          <div style={{ minWidth: 180 }}>
-            <select
-              className="input-field"
-              value={selectedDept}
-              onChange={(e) => setSelectedDept(e.target.value)}
-            >
-              <option value="">All Departments</option>
-              {departments.map((d) => (
-                <option key={d.public_id} value={d.public_id}>
-                  {d.department_name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Department Filter Capsule */}
+          <select
+            className="capsule-select-btn"
+            value={selectedDept}
+            onChange={(e) => setSelectedDept(e.target.value)}
+          >
+            <option value="">All Departments</option>
+            {departments.map((d) => (
+              <option key={d.public_id} value={d.public_id}>
+                {d.department_name}
+              </option>
+            ))}
+          </select>
 
-          {/* Status Filter */}
-          <div style={{ minWidth: 150 }}>
-            <select
-              className="input-field"
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
+          {/* Office Site / Location Filter Capsule */}
+          <select
+            className="capsule-select-btn"
+            value={selectedSite}
+            onChange={(e) => setSelectedSite(e.target.value)}
+          >
+            <option value="">All Locations</option>
+            <option value="us">🇺🇸 Miami (US)</option>
+            <option value="sweden">🇸🇪 Stockholm</option>
+            <option value="uk">🇬🇧 London</option>
+            <option value="india">🇮🇳 Bangalore</option>
+            <option value="remote">🌐 Remote Global</option>
+          </select>
+
+          {/* Lifecycle / Employment Type Filter Capsule */}
+          <select
+            className="capsule-select-btn"
+            value={selectedLifecycle}
+            onChange={(e) => setSelectedLifecycle(e.target.value)}
+          >
+            <option value="">All Lifecycles</option>
+            <option value="full_time">Full Time</option>
+            <option value="part_time">Part Time</option>
+            <option value="contract">Contract</option>
+            <option value="intern">Intern</option>
+          </select>
+
+          {/* Status Filter Capsule */}
+          <select
+            className="capsule-select-btn"
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+          >
+            <option value="">All Statuses</option>
+            <option value="Active">Active</option>
+            <option value="On_Leave">On Leave</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+
+          {/* Reset Filters */}
+          {(search || selectedDept || selectedSite || selectedLifecycle || selectedStatus) && (
+            <button
+              onClick={() => {
+                setSearch("");
+                setSelectedDept("");
+                setSelectedSite("");
+                setSelectedLifecycle("");
+                setSelectedStatus("");
+              }}
+              className="btn btn-ghost btn-sm"
+              style={{ borderRadius: "9999px" }}
             >
-              <option value="">All Statuses</option>
-              <option value="Active">Active</option>
-              <option value="On_Leave">On Leave</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
+              Reset Filters
+            </button>
+          )}
         </div>
       )}
 
-      {/* Table View */}
+      {/* Curated Studio Data Table View */}
       {viewMode === "table" ? (
-        <div className="table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Employee</th>
-                <th>Employee Code</th>
-                <th>Department & Designation</th>
-                <th>Employment Type</th>
-                <th>Status</th>
-                <th>Joining Date</th>
-                <th style={{ textAlign: "right" }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {employees.map((emp) => (
-                <tr key={emp.public_id}>
-                  <td>
-                    <Link
-                      href={`/employees/${emp.public_id}`}
-                      style={{ display: "flex", alignItems: "center", gap: 12 }}
-                    >
-                      <Avatar name={`${emp.first_name} ${emp.last_name}`} size={36} />
-                      <div>
-                        <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>
-                          {emp.first_name} {emp.last_name}
-                        </div>
-                        <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                          {emp.email}
-                        </div>
-                      </div>
-                    </Link>
-                  </td>
-                  <td>
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.85rem", color: "var(--color-primary-400)" }}>
-                      {emp.employee_code}
-                    </span>
-                  </td>
-                  <td>
-                    <div style={{ fontWeight: 500, color: "var(--text-primary)" }}>
-                      {emp.designation_name || designations.find((d) => d.public_id === emp.designation_public_id)?.designation_name || designations.find((d) => d.public_id === emp.designation_public_id)?.title || "—"}
-                    </div>
-                    <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
-                      {emp.department_name || departments.find((d) => d.public_id === emp.department_public_id)?.department_name || "—"}
-                    </div>
-                  </td>
-                  <td>
-                    <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
-                      {String(emp.employment_type || "Full Time").replace(/_/g, " ")}
-                    </span>
-                  </td>
-                  <td>
-                    <StatusBadge status={emp.employee_status} />
-                  </td>
-                  <td>
-                    <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
-                      {new Date(emp.joining_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                    </span>
-                  </td>
-                  <td style={{ textAlign: "right" }}>
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                      {canEdit && (
-                        <button
-                          onClick={() => {
-                            setSelectedEditEmp(emp);
-                            setIsEditModalOpen(true);
-                          }}
-                          className="btn btn-ghost btn-sm"
-                          style={{ padding: "6px 8px", color: "var(--color-primary-400)" }}
-                          title="Edit Employee Details"
-                        >
-                          <Edit3 size={14} />
-                        </button>
-                      )}
-                      <Link
-                        href={`/employees/${emp.public_id}`}
-                        className="btn btn-ghost btn-sm"
-                        style={{ color: "var(--color-primary-400)", fontWeight: 600 }}
-                      >
-                        Profile <ChevronRight size={14} />
-                      </Link>
-                    </div>
-                  </td>
+        <div className="studio-card-container">
+          <div style={{ overflowX: "auto" }}>
+            <table className="data-table" style={{ margin: 0 }}>
+              <thead>
+                <tr>
+                  <th style={{ width: 44, textAlign: "center" }}>
+                    <input
+                      type="checkbox"
+                      checked={
+                        selectedEmpIds.size === displayedEmployees.length &&
+                        displayedEmployees.length > 0
+                      }
+                      onChange={toggleSelectAll}
+                      style={{ cursor: "pointer", width: 16, height: 16, accentColor: "#eab308" }}
+                      aria-label="Select all employees"
+                    />
+                  </th>
+                  <th>Employee</th>
+                  <th>Employee Code</th>
+                  <th>Job Title</th>
+                  <th>Department</th>
+                  <th>Site</th>
+                  <th>Start Date</th>
+                  <th>Lifecycle</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {displayedEmployees.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} style={{ textAlign: "center", padding: "48px 16px" }}>
+                      <p style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>
+                        No personnel records match your selected filters.
+                      </p>
+                    </td>
+                  </tr>
+                ) : (
+                  displayedEmployees.map((emp) => {
+                    const isSelected = selectedEmpIds.has(emp.public_id);
+                    const location = getLocationBadge(emp);
+                    const isStatusActive = String(emp.employee_status).toLowerCase() === "active";
+                    const isStatusLeave = String(emp.employee_status).toLowerCase().includes("leave");
+
+                    return (
+                      <tr
+                        key={emp.public_id}
+                        className={isSelected ? "table-row-selected-yellow" : ""}
+                        style={{ cursor: "pointer" }}
+                        onClick={() => toggleSelectRow(emp.public_id)}
+                      >
+                        {/* Checkbox */}
+                        <td
+                          style={{ textAlign: "center" }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelectRow(emp.public_id)}
+                            style={{ cursor: "pointer", width: 16, height: 16, accentColor: "#eab308" }}
+                            aria-label={`Select ${emp.first_name} ${emp.last_name}`}
+                          />
+                        </td>
+
+                        {/* Employee Avatar + Name */}
+                        <td>
+                          <Link
+                            href={`/employees/${emp.public_id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}
+                          >
+                            <Avatar name={`${emp.first_name} ${emp.last_name}`} size={38} />
+                            <div>
+                              <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>
+                                {emp.first_name} {emp.last_name}
+                              </div>
+                              <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                                {emp.email}
+                              </div>
+                            </div>
+                          </Link>
+                        </td>
+
+                        {/* Code */}
+                        <td>
+                          <span
+                            className="tabular-figures"
+                            style={{
+                              fontFamily: "var(--font-mono)",
+                              fontSize: "0.82rem",
+                              fontWeight: 600,
+                              color: "var(--color-primary-400)",
+                            }}
+                          >
+                            {emp.employee_code}
+                          </span>
+                        </td>
+
+                        {/* Job Role */}
+                        <td>
+                          <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>
+                            {emp.designation_name ||
+                              designations.find((d) => d.public_id === emp.designation_public_id)
+                                ?.designation_name ||
+                              designations.find((d) => d.public_id === emp.designation_public_id)
+                                ?.title ||
+                              "—"}
+                          </span>
+                        </td>
+
+                        {/* Department */}
+                        <td>
+                          <span style={{ fontSize: "0.86rem", color: "var(--text-secondary)" }}>
+                            {emp.department_name ||
+                              departments.find((d) => d.public_id === emp.department_public_id)
+                                ?.department_name ||
+                              "—"}
+                          </span>
+                        </td>
+
+                        {/* Location Site with Country Flag */}
+                        <td>
+                          <div className="location-flag-badge">
+                            <span style={{ fontSize: "1.1rem" }}>{location.flag}</span>
+                            <span style={{ fontWeight: 500 }}>{location.label}</span>
+                          </div>
+                        </td>
+
+                        {/* Start Date */}
+                        <td>
+                          <span className="tabular-figures" style={{ fontSize: "0.84rem", color: "var(--text-secondary)" }}>
+                            {emp.joining_date
+                              ? new Date(emp.joining_date).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                })
+                              : "—"}
+                          </span>
+                        </td>
+
+                        {/* Lifecycle */}
+                        <td>
+                          <span
+                            style={{
+                              fontSize: "0.8rem",
+                              fontWeight: 600,
+                              padding: "3px 8px",
+                              borderRadius: "6px",
+                              background: "var(--bg-surface-elevated)",
+                              color: "var(--text-secondary)",
+                            }}
+                          >
+                            {String(emp.employment_type || "Full Time").replace(/_/g, " ")}
+                          </span>
+                        </td>
+
+                        {/* Status Dot Badge */}
+                        <td>
+                          <span
+                            className={`status-indicator-dot ${
+                              isStatusActive
+                                ? "status-dot-green"
+                                : isStatusLeave
+                                ? "status-dot-amber"
+                                : "status-dot-gray"
+                            }`}
+                          >
+                            <span
+                              style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: "50%",
+                                background: "currentColor",
+                              }}
+                            />
+                            <span>{isStatusActive ? "Invited" : isStatusLeave ? "On Leave" : "Inactive"}</span>
+                          </span>
+                        </td>
+
+                        {/* Actions */}
+                        <td style={{ textAlign: "right" }} onClick={(e) => e.stopPropagation()}>
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                            {canEdit && (
+                              <button
+                                onClick={() => {
+                                  setSelectedEditEmp(emp);
+                                  setIsEditModalOpen(true);
+                                }}
+                                className="btn btn-ghost btn-sm"
+                                style={{ padding: "6px 8px", color: "var(--color-primary-400)" }}
+                                title="Edit Employee Details"
+                              >
+                                <Edit3 size={14} />
+                              </button>
+                            )}
+                            <Link
+                              href={`/employees/${emp.public_id}`}
+                              className="btn btn-ghost btn-sm"
+                              style={{ color: "var(--color-primary-400)", fontWeight: 600 }}
+                            >
+                              Profile <ChevronRight size={14} />
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
         /* Grid View */
         <div className="grid-cols-3">
-          {employees.map((emp) => (
-            <div key={emp.public_id} className="card card-interactive" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
-                  <Avatar name={`${emp.first_name} ${emp.last_name}`} size={48} />
-                  <StatusBadge status={emp.employee_status} />
-                </div>
+          {displayedEmployees.map((emp) => {
+            const isSelected = selectedEmpIds.has(emp.public_id);
+            const location = getLocationBadge(emp);
+            const isStatusActive = String(emp.employee_status).toLowerCase() === "active";
+            const isStatusLeave = String(emp.employee_status).toLowerCase().includes("leave");
 
-                <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: 2 }}>
-                  {emp.first_name} {emp.last_name}
-                </h3>
-                <div style={{ fontSize: "0.85rem", color: "var(--color-primary-400)", fontWeight: 600, marginBottom: 12 }}>
-                  {emp.designation_name || designations.find((d) => d.public_id === emp.designation_public_id)?.designation_name || designations.find((d) => d.public_id === emp.designation_public_id)?.title || "—"}
-                </div>
+            return (
+              <div
+                key={emp.public_id}
+                className={`card card-interactive ${isSelected ? "table-row-selected-yellow" : ""}`}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  borderRadius: "16px",
+                  border: isSelected ? "1px solid #eab308" : "1px solid var(--border-subtle)",
+                }}
+                onClick={() => toggleSelectRow(emp.public_id)}
+              >
+                <div>
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
+                    <Avatar name={`${emp.first_name} ${emp.last_name}`} size={46} />
+                    <span
+                      className={`status-indicator-dot ${
+                        isStatusActive
+                          ? "status-dot-green"
+                          : isStatusLeave
+                          ? "status-dot-amber"
+                          : "status-dot-gray"
+                      }`}
+                    >
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: "currentColor" }} />
+                      <span>{isStatusActive ? "Invited" : isStatusLeave ? "On Leave" : "Inactive"}</span>
+                    </span>
+                  </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: "0.82rem", color: "var(--text-secondary)", marginBottom: 16 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <Building size={14} style={{ color: "var(--text-muted)" }} />
-                    <span>{emp.department_name || departments.find((d) => d.public_id === emp.department_public_id)?.department_name || "—"}</span>
+                  <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: 2 }}>
+                    {emp.first_name} {emp.last_name}
+                  </h3>
+                  <div style={{ fontSize: "0.85rem", color: "var(--color-primary-400)", fontWeight: 600, marginBottom: 12 }}>
+                    {emp.designation_name ||
+                      designations.find((d) => d.public_id === emp.designation_public_id)?.designation_name ||
+                      "—"}
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <Mail size={14} style={{ color: "var(--text-muted)" }} />
-                    <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{emp.email}</span>
-                  </div>
-                  {emp.phone_number && (
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: "0.82rem", color: "var(--text-secondary)", marginBottom: 16 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <Phone size={14} style={{ color: "var(--text-muted)" }} />
-                      <span>{emp.phone_number}</span>
+                      <Building size={14} style={{ color: "var(--text-muted)" }} />
+                      <span>{emp.department_name || "—"}</span>
                     </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: "1rem" }}>{location.flag}</span>
+                      <span>{location.label}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <Mail size={14} style={{ color: "var(--text-muted)" }} />
+                      <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{emp.email}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: 8, marginTop: "auto" }} onClick={(e) => e.stopPropagation()}>
+                  {canEdit && (
+                    <button
+                      onClick={() => {
+                        setSelectedEditEmp(emp);
+                        setIsEditModalOpen(true);
+                      }}
+                      className="btn btn-secondary btn-sm"
+                      style={{ flex: 1, justifyContent: "center", borderRadius: "9999px" }}
+                    >
+                      <Edit3 size={14} /> Edit
+                    </button>
                   )}
+                  <Link
+                    href={`/employees/${emp.public_id}`}
+                    className="btn btn-primary btn-sm"
+                    style={{ flex: 1, justifyContent: "center", borderRadius: "9999px" }}
+                  >
+                    Profile
+                  </Link>
                 </div>
               </div>
-
-              <div style={{ display: "flex", gap: 8, marginTop: "auto" }}>
-                {canEdit && (
-                  <button
-                    onClick={() => {
-                      setSelectedEditEmp(emp);
-                      setIsEditModalOpen(true);
-                    }}
-                    className="btn btn-secondary btn-sm"
-                    style={{ flex: 1, justifyContent: "center" }}
-                  >
-                    <Edit3 size={14} /> Edit
-                  </button>
-                )}
-                <Link
-                  href={`/employees/${emp.public_id}`}
-                  className="btn btn-primary btn-sm"
-                  style={{ flex: 1, justifyContent: "center" }}
-                >
-                  Profile
-                </Link>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
