@@ -347,8 +347,8 @@ interface ClientCacheEntry<T> {
 }
 
 const clientApiCache = new Map<string, ClientCacheEntry<any>>();
-const CLIENT_CACHE_TTL_MS = 25000; // 25 seconds fresh window
-const REVALIDATE_AFTER_MS = 5000;  // 5 seconds before background revalidation
+const CLIENT_CACHE_TTL_MS = 180000; // 3 minutes fresh window (invalidated automatically on POST/PUT/PATCH/DELETE)
+const REVALIDATE_AFTER_MS = 30000;  // 30 seconds before background revalidation
 
 export function invalidateClientCache(endpointPrefix?: string): void {
   if (!endpointPrefix) {
