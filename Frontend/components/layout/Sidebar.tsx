@@ -122,6 +122,47 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
+// Prefetch tab dataset into memory cache for instant 0ms transitions
+function prefetchTabData(href: string) {
+  try {
+    switch (href) {
+      case "/employees":
+        api.employees.search({ limit: 10 }).catch(() => {});
+        api.departments.list().catch(() => {});
+        break;
+      case "/attendance":
+        api.attendance.getRecords({ limit: 500 }).catch(() => {});
+        api.employees.list({ limit: 100 }).catch(() => {});
+        break;
+      case "/leaves":
+        api.leaves.getBalances().catch(() => {});
+        api.leaves.getRequests().catch(() => {});
+        api.leaves.listTypes().catch(() => {});
+        break;
+      case "/projects":
+        api.projects.list().catch(() => {});
+        break;
+      case "/departments":
+        api.departments.list().catch(() => {});
+        api.departments.listDesignations().catch(() => {});
+        break;
+      case "/roles":
+        api.auth.listRolesDetailed().catch(() => {});
+        api.auth.listPermissions().catch(() => {});
+        break;
+      case "/approvals":
+        api.auth.listPendingUsers().catch(() => {});
+        break;
+      case "/announcements":
+        api.announcements.list().catch(() => {});
+        break;
+      case "/holidays":
+        api.holidays.list().catch(() => {});
+        break;
+    }
+  } catch (e) {}
+}
+
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -227,6 +268,22 @@ export function Sidebar() {
       return () => clearTimeout(timer);
     }
   }, [router, activeRole]);
+
+  // Approach B: Silently pre-warm top 2 visited tabs when browser is idle
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const warmIdle = () => {
+      prefetchTabData("/employees");
+      prefetchTabData("/attendance");
+    };
+    if ("requestIdleCallback" in window) {
+      const id = (window as any).requestIdleCallback(warmIdle, { timeout: 3000 });
+      return () => (window as any).cancelIdleCallback(id);
+    } else {
+      const timer = setTimeout(warmIdle, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [activeRole]);
 
   return (
     <aside
@@ -389,13 +446,16 @@ export function Sidebar() {
               prefetch={true}
               onMouseEnter={() => {
                 try { router.prefetch(item.href); } catch (e) {}
+                prefetchTabData(item.href);
               }}
               onFocus={() => {
                 try { router.prefetch(item.href); } catch (e) {}
+                prefetchTabData(item.href);
               }}
               onPointerDown={() => {
                 setOptimisticPath(item.href);
                 try { router.prefetch(item.href); } catch (e) {}
+                prefetchTabData(item.href);
               }}
               onClick={() => setOptimisticPath(item.href)}
               className={`sidebar-nav-link ${isActive ? "active" : ""}`}
