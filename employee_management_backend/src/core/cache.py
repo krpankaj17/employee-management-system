@@ -48,13 +48,13 @@ _locks: dict[str, threading.Lock] = {
 }
 _default_lock = threading.Lock()
 
-# Global Valkey Client Pool with low connection timeout
+# Global Valkey Client Pool with resilient connection timeouts for cloud environments
 _pool = redis.ConnectionPool.from_url(
     settings.VALKEY_URL,
     decode_responses=True,
     max_connections=20,
-    socket_timeout=0.3,
-    socket_connect_timeout=0.3,
+    socket_timeout=1.0,
+    socket_connect_timeout=2.0,
 )
 _client = redis.Redis(connection_pool=_pool)
 
