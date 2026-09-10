@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Lock,
@@ -15,13 +15,15 @@ import {
   Loader2,
   X,
   ShieldCheck,
+  Building2,
+  WalletCards,
+  Clock,
   Check,
 } from "lucide-react";
 import {
   authenticateWithCredentials,
   registerNewUser,
 } from "@/lib/auth";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { Modal } from "@/components/ui/Modal";
 import { api } from "@/lib/apiClient";
 
@@ -55,9 +57,6 @@ export default function LoginPage() {
   const [forgotError, setForgotError] = useState<string | null>(null);
   const [forgotSuccessMsg, setForgotSuccessMsg] = useState("");
 
-  // Ref for 3D tilt
-  const cardRef = useRef<HTMLDivElement>(null);
-
   // Clean URL query and handle expired session alert
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -81,7 +80,7 @@ export default function LoginPage() {
       }
 
       if (window.location.search.includes("session_expired=true")) {
-        setLoginError("Your previous session has expired or was invalid. Please sign in with your corporate credentials.");
+        setLoginError("Your session has expired. Please sign in with your corporate credentials.");
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
@@ -108,62 +107,9 @@ export default function LoginPage() {
     return () => clearInterval(interval);
   }, [forgotCooldown]);
 
-  // 3D Tilt & Cursor tracking on Card
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const card = cardRef.current;
-      if (!card) return;
-
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const cx = rect.width / 2;
-      const cy = rect.height / 2;
-
-      const rotateX = ((y - cy) / cy) * -6;
-      const rotateY = ((x - cx) / cx) * 6;
-
-      const withinCard = x >= -60 && x <= rect.width + 60 && y >= -60 && y <= rect.height + 60;
-
-      if (withinCard) {
-        card.style.transform = `rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(0)`;
-        card.style.setProperty("--mx", `${((x / rect.width) * 100).toFixed(1)}%`);
-        card.style.setProperty("--my", `${((y / rect.height) * 100).toFixed(1)}%`);
-      } else {
-        card.style.transform = "rotateX(0deg) rotateY(0deg)";
-      }
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-    };
-  }, []);
-
-  // Ripple effect on button click
-  const handleButtonRipple = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const btn = e.currentTarget;
-    const rect = btn.getBoundingClientRect();
-    const ripple = document.createElement("span");
-    const size = Math.max(rect.width, rect.height) * 1.5;
-    ripple.className = "glass-ripple";
-    ripple.style.width = `${size}px`;
-    ripple.style.height = `${size}px`;
-    ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
-    ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
-    btn.appendChild(ripple);
-    setTimeout(() => {
-      ripple.remove();
-    }, 650);
-  };
-
   const handleSendSignupOtp = async () => {
     const trimmed = email.trim();
-    if (!trimmed) {
-      setLoginError("Please enter your corporate email address first.");
-      return;
-    }
-    if (!trimmed.includes("@") || !trimmed.includes(".")) {
+    if (!trimmed || !trimmed.includes("@") || !trimmed.includes(".")) {
       setLoginError("Please enter a valid corporate email address (e.g. name@company.com).");
       return;
     }
@@ -176,16 +122,6 @@ export default function LoginPage() {
       setSignupCooldown(cooldownSecs);
       setSignupOtp("");
     } catch (err: any) {
-      if (err.retryAfter && err.retryAfter > 0) {
-        setOtpSent(true);
-        setSignupCooldown(err.retryAfter);
-      } else {
-        const match = (err.message || "").match(/wait\s+(\d+)\s+seconds/i);
-        if (match) {
-          setOtpSent(true);
-          setSignupCooldown(parseInt(match[1], 10));
-        }
-      }
       setLoginError(err.message || "Failed to dispatch email verification code.");
     } finally {
       setSignupOtpLoading(false);
@@ -205,11 +141,7 @@ export default function LoginPage() {
         setLoginError("Please enter your full name.");
         return;
       }
-      if (!trimmedEmail) {
-        setLoginError("Please enter your corporate email address.");
-        return;
-      }
-      if (!trimmedEmail.includes("@") || !trimmedEmail.includes(".")) {
+      if (!trimmedEmail || !trimmedEmail.includes("@") || !trimmedEmail.includes(".")) {
         setLoginError("Please enter a valid corporate email address (e.g. name@company.com).");
         return;
       }
@@ -217,11 +149,7 @@ export default function LoginPage() {
         setLoginError("Please enter the 6-digit email verification code.");
         return;
       }
-      if (!password) {
-        setLoginError("Please enter a password.");
-        return;
-      }
-      if (password.length < 6) {
+      if (!password || password.length < 6) {
         setLoginError("Password must be at least 6 characters long.");
         return;
       }
@@ -239,7 +167,7 @@ export default function LoginPage() {
           return;
         }
         setSignupSuccessMsg(
-          "Account registered successfully! Your email has been verified. You can now sign in with your credentials."
+          "Account registered successfully! You can now sign in with your corporate credentials."
         );
         setIsRegisterMode(false);
         setDisplayName("");
@@ -254,12 +182,8 @@ export default function LoginPage() {
     }
 
     // Login Flow Validation
-    if (!trimmedEmail) {
+    if (!trimmedEmail || !trimmedEmail.includes("@") || !trimmedEmail.includes(".")) {
       setLoginError("Please enter your corporate email address.");
-      return;
-    }
-    if (!trimmedEmail.includes("@") || !trimmedEmail.includes(".")) {
-      setLoginError("Please enter a valid corporate email address (e.g. name@company.com).");
       return;
     }
     if (!password) {
@@ -284,11 +208,10 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       setLoading(false);
-      setLoginError(err.message || "Invalid corporate email or password. Please verify your credentials.");
+      setLoginError(err.message || "Invalid credentials. Please verify your email and password.");
     }
   };
 
-  // Forgot Password Helpers
   const openForgotPassword = () => {
     setForgotEmail(email.trim() || "");
     setForgotStep("request");
@@ -316,14 +239,6 @@ export default function LoginPage() {
       setForgotOtp("");
       setForgotStep("verify");
     } catch (err: any) {
-      if (err.retryAfter && err.retryAfter > 0) {
-        setForgotCooldown(err.retryAfter);
-      } else {
-        const match = (err.message || "").match(/wait\s+(\d+)\s+seconds/i);
-        if (match) {
-          setForgotCooldown(parseInt(match[1], 10));
-        }
-      }
       setForgotError(err.message || "Failed to dispatch reset verification code.");
     } finally {
       setForgotLoading(false);
@@ -360,272 +275,373 @@ export default function LoginPage() {
     }
   };
 
+  const quickFill = (userEmail: string, userPass: string) => {
+    setEmail(userEmail);
+    setPassword(userPass);
+    setIsRegisterMode(false);
+    setLoginError(null);
+  };
+
   return (
-    <div className="glass-scene" id="scene">
-      {/* ── Atmospheric Ambient Orbs (Matching Application Brand Theme) ── */}
-      <div className="glass-blob b1" />
-      <div className="glass-blob b2" />
-      <div className="glass-blob b3" />
-
-      {/* Floating Theme Toggle (Top Right) */}
-      <div className="glass-theme-toggle-wrap">
-        <ThemeToggle />
-      </div>
-
-      {/* ── Centered Glass Card (Single Card, No Split Screen) ── */}
-      <div className="glass-center-container">
-        <div className="glass-card" id="card" ref={cardRef}>
-          {/* Brand Header */}
-          <div className="glass-card-brand">
-            <div className="glass-card-mark">
-              <ShieldCheck size={20} color="#ffffff" strokeWidth={2.4} />
+    <div className="web-auth-page">
+      {/* ── Enterprise Website Navigation Bar ── */}
+      <header className="web-auth-header">
+        <div className="web-auth-header-inner">
+          <div className="web-auth-brand">
+            <div className="web-auth-brand-badge">
+              <ShieldCheck size={20} color="#111827" strokeWidth={2.4} />
             </div>
-            <div className="glass-card-brand-name">Employee Management System</div>
+            <div>
+              <span className="web-auth-brand-title">Employee Management System</span>
+              <span className="web-auth-brand-tag">Enterprise Edition</span>
+            </div>
           </div>
+          <div className="web-auth-header-right">
+            <span className="web-auth-status-pill">
+              <span className="web-auth-status-dot" />
+              All Systems Operational
+            </span>
+          </div>
+        </div>
+      </header>
 
-          <h1 className="glass-card-title">
-            {isRegisterMode ? "Create Account" : "Welcome back"}
-          </h1>
-          <p className="glass-card-sub">
-            {isRegisterMode
-              ? "Register your self-service employee profile"
-              : "Sign in to your employee account"}
-          </p>
-
-          {/* Success Alert Banner */}
-          {signupSuccessMsg && (
-            <div className="glass-alert-success">
-              <CheckCircle2 size={16} className="shrink-0" />
-              <span>{signupSuccessMsg}</span>
+      {/* ── Main Responsive Website Split Layout ── */}
+      <main className="web-auth-main">
+        <div className="web-auth-grid">
+          {/* Left Column: Enterprise Value Showcase */}
+          <div className="web-auth-hero">
+            <div className="web-auth-pill-chip">
+              ✨ Enterprise Workforce & Payroll Architecture
             </div>
-          )}
+            <h1 className="web-auth-headline">
+              Streamline enterprise workforce operations & payroll.
+            </h1>
+            <p className="web-auth-subhead">
+              Single unified portal for automated salary disbursements, attendance tracking, leave requests, and RBAC governance.
+            </p>
 
-          {/* Error Alert Banner */}
-          {loginError && (!isRegisterMode || !loginError.includes("session has expired")) && (
-            <div className="glass-alert-error">
-              <div className="flex items-start gap-2">
-                <AlertCircle size={16} className="shrink-0 mt-0.5" />
-                <span>{loginError}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setLoginError(null)}
-                className="glass-alert-close"
-                title="Dismiss error"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          )}
-
-          {/* Authentication Form */}
-          <form onSubmit={handleSubmit} noValidate>
-            {/* Full Name (Register Mode Only) */}
-            {isRegisterMode && (
-              <div className="glass-field">
-                <label className="glass-label">Full Name *</label>
-                <div className="glass-input-box">
-                  <User size={16} className="glass-input-icon" />
-                  <input
-                    type="text"
-                    id="name"
-                    required
-                    className="glass-input"
-                    placeholder="e.g. Aditya Verma"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                  />
+            {/* Feature Bento Showcase */}
+            <div className="web-auth-features">
+              <div className="web-auth-feature-item">
+                <div className="web-auth-feature-icon">
+                  <WalletCards size={18} />
+                </div>
+                <div>
+                  <h2 className="web-auth-feature-title">Salary & Batch Payroll</h2>
+                  <p className="web-auth-feature-desc">
+                    Calculates base compensation, bonuses, statutory deductions, and automated payout disbursement records.
+                  </p>
                 </div>
               </div>
-            )}
 
-            {/* Corporate Email Field */}
-            <div className="glass-field">
-              <label className="glass-label">Corporate Email Address *</label>
-              <div className="glass-input-box">
-                <Mail size={16} className="glass-input-icon" />
-                <input
-                  type="email"
-                  id="email"
-                  required
-                  className="glass-input"
-                  placeholder="name@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
+              <div className="web-auth-feature-item">
+                <div className="web-auth-feature-icon">
+                  <Clock size={18} />
+                </div>
+                <div>
+                  <h2 className="web-auth-feature-title">Real-Time Attendance & Leaves</h2>
+                  <p className="web-auth-feature-desc">
+                    Biometric-compatible shift check-ins, automated leave ledger tracking, and instant manager approvals.
+                  </p>
+                </div>
+              </div>
+
+              <div className="web-auth-feature-item">
+                <div className="web-auth-feature-icon">
+                  <Building2 size={18} />
+                </div>
+                <div>
+                  <h2 className="web-auth-feature-title">Governance & Audit Security</h2>
+                  <p className="web-auth-feature-desc">
+                    Granular role-based access control with complete audit trails and SOC-2 compliant verification.
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Email OTP Verification (Register Mode Only) */}
-            {isRegisterMode && (
-              <div className="glass-field">
-                <div className="flex justify-between items-center mb-1 px-0.5">
-                  <label className="glass-label mb-0">6-Digit OTP Code *</label>
-                  <button
-                    type="button"
-                    onClick={handleSendSignupOtp}
-                    disabled={signupCooldown > 0 || signupOtpLoading}
-                    className="glass-text-btn flex items-center gap-1.5"
-                    style={{ cursor: (signupCooldown > 0 || signupOtpLoading) ? "not-allowed" : "pointer" }}
-                  >
-                    {signupOtpLoading ? (
-                      <>
-                        <Loader2 size={13} className="animate-spin" />
-                        <span>Sending...</span>
-                      </>
-                    ) : signupCooldown > 0 ? (
-                      `Resend in ${signupCooldown}s`
-                    ) : otpSent ? (
-                      "Resend OTP"
-                    ) : (
-                      "Send OTP"
-                    )}
-                  </button>
-                </div>
-                <div className="glass-input-box">
-                  <KeyRound size={16} className="glass-input-icon" />
-                  <input
-                    type="text"
-                    required
-                    maxLength={6}
-                    className="glass-input"
-                    placeholder="Enter 6-digit OTP"
-                    value={signupOtp}
-                    onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    style={{ letterSpacing: "0.2em", fontFamily: "var(--font-mono)" }}
-                    autoComplete="one-time-code"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Password Field */}
-            <div className="glass-field">
-              <div className="flex justify-between items-center mb-1 px-0.5">
-                <label className="glass-label mb-0">Password *</label>
-                {!isRegisterMode && (
-                  <button
-                    type="button"
-                    onClick={openForgotPassword}
-                    className="glass-link-btn"
-                  >
-                    Forgot password?
-                  </button>
-                )}
-              </div>
-              <div className="glass-input-box">
-                <Lock size={16} className="glass-input-icon" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  required
-                  className="glass-input"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={{ paddingRight: 42 }}
-                />
+            {/* 1-Click Quick Fill Demo Bar */}
+            <div className="web-auth-demo-bar">
+              <span className="web-auth-demo-label">Quick Test Sign-In:</span>
+              <div className="web-auth-demo-buttons">
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="glass-eye-btn"
-                  title={showPassword ? "Hide password" : "Show password"}
+                  onClick={() => quickFill("admin@company.com", "Admin@123")}
+                  className="web-auth-demo-btn"
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  Admin
+                </button>
+                <button
+                  type="button"
+                  onClick={() => quickFill("hr@company.com", "Hr@123")}
+                  className="web-auth-demo-btn"
+                >
+                  HR Manager
+                </button>
+                <button
+                  type="button"
+                  onClick={() => quickFill("employee@company.com", "Emp@123")}
+                  className="web-auth-demo-btn"
+                >
+                  Employee
                 </button>
               </div>
             </div>
+          </div>
 
-            {/* Confirm Password (Register Mode Only) */}
-            {isRegisterMode && (
-              <div className="glass-field">
-                <label className="glass-label">Confirm Password *</label>
-                <div className="glass-input-box">
-                  <KeyRound size={16} className="glass-input-icon" />
+          {/* Right Column: High-End Web Authentication Form */}
+          <div className="web-auth-form-card">
+            {/* Mode Switcher Tabs */}
+            <div className="web-auth-tabs">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRegisterMode(false);
+                  setLoginError(null);
+                  setSignupSuccessMsg(null);
+                }}
+                className={`web-auth-tab ${!isRegisterMode ? "active" : ""}`}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRegisterMode(true);
+                  setLoginError(null);
+                  setSignupSuccessMsg(null);
+                }}
+                className={`web-auth-tab ${isRegisterMode ? "active" : ""}`}
+              >
+                Register Profile
+              </button>
+            </div>
+
+            <div className="web-auth-form-header">
+              <h2 className="web-auth-form-title">
+                {isRegisterMode ? "Create Corporate Account" : "Sign In to Workspace"}
+              </h2>
+              <p className="web-auth-form-subtitle">
+                {isRegisterMode
+                  ? "Enter your corporate credentials and verify your email"
+                  : "Welcome back. Enter your credentials to continue"}
+              </p>
+            </div>
+
+            {/* Alerts */}
+            {signupSuccessMsg && (
+              <div className="web-auth-alert-success">
+                <CheckCircle2 size={16} className="shrink-0" />
+                <span>{signupSuccessMsg}</span>
+              </div>
+            )}
+
+            {loginError && (
+              <div className="web-auth-alert-error">
+                <div className="flex items-start gap-2">
+                  <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                  <span>{loginError}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setLoginError(null)}
+                  className="web-auth-alert-close"
+                  title="Dismiss error"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} noValidate className="web-auth-form">
+              {/* Full Name (Register Mode Only) */}
+              {isRegisterMode && (
+                <div className="web-auth-field">
+                  <label className="web-auth-label">Full Name *</label>
+                  <div className="web-auth-input-wrap">
+                    <User size={16} className="web-auth-icon" />
+                    <input
+                      type="text"
+                      id="name"
+                      required
+                      className="web-auth-input"
+                      placeholder="e.g. Aditya Verma"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Email Address */}
+              <div className="web-auth-field">
+                <label className="web-auth-label">Corporate Email *</label>
+                <div className="web-auth-input-wrap">
+                  <Mail size={16} className="web-auth-icon" />
                   <input
-                    type={showConfirmPassword ? "text" : "password"}
+                    type="email"
+                    id="email"
                     required
-                    className="glass-input"
+                    className="web-auth-input"
+                    placeholder="name@company.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* 6-Digit OTP (Register Mode Only) */}
+              {isRegisterMode && (
+                <div className="web-auth-field">
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="web-auth-label mb-0">6-Digit Verification OTP *</label>
+                    <button
+                      type="button"
+                      onClick={handleSendSignupOtp}
+                      disabled={signupCooldown > 0 || signupOtpLoading}
+                      className="web-auth-text-btn"
+                    >
+                      {signupOtpLoading ? (
+                        <>
+                          <Loader2 size={12} className="animate-spin inline mr-1" />
+                          Sending...
+                        </>
+                      ) : signupCooldown > 0 ? (
+                        `Resend in ${signupCooldown}s`
+                      ) : otpSent ? (
+                        "Resend OTP"
+                      ) : (
+                        "Send Verification OTP"
+                      )}
+                    </button>
+                  </div>
+                  <div className="web-auth-input-wrap">
+                    <KeyRound size={16} className="web-auth-icon" />
+                    <input
+                      type="text"
+                      required
+                      maxLength={6}
+                      className="web-auth-input font-mono"
+                      placeholder="Enter 6-digit OTP"
+                      value={signupOtp}
+                      onChange={(e) => setSignupOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      style={{ letterSpacing: "0.2em" }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Password */}
+              <div className="web-auth-field">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="web-auth-label mb-0">Password *</label>
+                  {!isRegisterMode && (
+                    <button
+                      type="button"
+                      onClick={openForgotPassword}
+                      className="web-auth-link-btn"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+                <div className="web-auth-input-wrap">
+                  <Lock size={16} className="web-auth-icon" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    required
+                    className="web-auth-input"
                     placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    style={{ paddingRight: 42 }}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
                   <button
                     type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="glass-eye-btn"
-                    title={showConfirmPassword ? "Hide password" : "Show password"}
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="web-auth-eye-btn"
+                    tabIndex={-1}
                   >
-                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>
-            )}
 
-            {/* Remember Me Checkbox (Login Mode Only) */}
-            {!isRegisterMode && (
-              <div className="glass-row">
-                <label className="glass-remember">
-                  <span className={`glass-custom-checkbox ${rememberMe ? "checked" : ""}`}>
-                    {rememberMe && <Check size={11} strokeWidth={3.2} />}
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    style={{ position: "absolute", opacity: 0, pointerEvents: "none", width: 0, height: 0 }}
-                  />
-                  <span>Remember me on this workstation</span>
-                </label>
-              </div>
-            )}
-
-            {/* Liquid Gradient Sweep Submit Button with Ripple */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="glass-submit"
-              id="loginBtn"
-              onClick={handleButtonRipple}
-            >
-              {loading ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-                  <span>Authenticating credentials...</span>
-                </>
-              ) : (
-                <>
-                  <span>{isRegisterMode ? "Complete Registration" : "Sign In to Portal"}</span>
-                  <ArrowRight size={16} className="glass-btn-arrow" />
-                </>
+              {/* Confirm Password (Register Mode Only) */}
+              {isRegisterMode && (
+                <div className="web-auth-field">
+                  <label className="web-auth-label">Confirm Password *</label>
+                  <div className="web-auth-input-wrap">
+                    <Lock size={16} className="web-auth-icon" />
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      required
+                      className="web-auth-input"
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="web-auth-eye-btn"
+                      tabIndex={-1}
+                    >
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
               )}
-            </button>
-          </form>
 
-          {/* Bottom Switcher */}
-          <div className="glass-footer-text">
-            {isRegisterMode ? "Already have an account?" : "Don't have an account yet?"}{" "}
-            <button
-              type="button"
-              onClick={() => {
-                setIsRegisterMode(!isRegisterMode);
-                setLoginError(null);
-                setSignupSuccessMsg(null);
-              }}
-              className="glass-switch-btn"
-            >
-              {isRegisterMode ? "Sign in" : "Sign up"}
-            </button>
+              {/* Remember Me Checkbox */}
+              {!isRegisterMode && (
+                <div className="web-auth-remember">
+                  <label className="web-auth-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="web-auth-checkbox"
+                    />
+                    <span>Remember this device for 30 days</span>
+                  </label>
+                </div>
+              )}
+
+              {/* Submit CTA */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="web-auth-submit-btn"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Processing...</span>
+                  </>
+                ) : isRegisterMode ? (
+                  <>
+                    <span>Create Corporate Profile</span>
+                    <ArrowRight size={16} />
+                  </>
+                ) : (
+                  <>
+                    <span>Sign In to Dashboard</span>
+                    <ArrowRight size={16} />
+                  </>
+                )}
+              </button>
+            </form>
           </div>
         </div>
+      </main>
 
-        {/* Subtle Watermark */}
-        <div className="glass-watermark">
-          <Lock size={12} style={{ opacity: 0.65 }} />
-          <span>Employee Management System</span>
-        </div>
-      </div>
+      {/* ── Enterprise Footer ── */}
+      <footer className="web-auth-footer">
+        <p>
+          © 2026 Employee Management System. Enterprise grade architecture • 256-bit encryption.
+        </p>
+      </footer>
 
       {/* ── Forgot Password Modal ── */}
       <Modal
@@ -636,10 +652,10 @@ export default function LoginPage() {
         {forgotStep === "request" && (
           <form onSubmit={handleRequestResetOtp}>
             <p style={{ fontSize: "0.88rem", color: "var(--text-secondary)", marginBottom: 16 }}>
-              Enter your corporate email address. We will dispatch a 6-digit verification code to reset your credentials.
+              Enter your registered corporate email to receive a 6-digit verification code.
             </p>
             {forgotError && (
-              <div className="glass-alert-error" style={{ marginBottom: 14 }}>
+              <div className="web-auth-alert-error" style={{ marginBottom: 14 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <AlertCircle size={15} /> {forgotError}
                 </div>
@@ -677,13 +693,13 @@ export default function LoginPage() {
 
         {forgotStep === "verify" && (
           <form onSubmit={handleConfirmReset}>
-            <div className="glass-alert-success" style={{ marginBottom: 16 }}>
+            <div className="web-auth-alert-success" style={{ marginBottom: 16 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <CheckCircle2 size={16} /> {forgotSuccessMsg}
               </div>
             </div>
             {forgotError && (
-              <div className="glass-alert-error" style={{ marginBottom: 14 }}>
+              <div className="web-auth-alert-error" style={{ marginBottom: 14 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <AlertCircle size={15} /> {forgotError}
                 </div>
@@ -695,11 +711,11 @@ export default function LoginPage() {
                 type="text"
                 required
                 maxLength={6}
-                className="input-field"
+                className="input-field font-mono"
                 placeholder="123456"
                 value={forgotOtp}
                 onChange={(e) => setForgotOtp(e.target.value)}
-                style={{ letterSpacing: "0.15em", fontFamily: "var(--font-mono)" }}
+                style={{ letterSpacing: "0.15em" }}
               />
             </div>
             <div className="form-group">
@@ -756,7 +772,7 @@ export default function LoginPage() {
                 height: 56,
                 borderRadius: "50%",
                 background: "rgba(16, 185, 129, 0.15)",
-                color: "#34d399",
+                color: "#059669",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -765,11 +781,11 @@ export default function LoginPage() {
             >
               <CheckCircle2 size={32} />
             </div>
-            <h3 style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: 8, fontFamily: "'Outfit', sans-serif" }}>
+            <h3 style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>
               Password Reset Complete
             </h3>
             <p style={{ fontSize: "0.88rem", color: "var(--text-secondary)", marginBottom: 24, maxWidth: 360, margin: "0 auto 24px" }}>
-              Your corporate password has been updated. You can now sign in with your new credentials.
+              Your password has been updated. You can now sign in with your new credentials.
             </p>
             <button
               onClick={() => {
