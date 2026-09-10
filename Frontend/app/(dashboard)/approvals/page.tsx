@@ -31,6 +31,7 @@ import { DocumentRecord } from "@/types/document";
 import { useAuth } from "@/lib/auth";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Pagination } from "@/components/ui/Pagination";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 const AVAILABLE_ROLES: { value: UserRole; label: string; desc: string }[] = [
   { value: "Employee", label: "Employee", desc: "Standard company employee (attendance punches, leaves, payslips)" },
@@ -187,12 +188,17 @@ export default function ApprovalsPage() {
     }
   };
 
-  const handleRejectUser = async (u: UserProfile) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to reject the registration for "${u.display_name}" (${u.email})?\n\nThis will remove the pending account from the approvals queue.`
-    );
-    if (!confirmed) return;
+  const [userToReject, setUserToReject] = useState<UserProfile | null>(null);
+  const [isRejecting, setIsRejecting] = useState(false);
 
+  const handleRejectUser = (u: UserProfile) => {
+    setUserToReject(u);
+  };
+
+  const executeRejectUser = async () => {
+    if (!userToReject) return;
+    const u = userToReject;
+    setIsRejecting(true);
     setProcessingUser((prev) => ({ ...prev, [u.public_id]: true }));
     setActionFeedback(null);
 
@@ -211,6 +217,7 @@ export default function ApprovalsPage() {
         message: `Rejected: Registration request for ${u.display_name} (${u.email}) has been discarded.`,
       });
 
+      setUserToReject(null);
       setTimeout(() => setActionFeedback(null), 6000);
     } catch (err: any) {
       setActionFeedback({
@@ -218,6 +225,7 @@ export default function ApprovalsPage() {
         message: err.message || `Failed to reject ${u.display_name}.`,
       });
     } finally {
+      setIsRejecting(false);
       setProcessingUser((prev) => ({ ...prev, [u.public_id]: false }));
     }
   };
@@ -970,6 +978,26 @@ export default function ApprovalsPage() {
           )}
         </div>
       )}
+
+      {/* Reject Registration Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!userToReject}
+        onClose={() => {
+          if (!isRejecting) setUserToReject(null);
+        }}
+        onConfirm={executeRejectUser}
+        title="Reject Registration"
+        message={
+          userToReject
+            ? `Are you sure you want to reject the registration request for "${userToReject.display_name}" (${userToReject.email})? This will discard the registration from the approvals queue.`
+            : ""
+        }
+        confirmText="Reject Registration"
+        cancelText="Cancel"
+        variant="danger"
+        icon="user-minus"
+        isLoading={isRejecting}
+      />
     </div>
   );
 }

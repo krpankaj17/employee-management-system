@@ -7,6 +7,8 @@ import { Topbar } from "@/components/layout/Topbar";
 import { BackendOfflineBanner } from "@/components/layout/BackendOfflineBanner";
 import { API_CONFIG } from "@/lib/config";
 
+import { ToastContainer } from "@/components/ui/Toast";
+
 export default function DashboardLayout({
   children,
 }: {
@@ -94,6 +96,7 @@ export default function DashboardLayout({
         <BackendOfflineBanner />
         <main className="page-container">{children}</main>
       </div>
+      <ToastContainer />
     </div>
   );
 }

@@ -22,6 +22,7 @@ import { Announcement } from "@/types/announcement";
 import { Holiday } from "@/types/holiday";
 import { AuditLog } from "@/types/audit";
 import { DocumentRecord, DocumentUploadPayload, DocumentVerifyPayload } from "@/types/document";
+import { showToast } from "@/components/ui/Toast";
 import {
   UserProfile,
   UserSignupIn,
@@ -66,6 +67,234 @@ export function createMockJwt(sub = "usr-demo", role = "Admin"): string {
   const payload = b64(JSON.stringify({ sub, role, exp: Math.floor(Date.now() / 1000) + 86400 }));
   const signature = b64("mock_signature_hash");
   return `${header}.${payload}.${signature}`;
+}
+
+/**
+ * Humanizes backend field keys into user-friendly form labels.
+ */
+export function humanizeFieldName(loc: string): string {
+  if (!loc) return "Field";
+  const map: Record<string, string> = {
+    username: "Corporate email / username",
+    email: "Corporate email",
+    corporate_email: "Corporate email",
+    personal_email: "Personal email",
+    password: "Password",
+    current_password: "Current password",
+    new_password: "New password",
+    confirm_password: "Confirm password",
+    first_name: "First name",
+    last_name: "Last name",
+    display_name: "Full name",
+    name: "Name",
+    title: "Title",
+    phone: "Phone number",
+    phone_number: "Phone number",
+    department_id: "Department",
+    department_name: "Department name",
+    department_code: "Department code",
+    designation_id: "Designation / Role",
+    salary: "Salary",
+    base_salary: "Base salary",
+    hourly_rate: "Hourly rate",
+    hire_date: "Date of joining",
+    joining_date: "Date of joining",
+    date_of_birth: "Date of birth",
+    leave_type: "Leave type",
+    leave_type_id: "Leave type",
+    start_date: "Start date",
+    end_date: "End date",
+    reason: "Reason",
+    notes: "Notes",
+    content: "Notice content",
+    amount: "Amount",
+    bonus: "Bonus",
+    deductions: "Deductions",
+  };
+  if (map[loc.toLowerCase()]) return map[loc.toLowerCase()];
+  return loc.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * Translates database constraint errors, raw exceptions, and technical tracebacks into user-friendly English.
+ */
+export function cleanRawErrorMessage(raw: string): string {
+  if (!raw || typeof raw !== "string") return "";
+
+  const lower = raw.toLowerCase();
+
+  // PostgreSQL Unique Constraint
+  if (lower.includes("duplicate key value") || lower.includes("unique constraint")) {
+    if (lower.includes("email")) {
+      return "An employee or user account with this email address already exists.";
+    }
+    if (lower.includes("employee_id")) {
+      return "This Employee ID is already assigned to another employee.";
+    }
+    if (lower.includes("department_code") || lower.includes("dept_code")) {
+      return "A department with this code already exists. Please choose a different code.";
+    }
+    if (lower.includes("department_name")) {
+      return "A department with this name already exists.";
+    }
+    if (lower.includes("attendance")) {
+      return "An attendance record already exists for this employee today.";
+    }
+    return "A duplicate record with these unique details already exists.";
+  }
+
+  // PostgreSQL Foreign Key Constraint
+  if (lower.includes("foreign key constraint") || lower.includes("violates foreign key")) {
+    return "The referenced item (e.g. department, manager, or project) does not exist or has been removed.";
+  }
+
+  // PostgreSQL Not-Null Constraint
+  if (lower.includes("not-null constraint") || lower.includes("violates not-null")) {
+    const colMatch = raw.match(/column\s+"([^"]+)"/i);
+    const colName = colMatch ? humanizeFieldName(colMatch[1]) : "A required field";
+    return `${colName} is required and cannot be left empty.`;
+  }
+
+  // Missing table or database migration error
+  if (lower.includes("relation") && lower.includes("does not exist")) {
+    return "Database table is undergoing updates. Please refresh the page or try again shortly.";
+  }
+
+  // Auth / Credentials
+  if (lower.includes("incorrect username or password") || lower === "invalid credentials") {
+    return "Invalid corporate email or password. Please verify your credentials.";
+  }
+  if (lower.includes("token has expired") || lower.includes("signature has expired")) {
+    return "Your login session has expired. Please sign in again.";
+  }
+  if (lower.includes("could not validate credentials")) {
+    return "Security session verification failed. Please sign in again.";
+  }
+  if (lower.includes("not enough permissions") || lower.includes("permission denied")) {
+    return "You do not have permission to perform this action.";
+  }
+
+  // Redis / cache
+  if (lower.includes("unable to connect to redis") || lower.includes("redisconnection")) {
+    return "Cache server is unreachable. System is operating in direct database mode.";
+  }
+
+  // Raw Python tracebacks or internal library noise
+  if (raw.includes("Traceback (most recent call last)") || raw.includes("psycopg2.") || raw.includes("sqlalchemy.")) {
+    return "An internal server error occurred while processing the database query.";
+  }
+
+  return raw;
+}
+
+/**
+ * Unified parser to transform API error responses into clear, human-understandable guidance.
+ */
+export function formatUserFacingErrorMessage(errorBody: any, status: number): string {
+  if (!errorBody && !status) return "An unexpected error occurred. Please try again.";
+
+  // 1. Check for field-level validation errors (Spring Boot / custom objects)
+  const valErrors = errorBody?.validation_errors || errorBody?.validationErrors;
+  if (valErrors && typeof valErrors === "object" && !Array.isArray(valErrors) && Object.keys(valErrors).length > 0) {
+    return Object.entries(valErrors)
+      .map(([k, v]) => `${humanizeFieldName(k)}: ${cleanRawErrorMessage(String(v))}`)
+      .join("; ");
+  }
+
+  // 2. Check for FastAPI / Pydantic validation array
+  if (Array.isArray(errorBody?.detail)) {
+    const readableErrors = errorBody.detail
+      .map((item: any) => {
+        if (typeof item === "string") return cleanRawErrorMessage(item);
+        if (!item || typeof item !== "object") return "";
+
+        const loc = Array.isArray(item.loc) ? String(item.loc[item.loc.length - 1]) : "";
+        const fieldName = humanizeFieldName(loc);
+        const rawMsg = (item.msg || item.detail || "").toString();
+        const type = (item.type || "").toString();
+
+        if (type === "missing" || rawMsg.toLowerCase().includes("field required")) {
+          return `${fieldName} is required`;
+        }
+        if (type === "string_too_short" || rawMsg.includes("at least 1 character")) {
+          const min = item.ctx?.min_length;
+          return min && min > 1
+            ? `${fieldName} must be at least ${min} characters`
+            : `${fieldName} cannot be empty`;
+        }
+        if (type === "string_too_long") {
+          const max = item.ctx?.max_length;
+          return max
+            ? `${fieldName} cannot exceed ${max} characters`
+            : `${fieldName} exceeds maximum allowed length`;
+        }
+        if (type.includes("email") || rawMsg.toLowerCase().includes("valid email")) {
+          return `Please enter a valid corporate email address for ${fieldName}`;
+        }
+        if (type.includes("int") || type.includes("float") || type.includes("decimal")) {
+          return `${fieldName} must be a valid numeric value`;
+        }
+        if (type.includes("date")) {
+          return `${fieldName} must be a valid date in YYYY-MM-DD format`;
+        }
+        if (type.includes("greater_than")) {
+          const gt = item.ctx?.gt ?? item.ctx?.ge ?? 0;
+          return `${fieldName} must be greater than ${gt}`;
+        }
+        if (type.includes("less_than")) {
+          const lt = item.ctx?.lt ?? item.ctx?.le;
+          return `${fieldName} must be less than or equal to ${lt}`;
+        }
+
+        return loc ? `${fieldName}: ${cleanRawErrorMessage(rawMsg)}` : cleanRawErrorMessage(rawMsg);
+      })
+      .filter(Boolean);
+
+    if (readableErrors.length > 0) {
+      return readableErrors.join(" • ");
+    }
+  }
+
+  // 3. String detail / message / error property
+  let raw = "";
+  if (typeof errorBody?.detail === "string" && errorBody.detail.trim()) {
+    raw = errorBody.detail.trim();
+  } else if (typeof errorBody?.detail === "object" && errorBody.detail !== null) {
+    raw = errorBody.detail.message || errorBody.detail.msg || "";
+  } else if (typeof errorBody?.message === "string" && errorBody.message.trim()) {
+    raw = errorBody.message.trim();
+  } else if (typeof errorBody?.error === "string" && errorBody.error.trim()) {
+    raw = errorBody.error.trim();
+  }
+
+  const cleaned = cleanRawErrorMessage(raw);
+  if (cleaned) return cleaned;
+
+  // 4. Standard HTTP status fallbacks
+  switch (status) {
+    case 400:
+      return "The submitted data was invalid or incomplete. Please check your form entries.";
+    case 401:
+      return "Your login session has expired. Please sign in again.";
+    case 403:
+      return "You do not have permission to perform this action.";
+    case 404:
+      return "The requested record or resource was not found.";
+    case 409:
+      return "A conflicting record already exists with these details.";
+    case 422:
+      return "One or more form fields are invalid. Please check the highlighted inputs.";
+    case 429:
+      return "Too many requests. Please pause a moment before retrying.";
+    case 500:
+      return "Internal server error. The server encountered an issue processing this request.";
+    case 502:
+    case 503:
+    case 504:
+      return "The backend server is temporarily unavailable or restarting. Please try again shortly.";
+    default:
+      return status ? `Request failed with status code ${status}.` : "Unable to complete request. Please try again.";
+  }
 }
 
 /**
@@ -196,67 +425,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
-    let msg = "";
-
-    // 1. Check for field-level validation errors (Spring Boot validation_errors / validationErrors)
-    const valErrors = errorBody.validation_errors || errorBody.validationErrors;
-    if (valErrors && typeof valErrors === "object" && Object.keys(valErrors).length > 0) {
-      msg = Object.entries(valErrors)
-        .map(([k, v]) => `${k.replace(/_/g, " ")}: ${v}`)
-        .join("; ");
-    }
-
-    // 2. Check for detail (FastAPI / RFC 7807) or message
-    if (!msg) {
-      if (Array.isArray(errorBody.detail)) {
-        const readableErrors = errorBody.detail.map((item: any) => {
-          if (typeof item === "string") return item;
-          const loc = Array.isArray(item.loc) ? item.loc[item.loc.length - 1] : "";
-          const rawMsg = (item.msg || item.detail || "").toString();
-          const fieldMap: Record<string, string> = {
-            username: "Corporate email / username",
-            email: "Corporate email",
-            password: "Password",
-            display_name: "Full name",
-            name: "Full name",
-            otp: "Verification code",
-            new_password: "New password",
-            confirm_password: "Confirm password",
-          };
-          const fieldName = fieldMap[loc] || (loc ? loc.replace(/_/g, " ") : "Field");
-
-          if (rawMsg.includes("String should have at least 1 character") || item.type === "string_too_short" || rawMsg.includes("field required")) {
-            return `${fieldName} is required`;
-          }
-          if (rawMsg.includes("valid email") || item.type === "value_error.email") {
-            return "Please enter a valid corporate email address";
-          }
-          if (rawMsg.includes("at least 6 characters") || rawMsg.includes("password")) {
-            return "Password must be at least 6 characters";
-          }
-          return loc ? `${fieldName}: ${rawMsg}` : rawMsg;
-        });
-        msg = readableErrors.filter(Boolean).join("; ");
-      } else if (typeof errorBody.detail === "string" && errorBody.detail.trim()) {
-        msg = errorBody.detail;
-      } else if (typeof errorBody.message === "string" && errorBody.message.trim()) {
-        msg = errorBody.message;
-      } else if (typeof errorBody.error === "string" && errorBody.error.trim()) {
-        msg = errorBody.error;
-      } else {
-        msg = `Request failed with HTTP status ${response.status}`;
-      }
-    }
-
-    // Standardize common authentication error messages
-    if (msg.includes("Incorrect username or password") || msg.toLowerCase() === "invalid credentials") {
-      msg = "Invalid corporate email or password. Please verify your credentials.";
-    }
-
-    // 3. User-friendly normalization for common infrastructure alerts
-    if (msg.toLowerCase().includes("unable to connect to redis") || msg.toLowerCase().includes("redisconnection")) {
-      msg = "Cache server is unreachable. Falling back to persistent database storage.";
-    }
+    const msg = formatUserFacingErrorMessage(errorBody, response.status);
 
     const err: any = new Error(msg);
     err.status = response.status;
@@ -1409,7 +1578,7 @@ export const api = {
 
     download: async (publicId: string, filename?: string) => {
       if (isMockData()) {
-        alert("Mock download completed.");
+        showToast.info("Mock download completed successfully.");
         return;
       }
       const token = typeof window !== "undefined" ? localStorage.getItem(API_CONFIG.STORAGE_KEYS.AUTH_TOKEN) : null;

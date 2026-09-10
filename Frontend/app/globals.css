@@ -2073,56 +2073,7 @@ button.glass-submit:hover:not(:disabled) .glass-btn-arrow {
   height: 0px !important;
 }
 
-/* Floating Edge Toggle Button on the sidebar boundary */
-.sidebar-edge-toggle {
-  position: absolute;
-  top: 20px;
-  right: -12px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--bg-surface-elevated, #1e2238);
-  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
-  color: var(--text-secondary, #94a3b8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 60;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-  transition: all var(--transition-fast);
-}
 
-.sidebar-edge-toggle:hover {
-  background: var(--color-primary-500) !important;
-  color: #ffffff !important;
-  border-color: var(--color-primary-400) !important;
-  transform: scale(1.12);
-  box-shadow: 0 0 14px var(--color-primary-glow) !important;
-}
-
-/* Collapsed Header Expand Pill */
-.sidebar-expand-action-pill {
-  width: 100%;
-  height: 32px;
-  border-radius: 8px;
-  border: 1px dashed var(--border-subtle);
-  background: transparent;
-  color: var(--color-primary-400);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  margin-bottom: 6px;
-  position: relative;
-  transition: all var(--transition-fast);
-}
-
-.sidebar-expand-action-pill:hover {
-  background: var(--bg-surface-hover);
-  border-color: var(--color-primary-500);
-  color: var(--color-primary-300);
-}
 
 /* Instant Hover Tooltip for Collapsed Sidebar Items */
 .sidebar-nav-link {
