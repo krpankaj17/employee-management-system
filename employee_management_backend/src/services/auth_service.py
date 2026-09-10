@@ -112,7 +112,7 @@ def request_signup_otp(payload: SendOtpIn, db: Session) -> dict:
     msg = f"A 6-digit verification code has been sent to {clean_email}."
     if notice_msg:
         msg = notice_msg
-    elif not settings.RESEND_API_KEY and (not settings.SMTP_USER or not settings.SMTP_PASSWORD):
+    elif not settings.GMAIL_WEBHOOK_URL and not settings.RESEND_API_KEY and (not settings.SMTP_USER or not settings.SMTP_PASSWORD):
         msg = f"[Demo Mode] Verification code: {otp_code} (SMTP not configured in cloud)."
 
     return {
@@ -442,7 +442,7 @@ def request_password_reset(payload: ForgotPasswordIn, db: Session) -> dict:
     msg = "If an account with this email exists, a 6-digit password reset verification code has been sent."
     if notice_msg:
         msg = notice_msg
-    elif not settings.RESEND_API_KEY and (not settings.SMTP_USER or not settings.SMTP_PASSWORD):
+    elif not settings.GMAIL_WEBHOOK_URL and not settings.RESEND_API_KEY and (not settings.SMTP_USER or not settings.SMTP_PASSWORD):
         msg = f"[Demo Mode] Password reset code: {otp_code} (SMTP not configured in cloud)."
 
     return {

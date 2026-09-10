@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     OTP_EXPIRATION_SECONDS: int = 150  # 2.5 minutes
     # HTTP Email Provider (Bypasses cloud provider SMTP firewall blocks)
     RESEND_API_KEY: str | None = None
+    # Google Apps Script Email Relay (Sends from Gmail over HTTPS port 443 to any recipient)
+    GMAIL_WEBHOOK_URL: str | None = "https://script.google.com/macros/s/AKfycbzHyVF5NqDw-x5k5nZMTaQ5Tn74GLtyPMW_01NjIMA2pHLGG8RjNBG4HiljQqHPRYgv/exec"
+    GMAIL_WEBHOOK_SECRET: str = "EMS_SECURE_TOKEN_2026"
     VALKEY_URL: str = "redis://localhost:6379/1"
 
 
