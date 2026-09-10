@@ -93,7 +93,9 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 
   const currentBackend = getActiveBackend();
-  const url = `${getBaseUrl()}${endpoint}`;
+  const base = getBaseUrl().replace(/\/+$/, "");
+  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  const url = `${base}${cleanEndpoint}`;
   let response!: Response;
 
   let isNetworkFailure = false;
