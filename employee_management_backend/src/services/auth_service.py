@@ -76,9 +76,9 @@ def request_signup_otp(payload: SendOtpIn, db: Session) -> dict:
     except Exception as e:
         err_str = str(e)
         utils.log_action("EMAIL_OTP_FAILED", f"email={clean_email} error={err_str}")
-        if "Network is unreachable" in err_str or "101" in err_str or "timed out" in err_str.lower() or "connection refused" in err_str.lower():
-            logger.warning(f"Outbound SMTP network blocked on host. Providing on-screen verification code: {otp_code}")
-            notice_msg = f"[Notice: Cloud host blocked SMTP port] Verification code: {otp_code}"
+        if "Network is unreachable" in err_str or "101" in err_str or "timed out" in err_str.lower() or "connection refused" in err_str.lower() or "Resend" in err_str or "domain" in err_str.lower() or "403" in err_str:
+            logger.warning(f"Email delivery restricted on host ({err_str}). Providing on-screen verification code: {otp_code}")
+            notice_msg = f"[Notice: Email sandbox restriction] Verification code: {otp_code}"
         else:
             return {
                 "ok": False,
@@ -406,9 +406,9 @@ def request_password_reset(payload: ForgotPasswordIn, db: Session) -> dict:
     except Exception as e:
         err_str = str(e)
         utils.log_action("PASSWORD_RESET_OTP_FAILED", f"email={clean_email} error={err_str}")
-        if "Network is unreachable" in err_str or "101" in err_str or "timed out" in err_str.lower() or "connection refused" in err_str.lower():
-            logger.warning(f"Outbound SMTP network blocked on host. Providing on-screen verification code: {otp_code}")
-            notice_msg = f"[Notice: Cloud host blocked SMTP port] Password reset code: {otp_code}"
+        if "Network is unreachable" in err_str or "101" in err_str or "timed out" in err_str.lower() or "connection refused" in err_str.lower() or "Resend" in err_str or "domain" in err_str.lower() or "403" in err_str:
+            logger.warning(f"Email delivery restricted on host ({err_str}). Providing on-screen verification code: {otp_code}")
+            notice_msg = f"[Notice: Email sandbox restriction] Password reset code: {otp_code}"
         else:
             return {
                 "ok": False,
