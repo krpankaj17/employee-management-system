@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { BackendOfflineBanner } from "@/components/layout/BackendOfflineBanner";
 import { API_CONFIG } from "@/lib/config";
@@ -55,8 +54,8 @@ export default function DashboardLayout({
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "var(--bg-app, #080914)",
-          color: "var(--text-primary, #ffffff)",
+          background: "var(--bg-app, #f7f5ee)",
+          color: "var(--text-primary, #111827)",
           fontFamily: "var(--font-sans, sans-serif)",
           gap: 16,
         }}
@@ -66,12 +65,12 @@ export default function DashboardLayout({
             width: 44,
             height: 44,
             borderRadius: "50%",
-            border: "3px solid rgba(99, 102, 241, 0.2)",
-            borderTopColor: "var(--color-primary-500, #6366f1)",
+            border: "3px solid rgba(234, 179, 8, 0.2)",
+            borderTopColor: "var(--color-amber-500, #eab308)",
             animation: "authSpin 0.8s linear infinite",
           }}
         />
-        <span style={{ fontSize: "0.88rem", color: "var(--text-secondary, #94a3b8)", letterSpacing: "0.02em" }}>
+        <span style={{ fontSize: "0.88rem", color: "var(--text-secondary, #64748b)", letterSpacing: "0.02em" }}>
           Verifying security session...
         </span>
         <style>{`
@@ -90,7 +89,7 @@ export default function DashboardLayout({
 
   return (
     <div className="app-layout">
-      <Sidebar />
+      {/* Sidebar removed per user request: Unified top navbar layout */}
       <div className="main-content-wrapper">
         <Topbar />
         <BackendOfflineBanner />

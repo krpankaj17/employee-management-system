@@ -11,14 +11,14 @@ import { API_CONFIG } from "./config";
 export type Theme = "dark" | "light";
 
 export function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "dark";
+  if (typeof window === "undefined") return "light";
 
   const savedTheme = localStorage.getItem(API_CONFIG.STORAGE_KEYS.THEME) as Theme | null;
   if (savedTheme === "light" || savedTheme === "dark") {
     return savedTheme;
   }
 
-  return "dark";
+  return "light";
 }
 
 export function applyTheme(theme: Theme): void {
@@ -28,12 +28,12 @@ export function applyTheme(theme: Theme): void {
   if (theme === "dark") {
     document.documentElement.classList.add("dark");
     document.documentElement.classList.remove("light");
-    document.documentElement.style.backgroundColor = "#080914";
+    document.documentElement.style.backgroundColor = "#0f121a";
     document.documentElement.style.colorScheme = "dark";
   } else {
     document.documentElement.classList.add("light");
     document.documentElement.classList.remove("dark");
-    document.documentElement.style.backgroundColor = "#f8fafc";
+    document.documentElement.style.backgroundColor = "#f7f5ee";
     document.documentElement.style.colorScheme = "light";
   }
   localStorage.setItem(API_CONFIG.STORAGE_KEYS.THEME, theme);
