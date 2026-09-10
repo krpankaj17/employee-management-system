@@ -2,10 +2,66 @@
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import httpx
 from core.config import settings
 import logging
 
 logger = logging.getLogger("email_service")
+
+
+def _dispatch_email(to_email: str, subject: str, html_content: str, text_content: str, from_header: str) -> None:
+    """Dispatches email via Resend HTTP API (HTTPS port 443) or direct SMTP (port 587/465).
+    Bypasses cloud platform firewall blocks against outbound SMTP."""
+    # 1. Prefer HTTP-based Resend API (HTTPS port 443 - not blocked by Render/cloud)
+    if settings.RESEND_API_KEY:
+        from_sender = settings.SMTP_FROM_EMAIL or "Datansh EMS <onboarding@resend.dev>"
+        res = httpx.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {settings.RESEND_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "from": from_sender,
+                "to": [to_email],
+                "subject": subject,
+                "html": html_content,
+                "text": text_content,
+            },
+            timeout=10.0,
+        )
+        if res.status_code in (200, 201):
+            logger.info(f"Email successfully delivered to {to_email} via Resend HTTP API")
+            return
+        else:
+            logger.error(f"Resend HTTP API returned error ({res.status_code}): {res.text}")
+            raise RuntimeError(f"Resend HTTP error: {res.text}")
+
+    # 2. Try direct SMTP if configured
+    if settings.SMTP_USER and settings.SMTP_PASSWORD:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = from_header
+        msg["To"] = to_email
+        msg.attach(MIMEText(text_content, "plain"))
+        msg.attach(MIMEText(html_content, "html"))
+
+        if settings.SMTP_PORT == 465:
+            with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=8) as server:
+                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                server.sendmail(settings.SMTP_FROM_EMAIL or settings.SMTP_USER, [to_email], msg.as_string())
+        else:
+            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=8) as server:
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
+                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                server.sendmail(settings.SMTP_FROM_EMAIL or settings.SMTP_USER, [to_email], msg.as_string())
+        logger.info(f"Email successfully sent to {to_email} via SMTP")
+        return
+
+    # 3. No email service configured
+    logger.warning(f"[DEMO MODE] No email provider configured. Simulated email dispatch to: {to_email}")
 
 
 def send_otp_email(to_email: str, otp_code: str, expires_in_seconds: int = 150) -> None:
@@ -91,30 +147,13 @@ def send_otp_email(to_email: str, otp_code: str, expires_in_seconds: int = 150) 
         "If you did not request this, please ignore this message."
     )
 
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = from_header
-    msg["To"] = to_email
-
-    msg.attach(MIMEText(text_content, "plain"))
-    msg.attach(MIMEText(html_content, "html"))
-
-    try:
-        if settings.SMTP_PORT == 465:
-            with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:
-                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                server.sendmail(settings.SMTP_FROM_EMAIL or settings.SMTP_USER, [to_email], msg.as_string())
-        else:
-            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                server.sendmail(settings.SMTP_FROM_EMAIL or settings.SMTP_USER, [to_email], msg.as_string())
-        logger.info(f"Verification email successfully sent to {to_email}")
-    except Exception as e:
-        logger.error(f"Failed to send email to {to_email}: {str(e)}")
-        raise e
+    _dispatch_email(
+        to_email=to_email,
+        subject=subject,
+        html_content=html_content,
+        text_content=text_content,
+        from_header=from_header,
+    )
 
 
 def send_password_reset_otp_email(to_email: str, otp_code: str, expires_in_seconds: int = 150) -> None:
@@ -199,30 +238,13 @@ def send_password_reset_otp_email(to_email: str, otp_code: str, expires_in_secon
         "If you did not request this, please ignore this message."
     )
 
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = from_header
-    msg["To"] = to_email
-
-    msg.attach(MIMEText(text_content, "plain"))
-    msg.attach(MIMEText(html_content, "html"))
-
-    try:
-        if settings.SMTP_PORT == 465:
-            with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:
-                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                server.sendmail(settings.SMTP_FROM_EMAIL or settings.SMTP_USER, [to_email], msg.as_string())
-        else:
-            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                server.sendmail(settings.SMTP_FROM_EMAIL or settings.SMTP_USER, [to_email], msg.as_string())
-        logger.info(f"Password reset email successfully sent to {to_email}")
-    except Exception as e:
-        logger.error(f"Failed to send password reset email to {to_email}: {str(e)}")
-        raise e
+    _dispatch_email(
+        to_email=to_email,
+        subject=subject,
+        html_content=html_content,
+        text_content=text_content,
+        from_header=from_header,
+    )
 
 
 def send_password_changed_alert(to_email: str) -> None:
@@ -275,21 +297,14 @@ def send_password_changed_alert(to_email: str) -> None:
     msg["From"] = from_header
     msg["To"] = to_email
     msg.attach(MIMEText(text_content, "plain"))
-    msg.attach(MIMEText(html_content, "html"))
-
     try:
-        if settings.SMTP_PORT == 465:
-            with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:
-                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                server.sendmail(settings.SMTP_FROM_EMAIL or settings.SMTP_USER, [to_email], msg.as_string())
-        else:
-            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                server.sendmail(settings.SMTP_FROM_EMAIL or settings.SMTP_USER, [to_email], msg.as_string())
-        logger.info(f"Password changed alert email successfully sent to {to_email}")
+        _dispatch_email(
+            to_email=to_email,
+            subject=subject,
+            html_content=html_content,
+            text_content=text_content,
+            from_header=from_header,
+        )
     except Exception as e:
         logger.error(f"Failed to send password changed alert to {to_email}: {str(e)}")
 
