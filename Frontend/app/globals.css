@@ -2057,17 +2057,24 @@ button.glass-submit:hover:not(:disabled) .glass-btn-arrow {
    ========================================================================== */
 
 @media print {
-  /* 1. Hide all navigation chrome, floating elements, and action controls */
+  /* 1. Hide the entire application background layout and non-modal elements */
+  .app-layout,
+  body > *:not(.modal-overlay) {
+    display: none !important;
+  }
+
   aside,
   header,
   nav,
-  .main-content-wrapper > header,
+  .main-content-wrapper,
+  .page-container,
   .action-icon-btn,
   .glass-search-pill,
   .backend-offline-banner,
   .btn,
   button,
   .modal-close-btn,
+  .modal-header,
   .no-print {
     display: none !important;
   }
@@ -2079,25 +2086,14 @@ button.glass-submit:hover:not(:disabled) .glass-btn-arrow {
     color: #0f172a !important;
     overflow: visible !important;
     height: auto !important;
+    min-height: auto !important;
     padding: 0 !important;
     margin: 0 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* 3. Collapse layout margins and containers */
-  .app-layout,
-  .main-content-wrapper,
-  .page-container {
-    margin: 0 !important;
-    padding: 0 !important;
-    display: block !important;
-    min-height: auto !important;
-    background: transparent !important;
-    width: 100% !important;
-  }
-
-  /* 4. Format modal overlay and card as clean printed document */
+  /* 3. Format modal overlay and card as clean printed document */
   .modal-overlay {
     position: static !important;
     background: transparent !important;
@@ -2107,24 +2103,26 @@ button.glass-submit:hover:not(:disabled) .glass-btn-arrow {
     display: block !important;
     inset: auto !important;
     z-index: auto !important;
+    overflow: visible !important;
   }
 
   .modal-card {
     position: static !important;
-    border: none !important;
+    border: 1px solid #cbd5e1 !important;
     box-shadow: none !important;
     max-width: 100% !important;
     width: 100% !important;
-    padding: 20px !important;
+    padding: 24px !important;
     background: #ffffff !important;
     color: #0f172a !important;
     max-height: none !important;
     overflow: visible !important;
-    border-radius: 0 !important;
+    border-radius: 6px !important;
   }
 
-  .modal-header h2 {
-    display: none !important;
+  .modal-card * {
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
   }
 }
 
