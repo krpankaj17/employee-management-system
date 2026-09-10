@@ -59,9 +59,12 @@ def create_refresh_token(data: dict, expires_delta: datetime.timedelta | None = 
 
 
 def decode_token(token: str) -> dict:
-    """Decodes and validates a JWT token signature and expiration."""
+    """Decodes and validates a JWT token signature and expiration with 60s clock skew leeway."""
     return jwt.decode(
-        token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]
+        token,
+        settings.JWT_SECRET_KEY,
+        algorithms=[settings.JWT_ALGORITHM],
+        leeway=datetime.timedelta(seconds=60),
     )
 
 

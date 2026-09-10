@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
-
 /* ==========================================================================
    DESIGN SYSTEM - CSS TOKENS & VARIABLES
    Supports automatic Dark and Light Themes
@@ -30,8 +28,9 @@
   --color-rose-500: #f43f5e;
 
   /* Typography & Layout Metrics */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: var(--font-outfit), 'Outfit', sans-serif;
+  --font-mono: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
   --sidebar-width: 72px;
   --sidebar-width-collapsed: 72px;
   --sidebar-width-expanded: 250px;
@@ -79,9 +78,9 @@
   --shadow-glow-purple: 0 0 20px rgba(234, 179, 8, 0.25);
 
   --badge-success-bg: rgba(16, 185, 129, 0.14);
-  --badge-success-text: #059669;
+  --badge-success-text: #047857;
   --badge-warning-bg: rgba(245, 158, 11, 0.14);
-  --badge-warning-text: #d97706;
+  --badge-warning-text: #b45309;
   --badge-danger-bg: rgba(244, 63, 94, 0.14);
   --badge-danger-text: #e11d48;
   --badge-info-bg: rgba(6, 182, 212, 0.14);
@@ -133,9 +132,9 @@
   --shadow-xl: 0 20px 32px -4px rgba(0, 0, 0, 0.1);
 
   --badge-success-bg: rgba(16, 185, 129, 0.12);
-  --badge-success-text: #059669;
+  --badge-success-text: #047857;
   --badge-warning-bg: rgba(245, 158, 11, 0.12);
-  --badge-warning-text: #d97706;
+  --badge-warning-text: #b45309;
   --badge-danger-bg: rgba(244, 63, 94, 0.12);
   --badge-danger-text: #e11d48;
   --badge-info-bg: rgba(6, 182, 212, 0.12);
@@ -1456,7 +1455,7 @@ input::-webkit-contacts-auto-fill-button {
 }
 
 .glass-card-brand-name {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-display), 'Outfit', sans-serif;
   font-weight: 700;
   font-size: 15px;
   letter-spacing: 0.2px;
@@ -1464,7 +1463,7 @@ input::-webkit-contacts-auto-fill-button {
 }
 
 .glass-card-title {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-display), 'Outfit', sans-serif;
   font-size: 26px;
   font-weight: 700;
   margin: 0 0 6px;
@@ -1701,7 +1700,7 @@ button.glass-submit {
   position: relative;
   width: 100%;
   height: 48px;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-display), 'Outfit', sans-serif;
   font-size: 14.5px;
   font-weight: 600;
   color: #ffffff;
@@ -1942,7 +1941,7 @@ button.glass-submit:hover:not(:disabled) .glass-btn-arrow {
   font-weight: 800;
   color: #111827;
   letter-spacing: -0.03em;
-  font-family: Outfit, Inter, sans-serif;
+  font-family: var(--font-display), var(--font-sans), sans-serif;
 }
 
 .web-auth-subhead {

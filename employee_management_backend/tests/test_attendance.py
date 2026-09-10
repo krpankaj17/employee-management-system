@@ -300,6 +300,16 @@ def test_auto_checkout_unclosed_yesterday_shift(client: TestClient, admin_header
     emp_pid = employee_auth["employee_public_id"]
     yesterday = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
 
+    # Clean up any leftover record for yesterday first
+    existing = client.get(
+        f"/attendance/records?employee_public_id={emp_pid}&date_from={yesterday}&date_to={yesterday}",
+        headers=admin_headers,
+    ).json().get("items", [])
+    for ex in existing:
+        pid = ex.get("public_id") or ex.get("id")
+        if pid:
+            client.delete(f"/attendance/records/{pid}", headers=admin_headers)
+
     # 1. Admin creates an unclosed check-in for yesterday (check_in present, check_out None)
     create_res = client.post(
         "/attendance/records",
