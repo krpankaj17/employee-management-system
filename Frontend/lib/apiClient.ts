@@ -11,6 +11,17 @@
 
 import { API_CONFIG, getBaseUrl, isMockData, getActiveBackend, setActiveBackend, BackendType } from "./config";
 import { Paginated } from "@/types/common";
+
+export type PaginatedResponse<T> = Paginated<T> & T[];
+
+export function toPaginatedResponse<T>(items: T[], total: number, skip = 0, limit: number | null = null): PaginatedResponse<T> {
+  const arr = [...items] as PaginatedResponse<T>;
+  arr.items = items;
+  arr.total = total;
+  arr.skip = skip;
+  arr.limit = limit;
+  return arr;
+}
 import { Employee, EmployeeFilterParams, Address, EmergencyContact } from "@/types/employee";
 import { AttendanceRecord } from "@/types/attendance";
 import { LeaveBalance, LeaveRequest, LeaveType } from "@/types/leave";
@@ -921,20 +932,40 @@ export const api = {
       return Array.isArray(perms) ? perms : [];
     },
 
-    listPendingUsers: async (): Promise<UserProfile[]> => {
+    listPendingUsers: async (params?: { skip?: number; limit?: number }): Promise<PaginatedResponse<UserProfile>> => {
       if (isMockData()) {
-        return mockData.MOCK_PENDING_USERS;
+        const items = mockData.MOCK_PENDING_USERS.map(normalizeUserProfile);
+        const skip = params?.skip || 0;
+        const limit = params?.limit !== undefined && params?.limit !== null ? params.limit : items.length;
+        return toPaginatedResponse(items.slice(skip, skip + limit), items.length, skip, limit);
       }
-      const users = await request<any[]>("/auth/pending-users");
-      return Array.isArray(users) ? users.map(normalizeUserProfile) : [];
+      const qParams: Record<string, string> = {};
+      if (params?.skip !== undefined) qParams.skip = String(params.skip);
+      if (params?.limit !== undefined) qParams.limit = String(params.limit);
+      const q = new URLSearchParams(qParams).toString();
+      const res = await request<any>(`/auth/pending-users${q ? `?${q}` : ""}`);
+      const rawItems: any[] = res?.items || (Array.isArray(res) ? res : []);
+      const items = rawItems.map(normalizeUserProfile);
+      const total = res?.total ?? (Array.isArray(res) ? res.length : items.length);
+      return toPaginatedResponse(items, total, res?.skip ?? params?.skip ?? 0, res?.limit ?? params?.limit ?? null);
     },
 
-    listUsers: async (): Promise<UserProfile[]> => {
+    listUsers: async (params?: { skip?: number; limit?: number }): Promise<PaginatedResponse<UserProfile>> => {
       if (isMockData()) {
-        return mockData.MOCK_ALL_USERS;
+        const items = mockData.MOCK_ALL_USERS.map(normalizeUserProfile);
+        const skip = params?.skip || 0;
+        const limit = params?.limit !== undefined && params?.limit !== null ? params.limit : items.length;
+        return toPaginatedResponse(items.slice(skip, skip + limit), items.length, skip, limit);
       }
-      const users = await request<any[]>("/auth/users");
-      return Array.isArray(users) ? users.map(normalizeUserProfile) : [];
+      const qParams: Record<string, string> = {};
+      if (params?.skip !== undefined) qParams.skip = String(params.skip);
+      if (params?.limit !== undefined) qParams.limit = String(params.limit);
+      const q = new URLSearchParams(qParams).toString();
+      const res = await request<any>(`/auth/users${q ? `?${q}` : ""}`);
+      const rawItems: any[] = res?.items || (Array.isArray(res) ? res : []);
+      const items = rawItems.map(normalizeUserProfile);
+      const total = res?.total ?? (Array.isArray(res) ? res.length : items.length);
+      return toPaginatedResponse(items, total, res?.skip ?? params?.skip ?? 0, res?.limit ?? params?.limit ?? null);
     },
 
     assignUserRoles: async (userPublicId: string, roleNames: string[]) => {
@@ -1603,14 +1634,23 @@ export const api = {
       return api.documents.listByEmployee(employeePublicId);
     },
 
-    listPending: async (): Promise<DocumentRecord[]> => {
+    listPending: async (params?: { skip?: number; limit?: number }): Promise<PaginatedResponse<DocumentRecord>> => {
       if (isMockData()) {
-        return mockData.MOCK_DOCUMENTS.filter(
+        const items = mockData.MOCK_DOCUMENTS.filter(
           (d) => !d.status || d.status === "Pending_Verification" || d.status.toLowerCase().includes("pending")
         );
+        const skip = params?.skip || 0;
+        const limit = params?.limit !== undefined && params?.limit !== null ? params.limit : items.length;
+        return toPaginatedResponse(items.slice(skip, skip + limit), items.length, skip, limit);
       }
-      const docs = await request<DocumentRecord[]>("/documents/pending");
-      return Array.isArray(docs) ? docs : [];
+      const qParams: Record<string, string> = {};
+      if (params?.skip !== undefined) qParams.skip = String(params.skip);
+      if (params?.limit !== undefined) qParams.limit = String(params.limit);
+      const q = new URLSearchParams(qParams).toString();
+      const res = await request<any>(`/documents/pending${q ? `?${q}` : ""}`);
+      const items: DocumentRecord[] = res?.items || (Array.isArray(res) ? res : []);
+      const total = res?.total ?? (Array.isArray(res) ? res.length : items.length);
+      return toPaginatedResponse(items, total, res?.skip ?? params?.skip ?? 0, res?.limit ?? params?.limit ?? null);
     },
 
     upload: async (payload: DocumentUploadPayload): Promise<DocumentRecord> => {
@@ -2152,23 +2192,37 @@ export const api = {
       return Array.isArray(res) ? res : res.items || [];
     },
 
-    create: async (payload: Partial<Holiday>): Promise<Holiday> => {
+    create: async (payload: Partial<Holiday> & { year?: number; applicable_region?: string }): Promise<Holiday> => {
+      const dateStr = payload.date || new Date().toISOString().split("T")[0];
+      const parsedYear = payload.year || (dateStr ? new Date(dateStr).getFullYear() : new Date().getFullYear());
+      const region = payload.applicable_region || payload.region || "ALL";
+      const normalizedPayload = {
+        name: payload.name || "Holiday",
+        date: dateStr,
+        day_of_week: payload.day_of_week || "Monday",
+        holiday_type: (payload.holiday_type || "national").toLowerCase(),
+        year: parsedYear,
+        applicable_region: region,
+        region,
+        is_optional: Boolean(payload.is_optional),
+        description: payload.description,
+      };
       if (isMockData()) {
         const newH: Holiday = {
           holiday_id: Date.now(),
           public_id: `hol-${Date.now()}`,
-          name: payload.name || "Holiday",
-          date: payload.date || new Date().toISOString().split("T")[0],
-          day_of_week: payload.day_of_week || "Monday",
-          holiday_type: payload.holiday_type || "National",
-          region: payload.region || "National",
-          is_optional: payload.is_optional || false,
-          description: payload.description,
+          name: normalizedPayload.name,
+          date: normalizedPayload.date,
+          day_of_week: normalizedPayload.day_of_week,
+          holiday_type: normalizedPayload.holiday_type as any,
+          region: normalizedPayload.region,
+          is_optional: normalizedPayload.is_optional,
+          description: normalizedPayload.description,
         };
         mockData.MOCK_HOLIDAYS_2026.push(newH);
         return newH;
       }
-      return request<Holiday>("/holidays", { method: "POST", body: JSON.stringify(payload) });
+      return request<Holiday>("/holidays", { method: "POST", body: JSON.stringify(normalizedPayload) });
     },
 
     delete: async (id: string | number): Promise<{ ok: boolean }> => {
@@ -2531,11 +2585,26 @@ export const api = {
 
   // ── 11. Projects Module (`/projects/*`) ──────────────────────────────────────
   projects: {
-    list: async (): Promise<Project[]> => {
-      if (isMockData()) return mockData.MOCK_PROJECTS.map(normalizeProject);
-      const res = await request<any>("/projects");
-      const items = Array.isArray(res) ? res : res.items || [];
-      return items.map(normalizeProject);
+    list: async (params: { status?: string; skip?: number; limit?: number } = {}): Promise<PaginatedResponse<Project>> => {
+      if (isMockData()) {
+        let items = mockData.MOCK_PROJECTS.map(normalizeProject);
+        if (params.status && params.status !== "all") {
+          items = items.filter((p) => p.status === params.status);
+        }
+        const skip = params.skip || 0;
+        const limit = params.limit !== undefined && params.limit !== null ? params.limit : items.length;
+        return toPaginatedResponse(items.slice(skip, skip + limit), items.length, skip, limit);
+      }
+      const qParams: Record<string, string> = {};
+      if (params.status && params.status !== "all") qParams.status = params.status;
+      if (params.skip !== undefined) qParams.skip = String(params.skip);
+      if (params.limit !== undefined) qParams.limit = String(params.limit);
+      const q = new URLSearchParams(qParams).toString();
+      const res = await request<any>(`/projects${q ? `?${q}` : ""}`);
+      const rawItems = Array.isArray(res) ? res : res?.items || [];
+      const items = rawItems.map(normalizeProject);
+      const total = res?.total ?? (Array.isArray(res) ? res.length : items.length);
+      return toPaginatedResponse(items, total, res?.skip ?? params.skip ?? 0, res?.limit ?? params.limit ?? null);
     },
 
     getById: async (publicId: string): Promise<Project> => {
@@ -2655,12 +2724,26 @@ export const api = {
 
   // ── 12. Performance Reviews (`/reviews/*`) ───────────────────────────────────
   reviews: {
-    list: async (params: { employee_public_id?: string; reviewer_public_id?: string } = {}): Promise<PerformanceReview[]> => {
-      if (isMockData()) return mockData.MOCK_REVIEWS;
-      const q = new URLSearchParams(params as any).toString();
-      const res = await request<any>(`/reviews?${q}`);
-      const items: any[] = Array.isArray(res) ? res : res.items || [];
-      return items.map((r: any) => ({
+    list: async (params: { employee_public_id?: string; reviewer_public_id?: string; status?: string; skip?: number; limit?: number } = {}): Promise<PaginatedResponse<PerformanceReview>> => {
+      if (isMockData()) {
+        let items = mockData.MOCK_REVIEWS;
+        if (params.status && params.status !== "all") {
+          items = items.filter((r) => r.status?.toLowerCase() === params.status?.toLowerCase());
+        }
+        const skip = params.skip || 0;
+        const limit = params.limit !== undefined && params.limit !== null ? params.limit : items.length;
+        return toPaginatedResponse(items.slice(skip, skip + limit), items.length, skip, limit);
+      }
+      const qParams: Record<string, string> = {};
+      if (params.employee_public_id) qParams.employee_public_id = params.employee_public_id;
+      if (params.reviewer_public_id) qParams.reviewer_public_id = params.reviewer_public_id;
+      if (params.status && params.status !== "all") qParams.status = params.status;
+      if (params.skip !== undefined) qParams.skip = String(params.skip);
+      if (params.limit !== undefined) qParams.limit = String(params.limit);
+      const q = new URLSearchParams(qParams).toString();
+      const res = await request<any>(`/reviews${q ? `?${q}` : ""}`);
+      const rawItems: any[] = Array.isArray(res) ? res : res?.items || [];
+      const items = rawItems.map((r: any) => ({
         public_id: r.public_id,
         employee_public_id: r.employee_public_id,
         employee_name: r.employee_name || "Employee",
@@ -2676,6 +2759,8 @@ export const api = {
         status: (r.status === "finalized" ? "Submitted" : r.status) || "Submitted",
         created_at: r.created_at || r.review_period_start || new Date().toISOString(),
       }));
+      const total = res?.total ?? (Array.isArray(res) ? res.length : items.length);
+      return toPaginatedResponse(items, total, res?.skip ?? params.skip ?? 0, res?.limit ?? params.limit ?? null);
     },
 
     getById: async (publicId: string): Promise<PerformanceReview> => {
@@ -2727,10 +2812,21 @@ export const api = {
 
   // ── 13. Announcements (`/announcements/*`) ───────────────────────────────────
   announcements: {
-    list: async (): Promise<Announcement[]> => {
-      if (isMockData()) return mockData.MOCK_ANNOUNCEMENTS;
-      const res = await request<any>("/announcements");
-      return Array.isArray(res) ? res : res.items || [];
+    list: async (params: { skip?: number; limit?: number } = {}): Promise<PaginatedResponse<Announcement>> => {
+      if (isMockData()) {
+        const items = mockData.MOCK_ANNOUNCEMENTS;
+        const skip = params.skip || 0;
+        const limit = params.limit !== undefined && params.limit !== null ? params.limit : items.length;
+        return toPaginatedResponse(items.slice(skip, skip + limit), items.length, skip, limit);
+      }
+      const qParams: Record<string, string> = {};
+      if (params.skip !== undefined) qParams.skip = String(params.skip);
+      if (params.limit !== undefined) qParams.limit = String(params.limit);
+      const q = new URLSearchParams(qParams).toString();
+      const res = await request<any>(`/announcements${q ? `?${q}` : ""}`);
+      const items: Announcement[] = Array.isArray(res) ? res : res?.items || [];
+      const total = res?.total ?? (Array.isArray(res) ? res.length : items.length);
+      return toPaginatedResponse(items, total, res?.skip ?? params.skip ?? 0, res?.limit ?? params.limit ?? null);
     },
 
     create: async (payload: Partial<Announcement>): Promise<Announcement> => {

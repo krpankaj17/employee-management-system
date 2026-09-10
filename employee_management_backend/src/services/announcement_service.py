@@ -45,16 +45,23 @@ def create_announcement(
     return {"ok": True, "announcement": saved.to_dict()}
 
 
-def list_announcements(user_dept_public_id: str | None, db: Session) -> list[dict[str, Any]]:
-    """Lists non-expired announcements for the user."""
+def list_announcements(
+    user_dept_public_id: str | None, db: Session, skip: int = 0, limit: int | None = None
+) -> dict[str, Any]:
+    """Lists non-expired announcements for the user with pagination metadata."""
     dept_id = None
     if user_dept_public_id:
         dept = dept_repo.get_by_public_id(user_dept_public_id, db=db)
         if dept:
             dept_id = dept.dept_id
 
-    items = repo.list_active_announcements(dept_id, db=db)
-    return [a.to_dict() for a in items]
+    items, total = repo.list_active_announcements(dept_id, db=db, skip=skip, limit=limit)
+    return {
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+        "items": [a.to_dict() for a in items],
+    }
 
 
 def delete_announcement(public_id: str, db: Session) -> dict[str, Any]:

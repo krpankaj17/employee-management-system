@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from core.permissions import require_permission, get_current_user
 from models.user import User
-from schemas.document_schema import DocumentMetadataIn, DocumentOut, DocumentVerifyIn
+from schemas.document_schema import DocumentMetadataIn, DocumentOut, DocumentVerifyIn, PaginatedDocuments
 from services import document_service
 
 # MIME types that modern browsers can render natively (inline)
@@ -95,13 +95,15 @@ def get_employee_documents(
     return res["documents"]
 
 
-@router.get("/pending", response_model=list[DocumentOut])
+@router.get("/pending", response_model=PaginatedDocuments)
 def get_pending_documents(
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int | None = Query(None, gt=0, description="Max number of records to return"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
-    Lists all documents pending verification.
+    Lists all documents pending verification with pagination.
     Requires Admin, HR_Manager, or 'document:read' / 'document:verify' permission.
     """
     user_roles = [r.role_name for r in current_user.roles]
@@ -117,8 +119,13 @@ def get_pending_documents(
             detail="Access not granted: You do not have permission to view pending documents queue.",
         )
 
-    res = document_service.get_pending_documents(db=db)
-    return res["documents"]
+    res = document_service.get_pending_documents(db=db, skip=skip, limit=limit)
+    return {
+        "total": res["total"],
+        "skip": res["skip"],
+        "limit": res["limit"],
+        "items": res["items"],
+    }
 
 
 @router.get("/{public_id}", response_model=DocumentOut)

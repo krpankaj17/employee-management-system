@@ -69,12 +69,15 @@ export default function HolidaysPage() {
         ? "Monday"
         : dt.toLocaleDateString("en-US", { weekday: "long" });
 
+      const yearVal = !isNaN(dt.getTime()) ? dt.getFullYear() : new Date().getFullYear();
       await api.holidays.create({
         name: newHoliday.name.trim(),
         date: newHoliday.date,
         day_of_week: dayOfWeek,
         holiday_type: newHoliday.holiday_type,
         region: newHoliday.region,
+        applicable_region: newHoliday.region,
+        year: yearVal,
         description: newHoliday.description.trim() || undefined,
       });
 

@@ -8,6 +8,7 @@ from models.user import User
 from schemas.announcement_schema import (
     AnnouncementIn,
     AnnouncementOut,
+    PaginatedAnnouncements,
     NotificationIn,
     NotificationRecipientOut,
 )
@@ -16,8 +17,10 @@ from services import announcement_service
 router = APIRouter(prefix="/announcements", tags=["Announcements & Notifications"])
 
 
-@router.get("", response_model=list[AnnouncementOut], dependencies=[Depends(require_permission("announcement:read"))])
+@router.get("", response_model=PaginatedAnnouncements, dependencies=[Depends(require_permission("announcement:read"))])
 def list_announcements(
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int | None = Query(None, gt=0, description="Max number of records to return"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -26,7 +29,7 @@ def list_announcements(
     if current_user.employee and current_user.employee.department:
         dept_public_id = str(current_user.employee.department.public_id)
 
-    return announcement_service.list_announcements(dept_public_id, db=db)
+    return announcement_service.list_announcements(dept_public_id, db=db, skip=skip, limit=limit)
 
 
 @router.post("", response_model=AnnouncementOut, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_permission("announcement:create"))])

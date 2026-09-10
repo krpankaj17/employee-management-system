@@ -12,6 +12,7 @@ from schemas.auth_schema import (
     TokenOut,
     TokenRefreshIn,
     UserProfileOut,
+    PaginatedUsers,
     ForgotPasswordIn,
     ResetPasswordIn,
     RoleOut,
@@ -222,7 +223,7 @@ def list_all_permissions(db: Session = Depends(get_db)):
     return auth_service.list_permissions(db)
 
 
-@router.get("/pending-users", response_model=list[UserProfileOut], dependencies=[Depends(require_admin_or_hr())])
+@router.get("/pending-users", response_model=PaginatedUsers, dependencies=[Depends(require_admin_or_hr())])
 def get_pending_users(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int | None = Query(None, gt=0, description="Max number of records to return"),
@@ -232,7 +233,7 @@ def get_pending_users(
     return auth_service.list_pending_users(db=db, skip=skip, limit=limit)
 
 
-@router.get("/users", response_model=list[UserProfileOut], dependencies=[Depends(require_admin_or_hr())])
+@router.get("/users", response_model=PaginatedUsers, dependencies=[Depends(require_admin_or_hr())])
 def get_all_users(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int | None = Query(None, gt=0, description="Max number of records to return"),

@@ -37,24 +37,35 @@ export default function ReviewsPage() {
     goals: "",
   });
 
+  const [totalReviews, setTotalReviews] = useState(0);
+
   useEffect(() => {
     loadReviews();
-  }, [role]);
+  }, [role, currentPage, pageSize, statusFilter]);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [search, cycleFilter, statusFilter]);
 
   const loadReviews = async () => {
-    const [list, empRes] = await Promise.all([
-      api.reviews.list().catch(() => []),
-      api.employees.list({ limit: 100 }).catch(() => ({ items: [] })),
-    ]);
-    setReviews(list);
-    const empList = empRes.items || [];
-    setEmployees(empList);
-    if (empList.length > 0 && !newRev.employee_public_id) {
-      setNewRev((prev) => ({ ...prev, employee_public_id: empList[0].public_id }));
+    try {
+      const [revRes, empRes] = await Promise.all([
+        api.reviews.list({
+          status: statusFilter !== "all" ? statusFilter : undefined,
+          skip: (currentPage - 1) * pageSize,
+          limit: pageSize,
+        }).catch(() => ({ items: [], total: 0 } as any)),
+        api.employees.list({ limit: 100 }).catch(() => ({ items: [] })),
+      ]);
+      setReviews(revRes.items || revRes || []);
+      setTotalReviews(revRes.total ?? (revRes.items || revRes || []).length);
+      const empList = empRes.items || [];
+      setEmployees(empList);
+      if (empList.length > 0 && !newRev.employee_public_id) {
+        setNewRev((prev) => ({ ...prev, employee_public_id: empList[0].public_id }));
+      }
+    } catch (err) {
+      console.error("Failed to load reviews:", err);
     }
   };
 
@@ -109,6 +120,7 @@ export default function ReviewsPage() {
     if (isEmployee && user?.employee_public_id && r.employee_public_id !== user.employee_public_id) {
       return false;
     }
+    if (!search && cycleFilter === "all") return true;
     const q = search.toLowerCase();
     const empName = (r.employee_name || "").toLowerCase();
     const revName = (r.reviewer_name || "").toLowerCase();
@@ -116,17 +128,17 @@ export default function ReviewsPage() {
     const strengths = (r.strengths || "").toLowerCase();
     const goals = (r.goals || "").toLowerCase();
     const matchesSearch =
+      !search ||
       empName.includes(q) ||
       revName.includes(q) ||
       deptName.includes(q) ||
       strengths.includes(q) ||
       goals.includes(q);
     const matchesCycle = cycleFilter === "all" || (r.review_cycle || "") === cycleFilter;
-    const matchesStatus = statusFilter === "all" || (r.status || "").toLowerCase() === statusFilter.toLowerCase();
-    return matchesSearch && matchesCycle && matchesStatus;
+    return matchesSearch && matchesCycle;
   });
 
-  const pagedReviews = filteredReviews.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const pagedReviews = filteredReviews;
 
   const cycles = Array.from(new Set(reviews.map((r) => r.review_cycle)));
 
@@ -323,7 +335,7 @@ export default function ReviewsPage() {
       {/* Pagination Controls */}
       <Pagination
         currentPage={currentPage}
-        totalItems={filteredReviews.length}
+        totalItems={totalReviews}
         pageSize={pageSize}
         onPageChange={setCurrentPage}
         onPageSizeChange={setPageSize}

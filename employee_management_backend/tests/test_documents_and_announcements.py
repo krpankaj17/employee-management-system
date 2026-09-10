@@ -53,8 +53,9 @@ def test_document_verification_and_self_verification(
     # 2. Check pending documents queue
     pending_res = client.get("/documents/pending", headers=admin_headers)
     assert pending_res.status_code == 200
-    pending_list = pending_res.json()
-    assert any(d["public_id"] == emp_doc_pid for d in pending_list)
+    pending_data = pending_res.json()
+    assert "items" in pending_data and "total" in pending_data
+    assert any(d["public_id"] == emp_doc_pid for d in pending_data["items"])
 
     # 3. Standard employee attempts to verify document -> should be 403 Forbidden
     forbidden_res = client.post(
@@ -125,8 +126,9 @@ def test_announcements_and_notifications_flow(client: TestClient, admin_headers,
     # 2. List Announcements as Employee
     list_res = client.get("/announcements", headers=employee_headers)
     assert list_res.status_code == 200
-    ann_list = list_res.json()
-    assert isinstance(ann_list, list)
+    ann_res = list_res.json()
+    assert "items" in ann_res and isinstance(ann_res["items"], list)
+    assert ann_res["total"] >= 1
 
     # 3. Delete Announcement
     del_res = client.delete(f"/announcements/{ann_pid}", headers=admin_headers)

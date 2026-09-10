@@ -3,6 +3,12 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
+  },
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+  },
   async rewrites() {
     const rawUrl =
       process.env.NEXT_PUBLIC_PYTHON_BACKEND_URL ||

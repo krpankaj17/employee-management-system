@@ -2,7 +2,7 @@
 import secrets
 import datetime
 import hashlib
-from typing import cast
+from typing import cast, Any
 import utils
 from sqlalchemy import select, func, delete
 from sqlalchemy.orm import Session
@@ -595,16 +595,26 @@ def get_user_profile(user_public_id: str, db: Session) -> dict | None:
     return _build_user_profile(user, db)
 
 
-def list_users(db: Session, skip: int = 0, limit: int | None = None) -> list[dict]:
-    """Lists all users with their roles, permissions, and profile details."""
-    users = auth_repo.get_all_users(db=db, skip=skip, limit=limit)
-    return [_build_user_profile(u, db) for u in users]
+def list_users(db: Session, skip: int = 0, limit: int | None = None) -> dict[str, Any]:
+    """Lists all users with their roles, permissions, and profile details with pagination metadata."""
+    users, total = auth_repo.get_all_users(db=db, skip=skip, limit=limit)
+    return {
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+        "items": [_build_user_profile(u, db) for u in users],
+    }
 
 
-def list_pending_users(db: Session, skip: int = 0, limit: int | None = None) -> list[dict]:
-    """Lists users awaiting role assignment / admin approval."""
-    pending = auth_repo.get_pending_users(db=db, skip=skip, limit=limit)
-    return [_build_user_profile(u, db) for u in pending]
+def list_pending_users(db: Session, skip: int = 0, limit: int | None = None) -> dict[str, Any]:
+    """Lists users awaiting role assignment / admin approval with pagination metadata."""
+    pending, total = auth_repo.get_pending_users(db=db, skip=skip, limit=limit)
+    return {
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+        "items": [_build_user_profile(u, db) for u in pending],
+    }
 
 
 def list_roles(db: Session) -> list[dict]:

@@ -1,5 +1,6 @@
 # employee_services.py
 import datetime
+from typing import cast
 import utils
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
@@ -10,6 +11,7 @@ from repository import address_repo
 from models.department import Department
 from models.designation import Designation
 from models.employee import Employee
+from models.user import User
 from schemas.employee_schema import EmployeeIn, EmployeeProfileIn, AdminEmployeeSetupIn
 
 VALID_GENDERS = {"male", "female", "other", "prefer_not_to_say"}
@@ -27,7 +29,7 @@ def _resolve_department_uuid(public_id: str | None, db: Session) -> tuple[int | 
     dept = db.scalar(select(Department).where(Department.public_id == public_id))
     if dept is None:
         return None, f"Department with public_id '{public_id}' does not exist"
-    return dept.dept_id, None
+    return cast(int, dept.dept_id), None
 
 
 def _resolve_designation_uuid(public_id: str | None, db: Session) -> tuple[int | None, str | None]:
@@ -37,7 +39,7 @@ def _resolve_designation_uuid(public_id: str | None, db: Session) -> tuple[int |
     desig = db.scalar(select(Designation).where(Designation.public_id == public_id))
     if desig is None:
         return None, f"Designation with public_id '{public_id}' does not exist"
-    return desig.designation_id, None
+    return cast(int, desig.designation_id), None
 
 
 def _resolve_manager_uuid(public_id: str | None, db: Session) -> tuple[int | None, str | None]:
@@ -47,7 +49,7 @@ def _resolve_manager_uuid(public_id: str | None, db: Session) -> tuple[int | Non
     manager = repo.get_by_public_id(public_id, db=db)
     if manager is None:
         return None, f"Reporting manager with public_id '{public_id}' does not exist"
-    return manager.emp_id, None
+    return cast(int, manager.emp_id), None
 
 
 # ─── Public API ─────────────────────────────────────────────────────────────────
@@ -209,16 +211,18 @@ def _validate_employee_payload(
         return {"error": "validation", "message": "Last name cannot be empty"}
 
     # Date of birth checks
-    if not utils.is_valid_date(emp_data.date_of_birth):
+    dob_raw = emp_data.date_of_birth
+    if not dob_raw or not utils.is_valid_date(dob_raw):
         return {"error": "validation", "message": "Invalid date_of_birth, expected format YYYY-MM-DD"}
-    dob_d = datetime.date.fromisoformat(emp_data.date_of_birth.strip())
+    dob_d = datetime.date.fromisoformat(dob_raw.strip())
     if dob_d >= datetime.date.today():
         return {"error": "validation", "message": "Date of birth must be in the past"}
 
     # Joining date checks
-    if not utils.is_valid_date(emp_data.joining_date):
+    join_raw = emp_data.joining_date
+    if not join_raw or not utils.is_valid_date(join_raw):
         return {"error": "validation", "message": "Invalid joining_date, expected format YYYY-MM-DD"}
-    join_d = datetime.date.fromisoformat(emp_data.joining_date.strip())
+    join_d = datetime.date.fromisoformat(join_raw.strip())
 
     # 18-year minimum age constraint
     min_joining_age = dob_d.replace(year=dob_d.year + 18)
@@ -229,36 +233,51 @@ def _validate_employee_payload(
         }
 
     # Gender check
-    gender_clean = emp_data.gender.strip().lower()
+    gender_raw = emp_data.gender
+    if not gender_raw or not gender_raw.strip():
+        return {"error": "validation", "message": f"Gender must be one of {sorted(VALID_GENDERS)}"}
+    gender_clean = gender_raw.strip().lower()
     if gender_clean not in VALID_GENDERS:
         return {"error": "validation", "message": f"Gender must be one of {sorted(VALID_GENDERS)}"}
 
     # Status check
-    status_clean = emp_data.employee_status.strip().lower()
+    status_raw = emp_data.employee_status
+    if not status_raw or not status_raw.strip():
+        return {"error": "validation", "message": f"Employee status must be one of {sorted(VALID_EMPLOYEE_STATUSES)}"}
+    status_clean = status_raw.strip().lower()
     if status_clean not in VALID_EMPLOYEE_STATUSES:
         return {"error": "validation", "message": f"Employee status must be one of {sorted(VALID_EMPLOYEE_STATUSES)}"}
 
     # Employment type check
-    type_clean = emp_data.employment_type.strip().lower()
+    type_raw = emp_data.employment_type
+    if not type_raw or not type_raw.strip():
+        return {"error": "validation", "message": f"Employment type must be one of {sorted(VALID_EMPLOYMENT_TYPES)}"}
+    type_clean = type_raw.strip().lower()
     if type_clean not in VALID_EMPLOYMENT_TYPES:
         return {"error": "validation", "message": f"Employment type must be one of {sorted(VALID_EMPLOYMENT_TYPES)}"}
 
     # Email check
-    if not utils.is_valid_email(emp_data.email):
-        return {"error": "validation", "message": "Invalid email address"}
-    existing_by_email = repo.get_by_email(emp_data.email, db=db)
-    if existing_by_email is not None:
-        existing_id = (
-            existing_by_email.emp_id
-            if hasattr(existing_by_email, "emp_id")
-            else existing_by_email.get("emp_id") or existing_by_email.get("id")
-        )
-        if existing_id != current_emp_id:
-            return {"error": "validation", "message": f"Email '{emp_data.email}' is already in use"}
+    if emp_data.email is not None and emp_data.email.strip():
+        if not utils.is_valid_email(emp_data.email):
+            return {"error": "validation", "message": "Invalid email address"}
+        existing_by_email = repo.get_by_email(emp_data.email.strip().lower(), db=db)
+        if existing_by_email is not None:
+            existing_id = (
+                existing_by_email.emp_id
+                if hasattr(existing_by_email, "emp_id")
+                else existing_by_email.get("emp_id") or existing_by_email.get("id")
+            )
+            if existing_id != current_emp_id:
+                return {"error": "validation", "message": f"Email '{emp_data.email}' is already in use"}
+    elif current_emp_id is None:
+        return {"error": "validation", "message": "Email is required"}
 
     # Phone check
-    phone_clean = emp_data.phone.strip()
-    if len(phone_clean) < 7 or len(phone_clean) > 15:
+    if emp_data.phone is not None and emp_data.phone.strip():
+        phone_clean = emp_data.phone.strip()
+        if len(phone_clean) < 7 or len(phone_clean) > 15:
+            return {"error": "validation", "message": "Phone number must be between 7 and 15 digits"}
+    elif current_emp_id is None:
         return {"error": "validation", "message": "Phone number must be between 7 and 15 digits"}
 
     # Department UUID existence check
@@ -347,7 +366,7 @@ def update_records(public_id: str, employee_in: EmployeeIn, db: Session):
             utils.log_action("UPDATE_FAILED", msg)
             return {"ok": False, "error": "not_found", "message": msg}
 
-        e_id = emp.emp_id
+        e_id = cast(int, emp.emp_id)
 
         error = _validate_employee_payload(employee_in, e_id, db=db)
         if error:
@@ -362,7 +381,7 @@ def update_records(public_id: str, employee_in: EmployeeIn, db: Session):
             last_name=employee_in.last_name,
             date_of_birth=employee_in.date_of_birth,
             gender=employee_in.gender,
-            email=employee_in.email,
+            email=employee_in.email.strip().lower() if (employee_in.email and employee_in.email.strip()) else cast(str, emp.email),
             phone=employee_in.phone,
             joining_date=employee_in.joining_date,
             employee_status=employee_in.employee_status,
@@ -391,7 +410,7 @@ def delete_record(public_id: str, db: Session):
             utils.log_action("DELETE_FAILED", f"public_id={public_id} does not exist")
             return {"ok": False, "error": "not_found", "message": f"Employee with public_id '{public_id}' not found"}
 
-        repo.delete_employee(db=db, e_id=emp.emp_id)
+        repo.delete_employee(db=db, e_id=cast(int, emp.emp_id))
         invalidate_cache("employee_profiles", public_id)
         invalidate_cache("employee_lists")
         utils.log_action("DELETE", f"public_id={public_id} deleted from database")
@@ -460,10 +479,11 @@ def get_employee_full_details(public_id: str, db: Session) -> dict | None:
         if not emp:
             return None
 
+        emp_internal_id = cast(int, emp.emp_id)
         emp_dict = emp.to_dict()
-        emp_dict["secondary_email"] = emp.user.secondary_email if emp.user else None
-        emp_dict["addresses"] = address_repo.get_employee_addresses(emp.emp_id, db=db)
-        contacts = address_repo.get_emergency_contacts(emp.emp_id, db=db)
+        emp_dict["secondary_email"] = emp.user.secondary_email if isinstance(emp.user, User) else None
+        emp_dict["addresses"] = address_repo.get_employee_addresses(emp_internal_id, db=db)
+        contacts = address_repo.get_emergency_contacts(emp_internal_id, db=db)
         emp_dict["emergency_contacts"] = [c.to_dict() for c in contacts]
         return emp_dict
 
@@ -476,6 +496,8 @@ def admin_setup_employee(public_id: str, payload: AdminEmployeeSetupIn, db: Sess
         emp = repo.get_by_public_id(public_id, db=db)
         if emp is None:
             return {"ok": False, "error": "not_found", "message": f"Employee with public_id '{public_id}' not found"}
+
+        emp_internal_id = cast(int, emp.emp_id)
 
         # 1. Resolve Corporate FK references
         if payload.department_public_id is not None:
@@ -494,7 +516,7 @@ def admin_setup_employee(public_id: str, payload: AdminEmployeeSetupIn, db: Sess
             mgr_id, err = _resolve_manager_uuid(payload.reporting_manager_public_id, db)
             if err:
                 return {"ok": False, "error": "validation", "message": err}
-            if mgr_id == emp.emp_id:
+            if mgr_id == emp_internal_id:
                 return {"ok": False, "error": "validation", "message": "An employee cannot be their own reporting manager"}
             emp.reporting_manager_id = mgr_id
 
@@ -552,22 +574,24 @@ def admin_setup_employee(public_id: str, payload: AdminEmployeeSetupIn, db: Sess
                 return {"ok": False, "error": "validation", "message": "Date of birth must be in the past"}
             emp.date_of_birth = dob_d
 
-        if payload.secondary_email and emp.user:
-            sec_clean = payload.secondary_email.strip().lower()
-            if not utils.is_valid_email(sec_clean):
-                return {"ok": False, "error": "validation", "message": "Invalid secondary_email format"}
-            emp.user.secondary_email = sec_clean
+        emp_user = emp.user
+        if isinstance(emp_user, User):
+            if payload.secondary_email:
+                sec_clean = payload.secondary_email.strip().lower()
+                if not utils.is_valid_email(sec_clean):
+                    return {"ok": False, "error": "validation", "message": "Invalid secondary_email format"}
+                emp_user.secondary_email = sec_clean
 
-        if emp.user and (payload.first_name or payload.last_name):
-            emp.user.display_name = f"{emp.first_name} {emp.last_name}".strip()
+            if payload.first_name or payload.last_name:
+                emp_user.display_name = f"{emp.first_name} {emp.last_name}".strip()
 
         # 4. Optional Bank Details
         if payload.bank_name and payload.account_number and payload.routing_code:
             from repository import payroll_repo
             from models.payroll import BankDetail
-            payroll_repo.clear_primary_bank_details(emp.emp_id, db=db)
+            payroll_repo.clear_primary_bank_details(emp_internal_id, db=db)
             bank_rec = BankDetail(
-                emp_id=emp.emp_id,
+                emp_id=emp_internal_id,
                 bank_name=payload.bank_name.strip(),
                 branch_name=payload.branch_name.strip() if payload.branch_name else None,
                 account_number=payload.account_number.strip(),
@@ -584,10 +608,11 @@ def admin_setup_employee(public_id: str, payload: AdminEmployeeSetupIn, db: Sess
             from decimal import Decimal
             basic_dec = Decimal(str(payload.basic_salary))
             net_dec = Decimal(str(payload.net_salary)) if payload.net_salary is not None else basic_dec
-            eff_from = emp.joining_date or datetime.date.today()
-            payroll_repo.close_previous_salary(emp.emp_id, eff_from, db=db)
+            joining_date: datetime.date | None = emp.joining_date  # type: ignore[assignment]
+            eff_from: datetime.date = joining_date if joining_date is not None else datetime.date.today()
+            payroll_repo.close_previous_salary(emp_internal_id, eff_from, db=db)
             salary_rec = Salary(
-                emp_id=emp.emp_id,
+                emp_id=emp_internal_id,
                 basic_salary=basic_dec,
                 net_salary=net_dec,
                 currency=payload.currency or "INR",
@@ -601,7 +626,7 @@ def admin_setup_employee(public_id: str, payload: AdminEmployeeSetupIn, db: Sess
             if addr_type not in {"current", "permanent"}:
                 continue
             address_repo.add_employee_address(
-                emp_id=emp.emp_id,
+                emp_id=emp_internal_id,
                 street_address=addr_in.street_address,
                 city=addr_in.city,
                 state=addr_in.state,
@@ -615,7 +640,7 @@ def admin_setup_employee(public_id: str, payload: AdminEmployeeSetupIn, db: Sess
         # 7. Emergency Contacts
         for ec_in in payload.emergency_contacts:
             address_repo.add_emergency_contact(
-                emp_id=emp.emp_id,
+                emp_id=emp_internal_id,
                 contact_name=ec_in.contact_name,
                 relationship=ec_in.relationship,
                 phone=ec_in.phone,
@@ -678,7 +703,7 @@ def onboard_or_update_my_profile(current_user, payload: EmployeeProfileIn, db: S
         # 2. Get or create Employee record
         emp = None
         if current_user.employee:
-            emp = repo.get_by_id(current_user.employee.emp_id, db=db)
+            emp = repo.get_by_id(cast(int, current_user.employee.emp_id), db=db)
 
         if emp is None:
             max_id = db.scalar(select(func.max(Employee.emp_id))) or 0
@@ -716,13 +741,15 @@ def onboard_or_update_my_profile(current_user, payload: EmployeeProfileIn, db: S
 
         current_user.display_name = f"{emp.first_name} {emp.last_name}".strip()
 
+        emp_internal_id = cast(int, emp.emp_id)
+
         # 3. Process addresses if provided
         for addr_in in payload.addresses:
             addr_type = addr_in.address_type.strip().lower()
             if addr_type not in {"current", "permanent"}:
                 continue
             address_repo.add_employee_address(
-                emp_id=emp.emp_id,
+                emp_id=emp_internal_id,
                 street_address=addr_in.street_address,
                 city=addr_in.city,
                 state=addr_in.state,
@@ -736,7 +763,7 @@ def onboard_or_update_my_profile(current_user, payload: EmployeeProfileIn, db: S
         # 4. Process emergency contacts if provided
         for ec_in in payload.emergency_contacts:
             address_repo.add_emergency_contact(
-                emp_id=emp.emp_id,
+                emp_id=emp_internal_id,
                 contact_name=ec_in.contact_name,
                 relationship=ec_in.relationship,
                 phone=ec_in.phone,

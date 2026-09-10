@@ -1,5 +1,4 @@
-# src/repository/document_repo.py
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session, joinedload
 from models.document import EmployeeDocument
 
@@ -58,13 +57,24 @@ def update_document_verification(
     return doc
 
 
-def list_pending_documents(db: Session) -> list[EmployeeDocument]:
-    """Lists all documents pending verification."""
+def list_pending_documents(
+    db: Session, skip: int = 0, limit: int | None = None
+) -> tuple[list[EmployeeDocument], int]:
+    """Lists all documents pending verification with pagination and total count."""
+    status_filter = EmployeeDocument.status.in_(["Pending_Verification", "pending_verification", "Pending", "pending"])
+    count_stmt = select(func.count(EmployeeDocument.document_id)).where(status_filter)
+    total = db.scalar(count_stmt) or 0
+
     stmt = (
         select(EmployeeDocument)
         .options(joinedload(EmployeeDocument.employee))
-        .where(EmployeeDocument.status.in_(["Pending_Verification", "pending_verification", "Pending", "pending"]))
+        .where(status_filter)
         .order_by(EmployeeDocument.uploaded_at.desc())
+        .offset(skip)
     )
-    return list(db.scalars(stmt).all())
+    if limit is not None:
+        stmt = stmt.limit(limit)
+
+    items = list(db.scalars(stmt).all())
+    return items, total
 

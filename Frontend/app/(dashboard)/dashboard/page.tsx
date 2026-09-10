@@ -506,7 +506,7 @@ export default function DashboardPage() {
                 border: "1px solid #e4e4e7",
                 borderRadius: "9999px",
                 fontSize: "0.8rem",
-                color: "#3f3f46",
+                color: "#18181b",
                 fontWeight: 600,
               }}
               title="Attendance recorded for today — check-in allowed once per day."
@@ -644,7 +644,7 @@ export default function DashboardPage() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#334155", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               {isEmployee ? "Profile Status" : "Total Workforce"}
             </span>
             <div
@@ -667,7 +667,7 @@ export default function DashboardPage() {
               {isEmployee ? "Active" : displayTotalEmp}
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
-              <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
+              <span style={{ fontSize: "0.8rem", color: "#334155" }}>
                 {isEmployee ? "Corporate Profile" : `${activeEmployees} Active Accounts`}
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: 2, fontSize: "0.75rem", color: "#0e1726", fontWeight: 600 }}>
@@ -694,7 +694,7 @@ export default function DashboardPage() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#334155", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               {isEmployee ? "Today's Shift" : "Active Today"}
             </span>
             <div
@@ -717,7 +717,7 @@ export default function DashboardPage() {
               {isEmployee ? (checkedIn ? "Clocked In" : shiftCompleted ? "Shift Done" : "Not Started") : displayActiveToday}
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
-              <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
+              <span style={{ fontSize: "0.8rem", color: "#334155" }}>
                 {isEmployee ? "Live Time Clock" : "Present at Work"}
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: 2, fontSize: "0.75rem", color: "#0e1726", fontWeight: 600 }}>
@@ -744,7 +744,7 @@ export default function DashboardPage() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#334155", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               {isEmployee ? "Leave Status" : "On Leave / Pending"}
             </span>
             <div
@@ -767,7 +767,7 @@ export default function DashboardPage() {
               {isEmployee ? pendingLeaves : onLeaveToday}
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
-              <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
+              <span style={{ fontSize: "0.8rem", color: "#334155" }}>
                 {isEmployee ? "Pending Requests" : `${pendingLeaves} Pending Approval`}
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: 2, fontSize: "0.75rem", color: "#0e1726", fontWeight: 600 }}>
@@ -794,7 +794,7 @@ export default function DashboardPage() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#334155", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               {isEmployee ? "Monthly Take-Home" : "Inactive Users"}
             </span>
             <div
@@ -818,7 +818,7 @@ export default function DashboardPage() {
               {isEmployee ? (myNetPay > 0 ? formatPayrollCurrency(myNetPay) : "Payslips Ready") : inactiveEmployees}
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
-              <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
+              <span style={{ fontSize: "0.8rem", color: "#334155" }}>
                 {isEmployee ? "Disbursed in INR (₹)" : "Deactivated / Suspended"}
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: 2, fontSize: "0.75rem", color: "#0e1726", fontWeight: 600 }}>
@@ -848,22 +848,22 @@ export default function DashboardPage() {
         >
           <div style={{ display: "flex", alignItems: "center", gap: 28, flexWrap: "wrap" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: "0.82rem", color: "#64748b" }}>Disbursed Payroll:</span>
+              <span style={{ fontSize: "0.82rem", color: "#334155" }}>Disbursed Payroll:</span>
               <span style={{ fontWeight: 800, color: "#0e1726", fontSize: "0.95rem" }}>
                 {formatPayrollCurrency(payrollTotal)}
               </span>
-              <span style={{ fontSize: "0.75rem", color: "#64748b" }}>({payrollRunsCount} Runs)</span>
+              <span style={{ fontSize: "0.75rem", color: "#334155" }}>({payrollRunsCount} Runs)</span>
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: "0.82rem", color: "#64748b" }}>Business Units:</span>
+              <span style={{ fontSize: "0.82rem", color: "#334155" }}>Business Units:</span>
               <span style={{ fontWeight: 800, color: "#0e1726", fontSize: "0.95rem" }}>
                 {departmentsCount} Departments
               </span>
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: "0.82rem", color: "#64748b" }}>Delivery:</span>
+              <span style={{ fontSize: "0.82rem", color: "#334155" }}>Delivery:</span>
               <span style={{ fontWeight: 800, color: "#0e1726", fontSize: "0.95rem" }}>
                 {activeProjectsCount} Active Projects
               </span>
@@ -928,7 +928,7 @@ export default function DashboardPage() {
                   {isEmployee ? myProjects.length : filteredProjects.length}
                 </span>
               </div>
-              <p style={{ fontSize: "0.78rem", color: "#64748b", margin: "4px 0 0 0" }}>
+              <p style={{ fontSize: "0.78rem", color: "#334155", margin: "4px 0 0 0" }}>
                 {isEmployee
                   ? "Initiatives, technical milestones, and deliverables assigned to you"
                   : "Enterprise milestones, project leads, and team capacity tracking"}
@@ -1037,7 +1037,7 @@ export default function DashboardPage() {
 
           {/* Projects Data Table */}
           {(isEmployee ? myProjects : pagedProjects).length === 0 ? (
-            <div style={{ textAlign: "center", padding: "40px 16px", color: "#64748b" }}>
+            <div style={{ textAlign: "center", padding: "40px 16px", color: "#334155" }}>
               <FolderKanban size={32} style={{ margin: "0 auto 8px", opacity: 0.4 }} />
               <div style={{ fontSize: "0.88rem", fontWeight: 600, color: "#0e1726", marginBottom: 2 }}>
                 No Projects Found
@@ -1051,19 +1051,19 @@ export default function DashboardPage() {
               <table className="data-table" style={{ width: "100%" }}>
                 <thead>
                   <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <th style={{ padding: "10px 14px", color: "#64748b", fontWeight: 600, fontSize: "0.78rem" }}>
+                    <th style={{ padding: "10px 14px", color: "#334155", fontWeight: 600, fontSize: "0.78rem" }}>
                       Project / Code
                     </th>
-                    <th style={{ padding: "10px 14px", color: "#64748b", fontWeight: 600, fontSize: "0.78rem" }}>
+                    <th style={{ padding: "10px 14px", color: "#334155", fontWeight: 600, fontSize: "0.78rem" }}>
                       Project Lead
                     </th>
-                    <th style={{ padding: "10px 14px", color: "#64748b", fontWeight: 600, fontSize: "0.78rem" }}>
+                    <th style={{ padding: "10px 14px", color: "#334155", fontWeight: 600, fontSize: "0.78rem" }}>
                       Team
                     </th>
-                    <th style={{ padding: "10px 14px", color: "#64748b", fontWeight: 600, fontSize: "0.78rem" }}>
+                    <th style={{ padding: "10px 14px", color: "#334155", fontWeight: 600, fontSize: "0.78rem" }}>
                       Status
                     </th>
-                    <th style={{ padding: "10px 14px", color: "#64748b", fontWeight: 600, fontSize: "0.78rem", textAlign: "right" }}>
+                    <th style={{ padding: "10px 14px", color: "#334155", fontWeight: 600, fontSize: "0.78rem", textAlign: "right" }}>
                       Actions
                     </th>
                   </tr>
@@ -1082,7 +1082,7 @@ export default function DashboardPage() {
                           <span style={{ fontWeight: 600, color: "#0e1726", fontSize: "0.86rem" }}>
                             {prj.project_name}
                           </span>
-                          <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "#64748b", fontWeight: 600 }}>
+                          <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "#334155", fontWeight: 600 }}>
                             {prj.project_code}
                           </span>
                         </div>
@@ -1185,13 +1185,13 @@ export default function DashboardPage() {
                 </Link>
               </div>
 
-              <p style={{ fontSize: "0.78rem", color: "#64748b", margin: "0 0 16px 0" }}>
+              <p style={{ fontSize: "0.78rem", color: "#334155", margin: "0 0 16px 0" }}>
                 Workforce distribution across functional business units
               </p>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {departmentDistribution.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "20px 8px", color: "#64748b", fontSize: "0.82rem" }}>
+                  <div style={{ textAlign: "center", padding: "20px 8px", color: "#334155", fontSize: "0.82rem" }}>
                     No department records found.
                   </div>
                 ) : (
@@ -1239,7 +1239,7 @@ export default function DashboardPage() {
                 borderTop: "1px solid #f1f5f9",
                 marginTop: 16,
                 fontSize: "0.76rem",
-                color: "#64748b",
+                color: "#334155",
               }}
             >
               <span>Total Units: {departmentsCount}</span>
@@ -1291,7 +1291,7 @@ export default function DashboardPage() {
                   marginBottom: 16,
                 }}
               >
-                <div style={{ fontSize: "0.78rem", color: "#64748b", marginBottom: 4 }}>
+                <div style={{ fontSize: "0.78rem", color: "#334155", marginBottom: 4 }}>
                   {checkedIn ? "Clocked In At" : "Status for Today"}
                 </div>
                 <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "#0e1726" }}>
@@ -1337,7 +1337,7 @@ export default function DashboardPage() {
                 borderTop: "1px solid #f1f5f9",
                 marginTop: 16,
                 fontSize: "0.76rem",
-                color: "#64748b",
+                color: "#334155",
                 textAlign: "center",
               }}
             >
@@ -1357,7 +1357,7 @@ export default function DashboardPage() {
                 <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#0e1726", margin: 0, marginBottom: 2 }}>
                   Weekly Attendance
                 </h3>
-                <p style={{ fontSize: "0.78rem", color: "#64748b", margin: 0 }}>
+                <p style={{ fontSize: "0.78rem", color: "#334155", margin: 0 }}>
                   Biometric presence and work shift verification rate
                 </p>
               </div>
@@ -1391,7 +1391,7 @@ export default function DashboardPage() {
 
                 return (
                   <div key={idx} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: "0.72rem", fontWeight: 700, color: isToday ? "#0e1726" : "#64748b" }}>
+                    <span style={{ fontSize: "0.72rem", fontWeight: 700, color: isToday ? "#0e1726" : "#334155" }}>
                       {displayVal}
                     </span>
                     <div
@@ -1408,7 +1408,7 @@ export default function DashboardPage() {
                       style={{
                         fontSize: "0.72rem",
                         fontWeight: 600,
-                        color: isToday ? "#0e1726" : "#64748b",
+                        color: isToday ? "#0e1726" : "#334155",
                         background: isToday ? "#e2e8f0" : "transparent",
                         padding: isToday ? "2px 6px" : "0",
                         borderRadius: "4px",
@@ -1431,7 +1431,7 @@ export default function DashboardPage() {
               borderTop: "1px solid #f1f5f9",
               marginTop: 14,
               fontSize: "0.76rem",
-              color: "#64748b",
+              color: "#334155",
             }}
           >
             <span>Shift Target: 8.0 hrs/day</span>
@@ -1472,7 +1472,7 @@ export default function DashboardPage() {
 
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {announcements.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "32px 12px", color: "#64748b", fontSize: "0.84rem" }}>
+              <div style={{ textAlign: "center", padding: "32px 12px", color: "#334155", fontSize: "0.84rem" }}>
                 No active announcements published.
               </div>
             ) : (

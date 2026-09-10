@@ -69,6 +69,13 @@ class UserProfileOut(BaseModel):
         return str(value) if value is not None else None
 
 
+class PaginatedUsers(BaseModel):
+    total: int
+    skip: int
+    limit: int | None = None
+    items: list[UserProfileOut]
+
+
 class ForgotPasswordIn(BaseModel):
     email: str = Field(min_length=5, max_length=255, description="Valid email address to receive password reset OTP")
 

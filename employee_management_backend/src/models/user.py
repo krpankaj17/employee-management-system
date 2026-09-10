@@ -1,10 +1,12 @@
-# src/models/user.py
 from datetime import datetime
-from typing import cast
+from typing import TYPE_CHECKING, cast
 from sqlalchemy import BigInteger, Integer, String, Boolean, DateTime, Text, ForeignKey, Index, func, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
+
+if TYPE_CHECKING:
+    from models.employee import Employee
 
 
 class User(Base):
@@ -38,7 +40,7 @@ class User(Base):
     )
 
     # Relationships
-    employee = relationship("Employee", back_populates="user", uselist=False)
+    employee: Mapped["Employee | None"] = relationship("Employee", back_populates="user", uselist=False)
     user_roles = relationship("UserRole", back_populates="user", cascade="all, delete-orphan")
     roles = relationship("Role", secondary="user_roles", back_populates="users", viewonly=True)
 

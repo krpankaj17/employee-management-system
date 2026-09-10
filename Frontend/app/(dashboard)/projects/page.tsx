@@ -146,9 +146,11 @@ export default function ProjectsPage() {
     end_date: "",
   });
 
+  const [totalProjects, setTotalProjects] = useState(0);
+
   useEffect(() => {
     loadProjects();
-  }, [role]);
+  }, [role, currentPage, pageSize, statusFilter]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -156,11 +158,16 @@ export default function ProjectsPage() {
 
   const loadProjects = async () => {
     try {
-      const [list, empRes] = await Promise.all([
-        api.projects.list().catch(() => []),
+      const [projRes, empRes] = await Promise.all([
+        api.projects.list({
+          status: statusFilter !== "all" ? statusFilter : undefined,
+          skip: (currentPage - 1) * pageSize,
+          limit: pageSize,
+        }).catch(() => ({ items: [], total: 0 } as any)),
         api.employees.list({ limit: 100 }).then((r) => r.items).catch(() => []),
       ]);
-      setProjects(list);
+      setProjects(projRes.items || projRes || []);
+      setTotalProjects(projRes.total ?? (projRes.items || projRes || []).length);
       setEmployees(empRes);
       if (empRes.length > 0) {
         setNewPrj((prev) => ({
@@ -509,18 +516,18 @@ export default function ProjectsPage() {
 
   // Filter & Pagination
   const filteredProjects = projects.filter((p) => {
+    if (!search) return true;
     const q = search.toLowerCase();
     const lead = getLeadName(p).toLowerCase();
-    const matchesSearch =
+    return (
       p.project_name.toLowerCase().includes(q) ||
       p.project_code.toLowerCase().includes(q) ||
       (p.description || "").toLowerCase().includes(q) ||
-      lead.includes(q);
-    const matchesStatus = statusFilter === "all" || p.status === statusFilter;
-    return matchesSearch && matchesStatus;
+      lead.includes(q)
+    );
   });
 
-  const pagedProjects = filteredProjects.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const pagedProjects = filteredProjects;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -777,7 +784,7 @@ export default function ProjectsPage() {
       {/* Pagination Controls */}
       <Pagination
         currentPage={currentPage}
-        totalItems={filteredProjects.length}
+        totalItems={totalProjects}
         pageSize={pageSize}
         onPageChange={setCurrentPage}
         onPageSizeChange={setPageSize}

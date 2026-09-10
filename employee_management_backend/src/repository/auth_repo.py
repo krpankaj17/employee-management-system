@@ -58,8 +58,11 @@ def get_user_by_id(user_id: int, db: Session) -> User | None:
 
 def get_all_users(
     db: Session, skip: int = 0, limit: int | None = None
-) -> list[User]:
-    """Retrieves all users with eager-loaded employee and roles/permissions."""
+) -> tuple[list[User], int]:
+    """Retrieves all users with eager-loaded employee and roles/permissions and total count."""
+    count_stmt = select(func.count(User.user_id))
+    total = db.scalar(count_stmt) or 0
+
     stmt = (
         select(User)
         .options(
@@ -71,13 +74,17 @@ def get_all_users(
     )
     if limit is not None:
         stmt = stmt.limit(limit)
-    return list(db.scalars(stmt).unique().all())
+    items = list(db.scalars(stmt).unique().all())
+    return items, total
 
 
 def get_pending_users(
     db: Session, skip: int = 0, limit: int | None = None
-) -> list[User]:
-    """Retrieves users who do not have any roles assigned (pending approval)."""
+) -> tuple[list[User], int]:
+    """Retrieves users who do not have any roles assigned (pending approval) and total count."""
+    count_stmt = select(func.count(User.user_id)).where(~User.user_roles.any())
+    total = db.scalar(count_stmt) or 0
+
     stmt = (
         select(User)
         .options(
@@ -90,7 +97,8 @@ def get_pending_users(
     )
     if limit is not None:
         stmt = stmt.limit(limit)
-    return list(db.scalars(stmt).unique().all())
+    items = list(db.scalars(stmt).unique().all())
+    return items, total
 
 
 def create_user(

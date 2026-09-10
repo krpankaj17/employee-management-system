@@ -160,6 +160,7 @@ export function Topbar() {
         <Link
           href="/profile"
           className={`studio-nav-item ${pathname.startsWith("/profile") ? "active" : ""}`}
+          aria-label="Account Settings"
         >
           Settings
         </Link>

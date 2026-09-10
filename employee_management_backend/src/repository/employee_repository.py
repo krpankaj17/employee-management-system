@@ -245,11 +245,11 @@ def create_employee(
     db: Session,
     first_name: str,
     last_name: str,
-    date_of_birth: str,
-    gender: str,
-    email: str,
-    phone: str,
-    joining_date: str,
+    date_of_birth: str | None = None,
+    gender: str | None = None,
+    email: str | None = None,
+    phone: str | None = None,
+    joining_date: str | None = None,
     employee_status: str = "active",
     employment_type: str = "full_time",
     dept_id: int | None = None,
@@ -259,11 +259,11 @@ def create_employee(
     employee_code: str | None = None,
 ) -> Employee:
     """Creates a new Employee and associated User record transactionally in PostgreSQL."""
-    clean_email = email.strip().lower()
+    clean_email = email.strip().lower() if email else ""
 
     # 1. Get or create associated User
-    user = db.scalar(select(User).where(func.lower(User.email) == clean_email))
-    if not user:
+    user = db.scalar(select(User).where(func.lower(User.email) == clean_email)) if clean_email else None
+    if not user and clean_email:
         user = User(
             email=clean_email,
             display_name=f"{first_name.strip()} {last_name.strip()}",
@@ -283,13 +283,13 @@ def create_employee(
     # 3. Parse dates
     dob_date = (
         datetime.date.fromisoformat(date_of_birth.strip())
-        if isinstance(date_of_birth, str)
-        else date_of_birth
+        if isinstance(date_of_birth, str) and date_of_birth.strip()
+        else (date_of_birth if isinstance(date_of_birth, datetime.date) else None)
     )
     join_date = (
         datetime.date.fromisoformat(joining_date.strip())
-        if isinstance(joining_date, str)
-        else joining_date
+        if isinstance(joining_date, str) and joining_date.strip()
+        else (joining_date if isinstance(joining_date, datetime.date) else None)
     )
 
     # 4. Create Employee record
@@ -298,16 +298,16 @@ def create_employee(
         first_name=first_name.strip(),
         last_name=last_name.strip(),
         date_of_birth=dob_date,
-        gender=gender.strip().lower(),
+        gender=gender.strip().lower() if gender else "male",
         email=clean_email,
-        phone=phone.strip(),
+        phone=phone.strip() if phone else None,
         joining_date=join_date,
         employee_status=employee_status.strip().lower(),
         employment_type=employment_type.strip().lower(),
         dept_id=dept_id,
         designation_id=designation_id,
         reporting_manager_id=reporting_manager_id,
-        user_id=user.user_id,
+        user_id=user.user_id if user else None,
         is_active=is_active,
     )
     db.add(emp)
@@ -321,11 +321,11 @@ def update_employee(
     e_id: int,
     first_name: str,
     last_name: str,
-    date_of_birth: str,
-    gender: str,
-    email: str,
-    phone: str,
-    joining_date: str,
+    date_of_birth: str | None = None,
+    gender: str | None = None,
+    email: str | None = None,
+    phone: str | None = None,
+    joining_date: str | None = None,
     employee_status: str = "active",
     employment_type: str = "full_time",
     dept_id: int | None = None,
@@ -342,19 +342,24 @@ def update_employee(
 
     emp.first_name = first_name.strip()
     emp.last_name = last_name.strip()
-    emp.date_of_birth = (
-        datetime.date.fromisoformat(date_of_birth.strip())
-        if isinstance(date_of_birth, str)
-        else date_of_birth
-    )
-    emp.gender = gender.strip().lower()
-    emp.email = email.strip().lower()
-    emp.phone = phone.strip()
-    emp.joining_date = (
-        datetime.date.fromisoformat(joining_date.strip())
-        if isinstance(joining_date, str)
-        else joining_date
-    )
+    if date_of_birth is not None:
+        emp.date_of_birth = (
+            datetime.date.fromisoformat(date_of_birth.strip())
+            if isinstance(date_of_birth, str) and date_of_birth.strip()
+            else (date_of_birth if isinstance(date_of_birth, datetime.date) else emp.date_of_birth)
+        )
+    if gender and gender.strip():
+        emp.gender = gender.strip().lower()
+    if email and email.strip():
+        emp.email = email.strip().lower()
+    if phone and phone.strip():
+        emp.phone = phone.strip()
+    if joining_date is not None:
+        emp.joining_date = (
+            datetime.date.fromisoformat(joining_date.strip())
+            if isinstance(joining_date, str) and joining_date.strip()
+            else (joining_date if isinstance(joining_date, datetime.date) else emp.joining_date)
+        )
     emp.employee_status = employee_status.strip().lower()
     emp.employment_type = employment_type.strip().lower()
     emp.dept_id = dept_id
