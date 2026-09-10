@@ -14,7 +14,10 @@ def _dispatch_email(to_email: str, subject: str, html_content: str, text_content
     Bypasses cloud platform firewall blocks against outbound SMTP."""
     # 1. Prefer HTTP-based Resend API (HTTPS port 443 - not blocked by Render/cloud)
     if settings.RESEND_API_KEY:
-        from_sender = settings.SMTP_FROM_EMAIL or "Datansh EMS <onboarding@resend.dev>"
+        # Resend requires their default test domain unless a custom domain is verified
+        from_sender = "Datansh EMS <onboarding@resend.dev>"
+        if settings.SMTP_FROM_EMAIL and not any(settings.SMTP_FROM_EMAIL.lower().endswith(d) for d in ["@gmail.com", "@yahoo.com", "@outlook.com", "@hotmail.com"]):
+            from_sender = f"{settings.SMTP_FROM_NAME} <{settings.SMTP_FROM_EMAIL}>"
         res = httpx.post(
             "https://api.resend.com/emails",
             headers={
