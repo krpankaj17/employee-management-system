@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Search,
   Filter,
@@ -36,6 +37,7 @@ import { hasPermission, useAuth, canViewAllEmployees } from "@/lib/auth";
 import { EditEmployeeModal } from "@/components/employee/EditEmployeeModal";
 
 export default function EmployeesPage() {
+  const router = useRouter();
   const { role, isHR, isAdmin, mounted } = useAuth();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -219,17 +221,14 @@ export default function EmployeesPage() {
   // Ratio metrics
   const activeCount = employees.filter((e) => String(e.employee_status).toLowerCase() === "active").length;
   const onLeaveCount = employees.filter((e) => String(e.employee_status).toLowerCase().includes("leave")).length;
-  const probationaryCount = employees.filter((e) => {
-    if (!e.joining_date) return false;
-    const jDate = new Date(e.joining_date);
-    const threeMonthsAgo = new Date();
-    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-    return jDate >= threeMonthsAgo;
+  const inactiveCount = employees.filter((e) => {
+    const s = String(e.employee_status).toLowerCase();
+    return s === "inactive" || s === "terminated" || s === "suspended" || s === "resigned";
   }).length;
 
-  const activePct = employees.length > 0 ? Math.round((activeCount / employees.length) * 100) : 84;
-  const onLeavePct = employees.length > 0 ? Math.round((onLeaveCount / employees.length) * 100) : 8;
-  const probationaryPct = employees.length > 0 ? Math.round((probationaryCount / employees.length) * 100) : 8;
+  const activePct = employees.length > 0 ? Math.round((activeCount / employees.length) * 100) : 0;
+  const onLeavePct = employees.length > 0 ? Math.round((onLeaveCount / employees.length) * 100) : 0;
+  const inactivePct = employees.length > 0 ? Math.round((inactiveCount / employees.length) * 100) : 0;
 
   if (role === "Employee") {
     return (
@@ -349,10 +348,10 @@ export default function EmployeesPage() {
               <strong className="tabular-figures">{onLeavePct}%</strong>
             </div>
 
-            {/* Probationary Segment */}
+            {/* Inactive Users Segment */}
             <div className="ratio-segment" style={{ flex: 1 }}>
-              <span>In Probation</span>
-              <strong className="tabular-figures">{probationaryPct}%</strong>
+              <span>Inactive Users</span>
+              <strong className="tabular-figures">{inactivePct}%</strong>
             </div>
           </div>
         </div>
@@ -458,18 +457,6 @@ export default function EmployeesPage() {
             <table className="data-table" style={{ margin: 0 }}>
               <thead>
                 <tr>
-                  <th style={{ width: 44, textAlign: "center" }}>
-                    <input
-                      type="checkbox"
-                      checked={
-                        selectedEmpIds.size === displayedEmployees.length &&
-                        displayedEmployees.length > 0
-                      }
-                      onChange={toggleSelectAll}
-                      style={{ cursor: "pointer", width: 16, height: 16, accentColor: "#eab308" }}
-                      aria-label="Select all employees"
-                    />
-                  </th>
                   <th>Employee</th>
                   <th>Employee Code</th>
                   <th>Job Title</th>
@@ -483,7 +470,7 @@ export default function EmployeesPage() {
               <tbody>
                 {displayedEmployees.length === 0 ? (
                   <tr>
-                    <td colSpan={9} style={{ textAlign: "center", padding: "48px 16px" }}>
+                    <td colSpan={8} style={{ textAlign: "center", padding: "48px 16px" }}>
                       <p style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>
                         No employee records match your selected filters.
                       </p>
@@ -491,31 +478,15 @@ export default function EmployeesPage() {
                   </tr>
                 ) : (
                   displayedEmployees.map((emp) => {
-                    const isSelected = selectedEmpIds.has(emp.public_id);
                     const isStatusActive = String(emp.employee_status).toLowerCase() === "active";
                     const isStatusLeave = String(emp.employee_status).toLowerCase().includes("leave");
 
                     return (
                       <tr
                         key={emp.public_id}
-                        className={isSelected ? "table-row-selected-yellow" : ""}
                         style={{ cursor: "pointer" }}
-                        onClick={() => toggleSelectRow(emp.public_id)}
+                        onClick={() => router.push(`/employees/${emp.public_id}`)}
                       >
-                        {/* Checkbox */}
-                        <td
-                          style={{ textAlign: "center" }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleSelectRow(emp.public_id)}
-                            style={{ cursor: "pointer", width: 16, height: 16, accentColor: "#eab308" }}
-                            aria-label={`Select ${emp.first_name} ${emp.last_name}`}
-                          />
-                        </td>
-
                         {/* Employee Avatar + Name */}
                         <td>
                           <Link

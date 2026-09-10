@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth";
 export function Topbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isHR, isAdmin, logout, mounted } = useAuth();
+  const { user, isHR, isAdmin, isEmployee, logout, mounted } = useAuth();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
@@ -28,16 +28,16 @@ export function Topbar() {
     return pathname.startsWith(href);
   };
 
-  // Primary 8 Core Modules (Clean width, no horizontal overflow)
+  // Primary Core Modules: Restrict administrative modules from regular employees
   const primaryNavItems = [
     { label: "Dashboard", href: "/dashboard" },
-    { label: "Employees", href: "/employees" },
+    ...(!isEmployee ? [{ label: "Employees", href: "/employees" }] : []),
     { label: "Attendance", href: "/attendance" },
     { label: "Leaves", href: "/leaves" },
     { label: "Salary", href: "/payroll" },
     { label: "Projects", href: "/projects" },
     { label: "Reviews", href: "/reviews" },
-    { label: "Departments", href: "/departments" },
+    ...(!isEmployee ? [{ label: "Departments", href: "/departments" }] : []),
   ];
 
   // Secondary & Governance Modules inside "More ▾"

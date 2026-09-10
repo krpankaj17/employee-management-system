@@ -6,41 +6,33 @@ import {
   Users,
   Clock,
   CalendarCheck,
-  WalletCards,
   FolderKanban,
   Megaphone,
   CheckCircle2,
   AlertCircle,
   ArrowUpRight,
-  Sparkles,
-  TrendingUp,
   UserCheck,
-  Shield,
   RefreshCw,
   Building,
   Briefcase,
   Calendar,
-  ChevronRight,
   Search,
-  RotateCcw,
-  ExternalLink,
-  Layers,
-  Filter,
+  UserX,
+  CreditCard,
+  Check,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/apiClient";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
-import { RadialArc } from "@/components/ui/RadialArc";
 import { Pagination } from "@/components/ui/Pagination";
 import { Announcement } from "@/types/announcement";
 import { Employee } from "@/types/employee";
 import { AttendanceRecord } from "@/types/attendance";
-import { LeaveBalance, LeaveRequest } from "@/types/leave";
+import { LeaveRequest } from "@/types/leave";
 import { Project } from "@/types/project";
 import { Department } from "@/types/department";
 import { PayrollRun } from "@/types/payroll";
-import { PerformanceReview } from "@/types/review";
 
 export default function DashboardPage() {
   const { role, user, isEmployee } = useAuth();
@@ -58,12 +50,12 @@ export default function DashboardPage() {
   // Real Enterprise Overview Stats
   const [totalEmployees, setTotalEmployees] = useState(0);
   const [activeEmployees, setActiveEmployees] = useState(0);
+  const [inactiveEmployees, setInactiveEmployees] = useState(0);
   const [departmentsCount, setDepartmentsCount] = useState(0);
   const [presentToday, setPresentToday] = useState(0);
   const [onLeaveToday, setOnLeaveToday] = useState(0);
   const [pendingLeaves, setPendingLeaves] = useState(0);
   const [activeProjectsCount, setActiveProjectsCount] = useState(0);
-  const [totalProjectsCount, setTotalProjectsCount] = useState(0);
   const [pendingApprovals, setPendingApprovals] = useState(0);
 
   // Live Payroll State
@@ -169,11 +161,18 @@ export default function DashboardPage() {
 
       // Enterprise calculations
       const totalEmp = employees.length;
-      const activeEmp = employees.filter(
-        (e) => (e.employee_status || "").toLowerCase() === "active" || !(e.employee_status || "").toLowerCase().includes("inactive")
-      ).length;
+      const activeEmp = employees.filter((e) => {
+        const st = (e.employee_status || "").toLowerCase();
+        return st === "active" || (!st.includes("inactive") && !st.includes("terminated") && !st.includes("suspended"));
+      }).length;
+      const inactiveEmp = employees.filter((e) => {
+        const st = (e.employee_status || "").toLowerCase();
+        return st === "inactive" || st === "terminated" || st === "suspended";
+      }).length;
+
       setTotalEmployees(totalEmp);
       setActiveEmployees(activeEmp);
+      setInactiveEmployees(inactiveEmp);
       setDepartmentsCount(departments.length);
 
       // Attendance calculations
@@ -199,7 +198,6 @@ export default function DashboardPage() {
         (p) => (p.status || "").toLowerCase() === "active" || (p.status || "").toLowerCase() === "in_progress"
       ).length;
       setActiveProjectsCount(activeProj);
-      setTotalProjectsCount(projects.length);
 
       // Pending user approvals
       setPendingApprovals(pendingUsers.length);
@@ -208,9 +206,7 @@ export default function DashboardPage() {
       const chartData = weekDays.map((wd) => {
         const recordsThatDay = attendanceRecords.filter((r) => r.date === wd.dateStr);
         const presentThatDay = recordsThatDay.filter(
-          (r) =>
-            (r.status || "").toLowerCase() === "present" ||
-            r.check_in_time
+          (r) => (r.status || "").toLowerCase() === "present" || r.check_in_time
         ).length;
         const baseTotal = totalEmp > 0 ? totalEmp : 1;
         const pct = wd.dateStr > todayStr ? 0 : Math.min(100, Math.round((presentThatDay / baseTotal) * 100));
@@ -223,7 +219,8 @@ export default function DashboardPage() {
           hours: 8,
         };
       });
-      // Active user punch state for today (Strictly once a day check-in for the current user)
+
+      // Active user punch state for today
       const myEmpId = user?.employee_public_id;
       const myTodayRecords = attendanceRecords.filter((r) => {
         if (!myEmpId) return false;
@@ -268,9 +265,7 @@ export default function DashboardPage() {
   };
 
   const handlePunchToggle = async () => {
-    if (shiftCompleted) {
-      return;
-    }
+    if (shiftCompleted) return;
     setPunchLoading(true);
     try {
       if (!checkedIn) {
@@ -298,7 +293,7 @@ export default function DashboardPage() {
     return `${h}h ${m}m`;
   };
 
-  // Currency Formatter: Dynamic Indian Rupee shortener (e.g., ₹5.84L, ₹1.2Cr, ₹45k)
+  // Indian Rupee currency shortener
   const formatPayrollCurrency = (amount: number) => {
     if (!amount || isNaN(amount) || amount === 0) return "₹0";
     if (amount >= 10000000) return `₹${(amount / 10000000).toFixed(2)}Cr`;
@@ -307,11 +302,8 @@ export default function DashboardPage() {
     return `₹${amount.toLocaleString("en-IN")}`;
   };
 
-  // KPI Stat Values
-  const displayTotalEmp = totalEmployees > 0 ? totalEmployees : (employeesList.length || 0);
+  const displayTotalEmp = totalEmployees > 0 ? totalEmployees : employeesList.length;
   const displayActiveToday = presentToday > 0 ? presentToday : (activeEmployees > 0 ? activeEmployees : 0);
-  const displayLeavesPending = pendingLeaves;
-  const displayPayroll = formatPayrollCurrency(payrollTotal);
 
   // Filtered & Paged Projects for Dashboard
   const filteredProjects = useMemo(() => {
@@ -336,24 +328,38 @@ export default function DashboardPage() {
 
   // Department Distribution Breakdown
   const departmentDistribution = useMemo(() => {
-    return departmentsList.map((dept) => {
-      const deptName = dept.department_name || dept.dept_name || "General";
-      const empCount = employeesList.filter(
-        (e) => (e.department_name || "").toLowerCase() === deptName.toLowerCase()
-      ).length;
-      const count = dept.employee_count || empCount || 0;
-      return {
-        id: dept.public_id,
-        name: deptName,
-        code: dept.department_code || dept.dept_code || "DEPT",
-        count,
-        head: dept.head_employee_name || "Lead Assigned",
-      };
-    }).sort((a, b) => b.count - a.count);
+    return departmentsList
+      .map((dept) => {
+        const deptName = dept.department_name || dept.dept_name || "General";
+        const empCount = employeesList.filter(
+          (e) => (e.department_name || "").toLowerCase() === deptName.toLowerCase()
+        ).length;
+        const count = dept.employee_count || empCount || 0;
+        return {
+          id: dept.public_id,
+          name: deptName,
+          code: dept.department_code || dept.dept_code || "DEPT",
+          count,
+          head: dept.head_employee_name || "Lead Assigned",
+        };
+      })
+      .sort((a, b) => b.count - a.count);
   }, [departmentsList, employeesList]);
 
+  // Filtered projects for Employee view
+  const myProjects = useMemo(() => {
+    if (!isEmployee || !user?.employee_public_id) return projectsList;
+    const myId = user.employee_public_id;
+    return projectsList.filter(
+      (p) =>
+        p.head_employee_public_id === myId ||
+        p.project_head_public_id === myId ||
+        (p.members && p.members.some((m: any) => m.employee_public_id === myId || m.public_id === myId))
+    );
+  }, [projectsList, isEmployee, user]);
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 28, paddingBottom: 36 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingBottom: 36, width: "100%" }}>
       {/* ── HEADER: Section Title + Controls ── */}
       <div
         style={{
@@ -367,7 +373,7 @@ export default function DashboardPage() {
         <div>
           <h1
             style={{
-              fontSize: "1.85rem",
+              fontSize: "1.75rem",
               fontWeight: 800,
               color: "var(--text-primary)",
               letterSpacing: "-0.02em",
@@ -378,68 +384,66 @@ export default function DashboardPage() {
           </h1>
           <p style={{ fontSize: "0.86rem", color: "var(--text-secondary)", margin: "4px 0 0 0" }}>
             {isEmployee
-              ? "Your daily personal work hub, live punch clock, project assignments, and announcements"
-              : "Real-time workforce intelligence, operational delivery, and live attendance metrics"}
+              ? "Your personal daily work hub, punch clock, active projects, and company announcements"
+              : "Real-time enterprise workforce metrics, operational delivery, and live attendance tracking"}
           </p>
         </div>
 
         {/* Header Right Actions */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          {/* User Approvals quick pill */}
+          {/* User Approvals quick pill for Admin/HR */}
           {!isEmployee && pendingApprovals > 0 && (
             <Link
               href="/approvals"
-              className="card-interactive"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 8,
-                padding: "8px 14px",
-                background: "rgba(245, 158, 11, 0.12)",
-                border: "1px solid rgba(245, 158, 11, 0.25)",
+                padding: "7px 14px",
+                background: "#fef3c7",
+                border: "1px solid #fde68a",
                 borderRadius: "9999px",
                 fontSize: "0.8rem",
                 fontWeight: 600,
-                color: "var(--color-amber-400)",
+                color: "#92400e",
                 textDecoration: "none",
               }}
             >
               <UserCheck size={14} />
-              <span>{pendingApprovals} Approvals</span>
+              <span>{pendingApprovals} Pending Approvals</span>
             </Link>
           )}
 
-          {/* Compact Live Punch Pill */}
+          {/* Sleek Studio Time Clock Capsule */}
           {shiftCompleted ? (
             <div
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 8,
-                padding: "6px 14px",
-                background: "rgba(16, 185, 129, 0.1)",
-                border: "1px solid rgba(16, 185, 129, 0.25)",
+                padding: "7px 16px",
+                background: "#f4f4f5",
+                border: "1px solid #e4e4e7",
                 borderRadius: "9999px",
                 fontSize: "0.8rem",
-                color: "var(--color-emerald-400)",
+                color: "#3f3f46",
                 fontWeight: 600,
               }}
-              title="Check-in is allowed once per day. Shift completed for today."
+              title="Attendance recorded for today — check-in allowed once per day."
             >
-              <CheckCircle2 size={14} />
-              <span>Shift Completed</span>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#16a34a" }} />
+              <span>Shift Completed for Today</span>
             </div>
           ) : (
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 12,
-                background: "rgba(255, 255, 255, 0.04)",
-                backdropFilter: "blur(16px)",
-                WebkitBackdropFilter: "blur(16px)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                padding: "5px 6px 5px 14px",
+                gap: 10,
+                background: "#ffffff",
+                border: "1px solid #e2e8f0",
+                boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
+                padding: "4px 6px 4px 14px",
                 borderRadius: "9999px",
               }}
             >
@@ -449,31 +453,34 @@ export default function DashboardPage() {
                     width: 8,
                     height: 8,
                     borderRadius: "50%",
-                    background: checkedIn ? "var(--color-emerald-400)" : "var(--text-muted)",
-                    boxShadow: checkedIn ? "0 0 10px var(--color-emerald-400)" : "none",
+                    background: checkedIn ? "#16a34a" : "#94a3b8",
                   }}
                 />
-                <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", fontWeight: 500 }}>
-                  {checkedIn ? `In • ${formatWorkTime(workMinutes)}` : "Clock"}
+                <span style={{ fontSize: "0.82rem", color: "#334155", fontWeight: 600 }}>
+                  {checkedIn ? `Working • ${formatWorkTime(workMinutes)}` : "Time Clock"}
                 </span>
               </div>
 
               <button
                 onClick={handlePunchToggle}
                 disabled={punchLoading}
-                className={`btn btn-sm ${checkedIn ? "btn-danger" : "btn-success"}`}
                 style={{
+                  background: checkedIn ? "#dc2626" : "#0e1726",
+                  color: "#ffffff",
                   fontWeight: 700,
                   borderRadius: "9999px",
-                  padding: "5px 12px",
-                  fontSize: "0.76rem",
+                  padding: "6px 14px",
+                  fontSize: "0.78rem",
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 6,
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "background 140ms ease",
                 }}
               >
                 {punchLoading ? <RefreshCw size={12} className="spin" /> : <Clock size={12} />}
-                <span>{checkedIn ? "Out" : "In"}</span>
+                <span>{checkedIn ? "Clock Out" : "Clock In"}</span>
               </button>
             </div>
           )}
@@ -485,352 +492,339 @@ export default function DashboardPage() {
             className="action-icon-btn"
             title="Refresh dashboard metrics"
             style={{
-              width: 36,
-              height: 36,
+              width: 38,
+              height: 38,
               borderRadius: "50%",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              background: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid #e2e8f0",
+              background: "#ffffff",
+              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            <RefreshCw size={14} className={refreshing ? "spin" : ""} />
+            <RefreshCw size={14} className={refreshing ? "spin" : ""} style={{ color: "#475569" }} />
           </button>
         </div>
       </div>
 
-      {/* ── ROW 1: 4 CLICKABLE FROSTED GLASS KPI STAT CARDS ── */}
+      {/* ── ROW 1: 4 STUDIO METRIC CARDS ── */}
       <div className="grid-cols-4">
-        {/* Card 1: Total Employees (Admin/HR) OR My Profile (Employee) */}
+        {/* Card 1: Total Employees (Admin/HR) OR Employment Status (Employee) */}
         <Link
           href={isEmployee ? "/profile" : "/employees"}
           className="card card-interactive"
           style={{
             padding: "22px 24px",
             display: "flex",
-            alignItems: "flex-end",
+            flexDirection: "column",
             justifyContent: "space-between",
-            minHeight: 148,
-            overflow: "hidden",
-            position: "relative",
+            minHeight: 140,
             textDecoration: "none",
-            cursor: "pointer",
           }}
         >
-          <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%", zIndex: 2 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-              <div
-                className="stat-icon-container"
-                style={{
-                  background: "rgba(139, 92, 246, 0.14)",
-                  borderColor: "rgba(139, 92, 246, 0.25)",
-                  color: "#a78bfa",
-                  marginBottom: 14,
-                }}
-              >
-                <Users size={20} />
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 3,
-                  fontSize: "0.72rem",
-                  color: "var(--text-muted)",
-                  fontWeight: 600,
-                  transition: "color 0.2s ease",
-                }}
-              >
-                <span>{isEmployee ? "Profile" : "Directory"}</span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              {isEmployee ? "Profile Status" : "Total Workforce"}
+            </span>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                background: "#f1f5f9",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#0e1726",
+              }}
+            >
+              <Users size={18} />
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: "2rem", fontWeight: 800, color: "#0e1726", lineHeight: 1, letterSpacing: "-0.02em" }}>
+              {isEmployee ? "Active" : displayTotalEmp}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
+              <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
+                {isEmployee ? "Corporate Profile" : `${activeEmployees} Active Accounts`}
+              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 2, fontSize: "0.75rem", color: "#0e1726", fontWeight: 600 }}>
+                <span>{isEmployee ? "View" : "Directory"}</span>
                 <ArrowUpRight size={13} />
               </div>
             </div>
-
-            <div>
-              <div style={{ fontSize: "0.82rem", color: "var(--text-secondary)", fontWeight: 500, marginBottom: 4 }}>
-                {isEmployee ? "Employee Status" : "Total Employees"}
-              </div>
-              <div style={{ fontSize: isEmployee ? "1.8rem" : "2.3rem", fontWeight: 800, color: isEmployee ? "var(--color-emerald-400)" : "var(--text-primary)", lineHeight: 1, letterSpacing: "-0.03em" }}>
-                {isEmployee ? "Active" : displayTotalEmp}
-              </div>
-            </div>
-          </div>
-
-          {/* Glowing Radial Arc */}
-          <div style={{ position: "relative", zIndex: 2, marginRight: -8, marginBottom: -6 }}>
-            <RadialArc
-              percentage={isEmployee ? 100 : (Math.min(100, Math.round((activeEmployees / (totalEmployees || 1)) * 100)) || 85)}
-              variant="purple"
-              size={82}
-              strokeWidth={5}
-              rotation={115}
-            />
           </div>
         </Link>
 
-        {/* Card 2: Active Today (Clickable Link to /attendance) */}
+        {/* Card 2: Active Today (Admin/HR) OR Today's Shift (Employee) */}
         <Link
           href="/attendance"
           className="card card-interactive"
           style={{
             padding: "22px 24px",
             display: "flex",
-            alignItems: "flex-end",
+            flexDirection: "column",
             justifyContent: "space-between",
-            minHeight: 148,
-            overflow: "hidden",
-            position: "relative",
+            minHeight: 140,
             textDecoration: "none",
-            cursor: "pointer",
           }}
         >
-          <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%", zIndex: 2 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-              <div
-                className="stat-icon-container"
-                style={{
-                  background: "rgba(6, 182, 212, 0.14)",
-                  borderColor: "rgba(6, 182, 212, 0.25)",
-                  color: "#22d3ee",
-                  marginBottom: 14,
-                }}
-              >
-                <Clock size={20} />
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 3,
-                  fontSize: "0.72rem",
-                  color: "var(--text-muted)",
-                  fontWeight: 600,
-                  transition: "color 0.2s ease",
-                }}
-              >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              {isEmployee ? "Today's Shift" : "Active Today"}
+            </span>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                background: "#f1f5f9",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#0e1726",
+              }}
+            >
+              <Clock size={18} />
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: isEmployee ? "1.5rem" : "2rem", fontWeight: 800, color: "#0e1726", lineHeight: 1.2, letterSpacing: "-0.02em" }}>
+              {isEmployee ? (checkedIn ? "Clocked In" : shiftCompleted ? "Shift Done" : "Not Started") : displayActiveToday}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
+              <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
+                {isEmployee ? "Live Time Clock" : "Present at Work"}
+              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 2, fontSize: "0.75rem", color: "#0e1726", fontWeight: 600 }}>
                 <span>Timesheets</span>
                 <ArrowUpRight size={13} />
               </div>
             </div>
-
-            <div>
-              <div style={{ fontSize: "0.82rem", color: "var(--text-secondary)", fontWeight: 500, marginBottom: 4 }}>
-                Active Today
-              </div>
-              <div style={{ fontSize: "2.3rem", fontWeight: 800, color: "var(--text-primary)", lineHeight: 1, letterSpacing: "-0.03em" }}>
-                {displayActiveToday}
-              </div>
-            </div>
-          </div>
-
-          {/* Glowing Radial Arc */}
-          <div style={{ position: "relative", zIndex: 2, marginRight: -8, marginBottom: -6 }}>
-            <RadialArc
-              percentage={Math.min(100, Math.round((presentToday / (totalEmployees || 1)) * 100)) || 78}
-              variant="cyan"
-              size={82}
-              strokeWidth={5}
-              rotation={120}
-            />
           </div>
         </Link>
 
-        {/* Card 3: Leaves Pending (Clickable Link to /leaves) */}
+        {/* Card 3: On Leave / Pending (Admin/HR) OR Leave Balance (Employee) */}
         <Link
           href="/leaves"
           className="card card-interactive"
           style={{
             padding: "22px 24px",
             display: "flex",
-            alignItems: "flex-end",
+            flexDirection: "column",
             justifyContent: "space-between",
-            minHeight: 148,
-            overflow: "hidden",
-            position: "relative",
+            minHeight: 140,
             textDecoration: "none",
-            cursor: "pointer",
           }}
         >
-          <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%", zIndex: 2 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-              <div
-                className="stat-icon-container"
-                style={{
-                  background: "rgba(99, 102, 241, 0.14)",
-                  borderColor: "rgba(99, 102, 241, 0.25)",
-                  color: "#818cf8",
-                  marginBottom: 14,
-                }}
-              >
-                <RotateCcw size={20} />
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 3,
-                  fontSize: "0.72rem",
-                  color: "var(--text-muted)",
-                  fontWeight: 600,
-                  transition: "color 0.2s ease",
-                }}
-              >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              {isEmployee ? "Leave Status" : "On Leave / Pending"}
+            </span>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                background: "#f1f5f9",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#0e1726",
+              }}
+            >
+              <Calendar size={18} />
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: "2rem", fontWeight: 800, color: "#0e1726", lineHeight: 1, letterSpacing: "-0.02em" }}>
+              {isEmployee ? pendingLeaves : onLeaveToday}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
+              <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
+                {isEmployee ? "Pending Requests" : `${pendingLeaves} Pending Approval`}
+              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 2, fontSize: "0.75rem", color: "#0e1726", fontWeight: 600 }}>
                 <span>Requests</span>
                 <ArrowUpRight size={13} />
               </div>
             </div>
-
-            <div>
-              <div style={{ fontSize: "0.82rem", color: "var(--text-secondary)", fontWeight: 500, marginBottom: 4 }}>
-                Leaves Pending
-              </div>
-              <div style={{ fontSize: "2.3rem", fontWeight: 800, color: "var(--text-primary)", lineHeight: 1, letterSpacing: "-0.03em" }}>
-                {displayLeavesPending}
-              </div>
-            </div>
-          </div>
-
-          {/* Glowing Radial Arc */}
-          <div style={{ position: "relative", zIndex: 2, marginRight: -8, marginBottom: -6 }}>
-            <RadialArc
-              percentage={Math.min(100, pendingLeaves > 0 ? pendingLeaves * 10 : 12)}
-              variant="blue"
-              size={82}
-              strokeWidth={5}
-              rotation={130}
-            />
           </div>
         </Link>
 
-        {/* Card 4: Payroll (Clickable Link to /payroll with REAL dynamic data) */}
+        {/* Card 4: Inactive Users (Admin/HR) OR Latest Net Salary in ₹ (Employee) */}
         <Link
-          href="/payroll"
+          href={isEmployee ? "/payroll" : "/employees"}
           className="card card-interactive"
           style={{
             padding: "22px 24px",
             display: "flex",
-            alignItems: "flex-end",
+            flexDirection: "column",
             justifyContent: "space-between",
-            minHeight: 148,
-            overflow: "hidden",
-            position: "relative",
+            minHeight: 140,
             textDecoration: "none",
-            cursor: "pointer",
           }}
         >
-          <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%", zIndex: 2 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-              <div
-                className="stat-icon-container"
-                style={{
-                  background: "rgba(20, 184, 166, 0.14)",
-                  borderColor: "rgba(20, 184, 166, 0.25)",
-                  color: "#2dd4bf",
-                  marginBottom: 14,
-                }}
-              >
-                <span style={{ fontSize: "1.15rem", fontWeight: 800 }}>₹</span>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 3,
-                  fontSize: "0.72rem",
-                  color: "var(--text-muted)",
-                  fontWeight: 600,
-                  transition: "color 0.2s ease",
-                }}
-              >
-                <span>{isEmployee ? "My Payslips" : (payrollRunsCount > 0 ? `${payrollRunsCount} Runs` : "Manage")}</span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              {isEmployee ? "Monthly Take-Home" : "Inactive Users"}
+            </span>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                background: "#f1f5f9",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#0e1726",
+                fontWeight: 800,
+              }}
+            >
+              {isEmployee ? "₹" : <UserX size={18} />}
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: isEmployee ? "1.5rem" : "2rem", fontWeight: 800, color: "#0e1726", lineHeight: 1.2, letterSpacing: "-0.02em" }}>
+              {isEmployee ? (myNetPay > 0 ? formatPayrollCurrency(myNetPay) : "Payslips Ready") : inactiveEmployees}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
+              <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
+                {isEmployee ? "Disbursed in INR (₹)" : "Deactivated / Suspended"}
+              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 2, fontSize: "0.75rem", color: "#0e1726", fontWeight: 600 }}>
+                <span>{isEmployee ? "Payslips" : "Manage"}</span>
                 <ArrowUpRight size={13} />
               </div>
             </div>
-
-            <div>
-              <div style={{ fontSize: "0.82rem", color: "var(--text-secondary)", fontWeight: 500, marginBottom: 4 }}>
-                {isEmployee ? "Latest Net Salary" : "Payroll Disbursed"}
-              </div>
-              <div style={{ fontSize: isEmployee ? "1.8rem" : "2.3rem", fontWeight: 800, color: "var(--text-primary)", lineHeight: 1, letterSpacing: "-0.03em" }}>
-                {isEmployee ? (myNetPay > 0 ? formatPayrollCurrency(myNetPay) : "Payslips Ready") : displayPayroll}
-              </div>
-            </div>
-          </div>
-
-          {/* Glowing Radial Arc */}
-          <div style={{ position: "relative", zIndex: 2, marginRight: -8, marginBottom: -6 }}>
-            <RadialArc
-              percentage={isEmployee ? 100 : (payrollTotal > 0 ? 84 : 10)}
-              variant="teal"
-              size={82}
-              strokeWidth={5}
-              rotation={120}
-            />
           </div>
         </Link>
       </div>
 
-      {/* ── ROW 2: ENTERPRISE OPERATIONS CENTER (Active Projects + Department Distribution) ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr", gap: 24, alignItems: "start" }}>
-        {/* Main Section: Active Projects & Delivery Tracking (with search, filter, pagination) */}
+      {/* Admin/HR Executive Stats Pill Bar */}
+      {!isEmployee && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 16,
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: "16px",
+            padding: "14px 24px",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 28, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: "0.82rem", color: "#64748b" }}>Disbursed Payroll:</span>
+              <span style={{ fontWeight: 800, color: "#0e1726", fontSize: "0.95rem" }}>
+                {formatPayrollCurrency(payrollTotal)}
+              </span>
+              <span style={{ fontSize: "0.75rem", color: "#64748b" }}>({payrollRunsCount} Runs)</span>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: "0.82rem", color: "#64748b" }}>Business Units:</span>
+              <span style={{ fontWeight: 800, color: "#0e1726", fontSize: "0.95rem" }}>
+                {departmentsCount} Departments
+              </span>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: "0.82rem", color: "#64748b" }}>Delivery:</span>
+              <span style={{ fontWeight: 800, color: "#0e1726", fontSize: "0.95rem" }}>
+                {activeProjectsCount} Active Projects
+              </span>
+            </div>
+          </div>
+
+          <Link
+            href="/payroll"
+            style={{
+              fontSize: "0.8rem",
+              fontWeight: 700,
+              color: "#0e1726",
+              textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+            }}
+          >
+            <span>View Payroll Runs</span>
+            <ArrowUpRight size={13} />
+          </Link>
+        </div>
+      )}
+
+      {/* ── ROW 2: PROJECTS & WORK DISTRIBUTION ── */}
+      <div style={{ display: "grid", gridTemplateColumns: isEmployee ? "1.6fr 1fr" : "1.8fr 1fr", gap: 24, alignItems: "start" }}>
+        {/* Main Section: Active Projects Table */}
         <div
           className="card"
           style={{
-            padding: "26px 28px 24px",
+            padding: "24px 26px",
             position: "relative",
           }}
         >
-          {/* Table Header: Title + Search & Filter Tabs */}
+          {/* Header */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              marginBottom: 20,
+              marginBottom: 18,
               gap: 16,
               flexWrap: "wrap",
             }}
           >
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <FolderKanban size={20} style={{ color: "var(--color-primary-400)" }} />
-                <h2
-                  style={{
-                    fontSize: "1.15rem",
-                    fontWeight: 700,
-                    color: "var(--text-primary)",
-                    letterSpacing: "-0.01em",
-                    margin: 0,
-                  }}
-                >
-                  Active Projects & Delivery
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <FolderKanban size={18} style={{ color: "#0e1726" }} />
+                <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0e1726", margin: 0 }}>
+                  {isEmployee ? "My Assigned Projects" : "Active Projects & Delivery"}
                 </h2>
                 <span
                   style={{
                     fontSize: "0.72rem",
                     fontWeight: 700,
-                    background: "rgba(99, 102, 241, 0.15)",
-                    color: "var(--color-primary-400)",
+                    background: "#f1f5f9",
+                    color: "#0e1726",
                     padding: "2px 8px",
                     borderRadius: "9999px",
                   }}
                 >
-                  {filteredProjects.length} Initiatives
+                  {isEmployee ? myProjects.length : filteredProjects.length}
                 </span>
               </div>
-              <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: "4px 0 0 0" }}>
-                Milestone tracking, project deliverables, and cross-functional team allocation
+              <p style={{ fontSize: "0.78rem", color: "#64748b", margin: "4px 0 0 0" }}>
+                {isEmployee
+                  ? "Initiatives, technical milestones, and deliverables assigned to you"
+                  : "Enterprise milestones, project leads, and team capacity tracking"}
               </p>
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               {/* Search input */}
               <div
-                className="glass-search-pill"
                 style={{
-                  width: 200,
-                  padding: "6px 14px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  background: "#ffffff",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "9999px",
+                  padding: "5px 12px",
+                  width: 180,
                 }}
               >
-                <Search size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                <Search size={14} style={{ color: "#94a3b8", flexShrink: 0 }} />
                 <input
                   type="text"
                   placeholder="Filter projects..."
@@ -839,7 +833,14 @@ export default function DashboardPage() {
                     setProjectSearch(e.target.value);
                     setProjectCurrentPage(1);
                   }}
-                  className="glass-search-input"
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
+                    fontSize: "0.8rem",
+                    color: "#0e1726",
+                    width: "100%",
+                  }}
                   aria-label="Filter projects table"
                 />
               </div>
@@ -847,13 +848,18 @@ export default function DashboardPage() {
               {/* View All Projects Link */}
               <Link
                 href="/projects"
-                className="btn btn-secondary btn-sm"
                 style={{
                   fontSize: "0.78rem",
-                  padding: "6px 12px",
+                  fontWeight: 600,
+                  color: "#0e1726",
+                  textDecoration: "none",
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: 5,
+                  gap: 4,
+                  padding: "6px 12px",
+                  background: "#f8fafc",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "9999px",
                 }}
               >
                 <span>All Projects</span>
@@ -862,163 +868,147 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Status Filter Tabs */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              marginBottom: 16,
-              borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
-              paddingBottom: 12,
-            }}
-          >
-            {[
-              { id: "all", label: "All Projects" },
-              { id: "active", label: "Active" },
-              { id: "in_progress", label: "In Progress" },
-              { id: "on_hold", label: "On Hold" },
-              { id: "completed", label: "Completed" },
-              { id: "cancelled", label: "Cancelled" },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => {
-                  setProjectStatusFilter(tab.id);
-                  setProjectCurrentPage(1);
-                }}
-                className={`btn btn-sm ${projectStatusFilter === tab.id ? "btn-primary" : "btn-ghost"}`}
-                style={{
-                  fontSize: "0.75rem",
-                  padding: "4px 12px",
-                  borderRadius: "9999px",
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          {/* Status Filter Tabs (For Admin/HR) */}
+          {!isEmployee && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 16,
+                borderBottom: "1px solid #f1f5f9",
+                paddingBottom: 10,
+              }}
+            >
+              {[
+                { id: "all", label: "All" },
+                { id: "active", label: "Active" },
+                { id: "in_progress", label: "In Progress" },
+                { id: "completed", label: "Completed" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    setProjectStatusFilter(tab.id);
+                    setProjectCurrentPage(1);
+                  }}
+                  style={{
+                    fontSize: "0.76rem",
+                    fontWeight: 600,
+                    padding: "4px 12px",
+                    borderRadius: "9999px",
+                    border: "1px solid " + (projectStatusFilter === tab.id ? "#0e1726" : "#e2e8f0"),
+                    background: projectStatusFilter === tab.id ? "#0e1726" : "#ffffff",
+                    color: projectStatusFilter === tab.id ? "#ffffff" : "#475569",
+                    cursor: "pointer",
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Projects Data Table */}
-          {pagedProjects.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "48px 16px", color: "var(--text-muted)" }}>
-              <FolderKanban size={32} style={{ margin: "0 auto 10px", opacity: 0.5 }} />
-              <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text-primary)", marginBottom: 4 }}>
-                No Matching Projects Found
+          {(isEmployee ? myProjects : pagedProjects).length === 0 ? (
+            <div style={{ textAlign: "center", padding: "40px 16px", color: "#64748b" }}>
+              <FolderKanban size={32} style={{ margin: "0 auto 8px", opacity: 0.4 }} />
+              <div style={{ fontSize: "0.88rem", fontWeight: 600, color: "#0e1726", marginBottom: 2 }}>
+                No Projects Found
               </div>
-              <p style={{ fontSize: "0.8rem", margin: 0 }}>
-                Adjust your search or status filter to see other enterprise deliverables.
+              <p style={{ fontSize: "0.78rem", margin: 0 }}>
+                {isEmployee ? "You currently have no project deliverables assigned." : "Adjust filters to view active project deliverables."}
               </p>
             </div>
           ) : (
             <div style={{ overflowX: "auto" }}>
               <table className="data-table" style={{ width: "100%" }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.07)" }}>
-                    <th style={{ padding: "10px 14px", color: "var(--text-muted)", fontWeight: 500, fontSize: "0.8rem" }}>
+                  <tr style={{ borderBottom: "1px solid #f1f5f9" }}>
+                    <th style={{ padding: "10px 14px", color: "#64748b", fontWeight: 600, fontSize: "0.78rem" }}>
                       Project / Code
                     </th>
-                    <th style={{ padding: "10px 14px", color: "var(--text-muted)", fontWeight: 500, fontSize: "0.8rem" }}>
+                    <th style={{ padding: "10px 14px", color: "#64748b", fontWeight: 600, fontSize: "0.78rem" }}>
                       Project Lead
                     </th>
-                    <th style={{ padding: "10px 14px", color: "var(--text-muted)", fontWeight: 500, fontSize: "0.8rem" }}>
+                    <th style={{ padding: "10px 14px", color: "#64748b", fontWeight: 600, fontSize: "0.78rem" }}>
                       Team
                     </th>
-                    <th style={{ padding: "10px 14px", color: "var(--text-muted)", fontWeight: 500, fontSize: "0.8rem" }}>
+                    <th style={{ padding: "10px 14px", color: "#64748b", fontWeight: 600, fontSize: "0.78rem" }}>
                       Status
                     </th>
-                    <th style={{ padding: "10px 14px", color: "var(--text-muted)", fontWeight: 500, fontSize: "0.8rem", textAlign: "right" }}>
+                    <th style={{ padding: "10px 14px", color: "#64748b", fontWeight: 600, fontSize: "0.78rem", textAlign: "right" }}>
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {pagedProjects.map((prj) => (
+                  {(isEmployee ? myProjects.slice(0, 5) : pagedProjects).map((prj) => (
                     <tr
-                        key={prj.public_id}
-                        style={{
-                          borderBottom: "1px solid rgba(255, 255, 255, 0.04)",
-                          transition: "background 140ms ease",
-                        }}
-                      >
-                        {/* Project Name & Code */}
-                        <td style={{ padding: "14px 14px" }}>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                            <span style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.88rem" }}>
-                              {prj.project_name}
-                            </span>
-                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                              <span
-                                style={{
-                                  fontFamily: "var(--font-mono)",
-                                  fontSize: "0.72rem",
-                                  color: "var(--color-primary-400)",
-                                  fontWeight: 600,
-                                }}
-                              >
-                                {prj.project_code}
-                              </span>
-                              {prj.end_date && (
-                                <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
-                                  • Due {prj.end_date}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </td>
+                      key={prj.public_id}
+                      style={{
+                        borderBottom: "1px solid #f8fafc",
+                        transition: "background 140ms ease",
+                      }}
+                    >
+                      <td style={{ padding: "12px 14px" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                          <span style={{ fontWeight: 600, color: "#0e1726", fontSize: "0.86rem" }}>
+                            {prj.project_name}
+                          </span>
+                          <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "#64748b", fontWeight: 600 }}>
+                            {prj.project_code}
+                          </span>
+                        </div>
+                      </td>
 
-                        {/* Project Lead */}
-                        <td style={{ padding: "14px 14px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <Avatar name={prj.head_employee_name || prj.project_head_name || "Lead"} size={28} ring={false} />
-                            <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)", fontWeight: 500 }}>
-                              {prj.head_employee_name || prj.project_head_name || "Unassigned"}
-                            </span>
-                          </div>
-                        </td>
+                      <td style={{ padding: "12px 14px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <Avatar name={prj.head_employee_name || prj.project_head_name || "Lead"} size={26} ring={false} />
+                          <span style={{ fontSize: "0.82rem", color: "#334155", fontWeight: 500 }}>
+                            {prj.head_employee_name || prj.project_head_name || "Unassigned"}
+                          </span>
+                        </div>
+                      </td>
 
-                        {/* Team Size */}
-                        <td style={{ padding: "14px 14px" }}>
-                          <div style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "0.82rem", color: "var(--text-secondary)" }}>
-                            <Users size={14} style={{ color: "var(--text-muted)" }} />
-                            <span>{prj.members_count || (prj.members?.length ?? 1)}</span>
-                          </div>
-                        </td>
+                      <td style={{ padding: "12px 14px" }}>
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "0.8rem", color: "#475569" }}>
+                          <Users size={13} style={{ color: "#94a3b8" }} />
+                          <span>{prj.members_count || (prj.members?.length ?? 1)}</span>
+                        </div>
+                      </td>
 
-                        {/* Status Badge */}
-                        <td style={{ padding: "14px 14px" }}>
-                          <StatusBadge status={prj.status} />
-                        </td>
+                      <td style={{ padding: "12px 14px" }}>
+                        <StatusBadge status={prj.status} />
+                      </td>
 
-                        {/* Actions */}
-                        <td style={{ padding: "14px 14px", textAlign: "right" }}>
-                          <Link
-                            href="/projects"
-                            className="btn btn-ghost btn-sm"
-                            style={{
-                              padding: "4px 8px",
-                              fontSize: "0.76rem",
-                              color: "var(--color-primary-400)",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 4,
-                            }}
-                            title="Manage project team"
-                          >
-                            <span>Manage</span>
-                            <ArrowUpRight size={13} />
-                          </Link>
-                        </td>
-                      </tr>
+                      <td style={{ padding: "12px 14px", textAlign: "right" }}>
+                        <Link
+                          href="/projects"
+                          style={{
+                            fontSize: "0.76rem",
+                            fontWeight: 600,
+                            color: "#0e1726",
+                            textDecoration: "none",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 3,
+                          }}
+                        >
+                          <span>{isEmployee ? "Details" : "Manage"}</span>
+                          <ArrowUpRight size={12} />
+                        </Link>
+                      </td>
+                    </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
 
-          {/* Meaningful Pagination Controls */}
-          {filteredProjects.length > 0 && (
+          {/* Pagination Controls for Admin/HR */}
+          {!isEmployee && filteredProjects.length > 0 && (
             <Pagination
               currentPage={projectCurrentPage}
               totalItems={filteredProjects.length}
@@ -1034,169 +1024,267 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Side Section: Department Workforce Distribution */}
-        <div
-          className="card"
-          style={{
-            padding: "26px 24px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-          }}
-        >
-          <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <Building size={18} style={{ color: "var(--color-cyan-400)" }} />
-                <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
-                  Department Breakdown
-                </h3>
-              </div>
-              <Link
-                href="/departments"
-                className="btn btn-ghost btn-sm"
-                style={{
-                  color: "var(--color-cyan-400)",
-                  fontSize: "0.78rem",
-                  padding: "4px 8px",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 3,
-                }}
-              >
-                <span>View All</span>
-                <ArrowUpRight size={12} />
-              </Link>
-            </div>
-
-            <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: "0 0 16px 0" }}>
-              Workforce distribution across organizational business units
-            </p>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {departmentDistribution.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "24px 8px", color: "var(--text-muted)", fontSize: "0.82rem" }}>
-                  No department records found.
+        {/* Side Section: Department Distribution (Admin/HR) OR Personal Time Hub (Employee) */}
+        {!isEmployee ? (
+          <div
+            className="card"
+            style={{
+              padding: "24px 22px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Building size={18} style={{ color: "#0e1726" }} />
+                  <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#0e1726", margin: 0 }}>
+                    Departments
+                  </h3>
                 </div>
-              ) : (
-                departmentDistribution.slice(0, 5).map((dept, idx) => (
-                  <div
-                    key={dept.id || idx}
-                    style={{
-                      background: "rgba(255, 255, 255, 0.02)",
-                      padding: "12px 14px",
-                      borderRadius: "12px",
-                      border: "1px solid rgba(255, 255, 255, 0.05)",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <span style={{ fontSize: "0.86rem", fontWeight: 600, color: "var(--text-primary)" }}>
+                <Link
+                  href="/departments"
+                  style={{
+                    color: "#0e1726",
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                    textDecoration: "none",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 3,
+                  }}
+                >
+                  <span>View All</span>
+                  <ArrowUpRight size={12} />
+                </Link>
+              </div>
+
+              <p style={{ fontSize: "0.78rem", color: "#64748b", margin: "0 0 16px 0" }}>
+                Workforce distribution across functional business units
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {departmentDistribution.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "20px 8px", color: "#64748b", fontSize: "0.82rem" }}>
+                    No department records found.
+                  </div>
+                ) : (
+                  departmentDistribution.slice(0, 5).map((dept, idx) => (
+                    <div
+                      key={dept.id || idx}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px 12px",
+                        background: "#f8fafc",
+                        borderRadius: "10px",
+                        border: "1px solid #f1f5f9",
+                      }}
+                    >
+                      <span style={{ fontSize: "0.84rem", fontWeight: 600, color: "#1e293b" }}>
                         {dept.name}
                       </span>
                       <span
                         style={{
-                          fontSize: "0.78rem",
-                          color: "var(--color-primary-400)",
-                          fontWeight: 600,
-                          background: "rgba(99, 102, 241, 0.12)",
-                          padding: "2px 10px",
+                          fontSize: "0.76rem",
+                          color: "#0e1726",
+                          fontWeight: 700,
+                          background: "#ffffff",
+                          border: "1px solid #e2e8f0",
+                          padding: "2px 8px",
                           borderRadius: "9999px",
                         }}
                       >
                         {dept.count} {dept.count === 1 ? "member" : "members"}
                       </span>
                     </div>
-                  </div>
-                ))
-              )}
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingTop: 14,
+                borderTop: "1px solid #f1f5f9",
+                marginTop: 16,
+                fontSize: "0.76rem",
+                color: "#64748b",
+              }}
+            >
+              <span>Total Units: {departmentsCount}</span>
+              <span style={{ color: "#16a34a", fontWeight: 600 }}>● Active Org Units</span>
             </div>
           </div>
-
+        ) : (
           <div
+            className="card"
             style={{
+              padding: "24px 22px",
               display: "flex",
-              alignItems: "center",
+              flexDirection: "column",
               justifyContent: "space-between",
-              paddingTop: 16,
-              borderTop: "1px solid rgba(255, 255, 255, 0.06)",
-              marginTop: 18,
-              fontSize: "0.76rem",
-              color: "var(--text-muted)",
             }}
           >
-            <span>Total Units: {departmentsCount || departmentsList.length}</span>
-            <span style={{ color: "var(--color-cyan-400)", fontWeight: 600 }}>● Active Org Chart</span>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Clock size={18} style={{ color: "#0e1726" }} />
+                  <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#0e1726", margin: 0 }}>
+                    Personal Time Clock
+                  </h3>
+                </div>
+                <Link
+                  href="/attendance"
+                  style={{
+                    color: "#0e1726",
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                    textDecoration: "none",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 3,
+                  }}
+                >
+                  <span>History</span>
+                  <ArrowUpRight size={12} />
+                </Link>
+              </div>
+
+              <div
+                style={{
+                  background: "#f8fafc",
+                  borderRadius: "12px",
+                  border: "1px solid #e2e8f0",
+                  padding: "16px",
+                  textAlign: "center",
+                  marginBottom: 16,
+                }}
+              >
+                <div style={{ fontSize: "0.78rem", color: "#64748b", marginBottom: 4 }}>
+                  {checkedIn ? "Clocked In At" : "Status for Today"}
+                </div>
+                <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "#0e1726" }}>
+                  {checkedIn ? checkInTime || "Active" : shiftCompleted ? "Shift Complete" : "Not Clocked In"}
+                </div>
+                {checkedIn && (
+                  <div style={{ fontSize: "0.82rem", color: "#16a34a", fontWeight: 600, marginTop: 4 }}>
+                    Elapsed: {formatWorkTime(workMinutes)}
+                  </div>
+                )}
+              </div>
+
+              {!shiftCompleted && (
+                <button
+                  type="button"
+                  onClick={handlePunchToggle}
+                  disabled={punchLoading}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: "9999px",
+                    background: checkedIn ? "#dc2626" : "#0e1726",
+                    color: "#ffffff",
+                    fontWeight: 700,
+                    fontSize: "0.88rem",
+                    border: "none",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                  }}
+                >
+                  {punchLoading ? <RefreshCw size={14} className="spin" /> : <Clock size={14} />}
+                  <span>{checkedIn ? "Clock Out for Today" : "Clock In to Shift"}</span>
+                </button>
+              )}
+            </div>
+
+            <div
+              style={{
+                paddingTop: 14,
+                borderTop: "1px solid #f1f5f9",
+                marginTop: 16,
+                fontSize: "0.76rem",
+                color: "#64748b",
+                textAlign: "center",
+              }}
+            >
+              Standard Shift Target: 8.0 Hours
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* ── ROW 3: OPERATIONAL WORKSPACE (Weekly Attendance & Company Bulletin) ── */}
+      {/* ── ROW 3: WEEKLY ATTENDANCE & BULLETIN ── */}
       <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 24 }}>
         {/* Weekly Attendance Visualization */}
-        <div className="card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+        <div className="card" style={{ padding: "24px 26px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
           <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
               <div>
-                <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary)", margin: 0, marginBottom: 4 }}>
+                <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#0e1726", margin: 0, marginBottom: 2 }}>
                   Weekly Attendance
                 </h3>
-                <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: 0 }}>
-                  Team check-in and biometric verification rate
+                <p style={{ fontSize: "0.78rem", color: "#64748b", margin: 0 }}>
+                  Biometric presence and work shift verification rate
                 </p>
               </div>
               <Link
                 href="/attendance"
-                className="btn btn-ghost btn-sm"
-                style={{ color: "var(--color-cyan-400)", fontWeight: 600, fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: 4 }}
+                style={{ color: "#0e1726", fontWeight: 600, fontSize: "0.8rem", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}
               >
                 <span>Timesheets</span>
-                <ArrowUpRight size={14} />
+                <ArrowUpRight size={13} />
               </Link>
             </div>
 
-            {/* Bar Chart */}
+            {/* Clean Studio Bar Chart */}
             <div
               style={{
                 display: "flex",
                 alignItems: "flex-end",
                 justifyContent: "space-between",
-                height: 180,
-                padding: "20px 14px 10px",
+                height: 160,
+                padding: "16px 14px 10px",
                 gap: 16,
-                background: "rgba(255, 255, 255, 0.02)",
-                borderRadius: "14px",
-                border: "1px solid rgba(255, 255, 255, 0.05)",
+                background: "#f8fafc",
+                borderRadius: "12px",
+                border: "1px solid #f1f5f9",
               }}
             >
               {weeklyAttendanceChart.map((item, idx) => {
                 const displayVal = `${item.pct || (idx === 3 ? 92 : 85)}%`;
-                const barHeight = Math.min(125, Math.max(20, ((item.pct || (idx === 3 ? 92 : 85)) / 100) * 125));
+                const barHeight = Math.min(105, Math.max(16, ((item.pct || (idx === 3 ? 92 : 85)) / 100) * 105));
                 const isToday = item.day.includes("Today");
 
                 return (
                   <div key={idx} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: "0.74rem", fontWeight: 700, color: isToday ? "var(--color-cyan-400)" : "var(--text-muted)" }}>
+                    <span style={{ fontSize: "0.72rem", fontWeight: 700, color: isToday ? "#0e1726" : "#64748b" }}>
                       {displayVal}
                     </span>
                     <div
                       style={{
                         width: "100%",
-                        maxWidth: 36,
+                        maxWidth: 32,
                         height: `${barHeight}px`,
-                        background: isToday
-                          ? "linear-gradient(180deg, #00f2fe 0%, #6366f1 100%)"
-                          : "linear-gradient(180deg, rgba(99, 102, 241, 0.7), rgba(79, 70, 229, 0.35))",
-                        borderRadius: "8px 8px 3px 3px",
-                        boxShadow: isToday ? "0 0 16px rgba(6, 182, 212, 0.4)" : "none",
-                        transition: "height 0.8s ease-out",
+                        background: isToday ? "#0e1726" : "#cbd5e1",
+                        borderRadius: "6px 6px 2px 2px",
+                        transition: "height 0.4s ease-out",
                       }}
                     />
                     <span
                       style={{
-                        fontSize: "0.74rem",
+                        fontSize: "0.72rem",
                         fontWeight: 600,
-                        color: isToday ? "var(--color-cyan-400)" : "var(--text-muted)",
-                        background: isToday ? "rgba(6, 182, 212, 0.14)" : "transparent",
+                        color: isToday ? "#0e1726" : "#64748b",
+                        background: isToday ? "#e2e8f0" : "transparent",
                         padding: isToday ? "2px 6px" : "0",
                         borderRadius: "4px",
                       }}
@@ -1215,22 +1303,22 @@ export default function DashboardPage() {
               alignItems: "center",
               justifyContent: "space-between",
               paddingTop: 14,
-              borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+              borderTop: "1px solid #f1f5f9",
               marginTop: 14,
               fontSize: "0.76rem",
-              color: "var(--text-muted)",
+              color: "#64748b",
             }}
           >
             <span>Shift Target: 8.0 hrs/day</span>
-            <span style={{ color: "var(--color-emerald-400)", fontWeight: 600 }}>● Live Biometric Sync</span>
+            <span style={{ color: "#16a34a", fontWeight: 600 }}>● Daily Log Sync</span>
           </div>
         </div>
 
         {/* Company Bulletins & Announcements */}
-        <div className="card" style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+        <div className="card" style={{ padding: "24px 24px", display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
+              <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#0e1726", margin: 0 }}>
                 Company Bulletin
               </h3>
               {announcements.length > 0 && (
@@ -1238,8 +1326,8 @@ export default function DashboardPage() {
                   style={{
                     fontSize: "0.7rem",
                     fontWeight: 700,
-                    background: "rgba(6, 182, 212, 0.15)",
-                    color: "var(--color-cyan-400)",
+                    background: "#f1f5f9",
+                    color: "#0e1726",
                     padding: "1px 8px",
                     borderRadius: "9999px",
                   }}
@@ -1250,17 +1338,16 @@ export default function DashboardPage() {
             </div>
             <Link
               href="/announcements"
-              className="btn btn-ghost btn-sm"
-              style={{ color: "var(--color-cyan-400)", fontWeight: 600, fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: 4 }}
+              style={{ color: "#0e1726", fontWeight: 600, fontSize: "0.8rem", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}
             >
               <span>View All</span>
-              <ArrowUpRight size={14} />
+              <ArrowUpRight size={13} />
             </Link>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {announcements.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "36px 12px", color: "var(--text-muted)", fontSize: "0.84rem" }}>
+              <div style={{ textAlign: "center", padding: "32px 12px", color: "#64748b", fontSize: "0.84rem" }}>
                 No active announcements published.
               </div>
             ) : (
@@ -1268,25 +1355,25 @@ export default function DashboardPage() {
                 <div
                   key={ann.public_id}
                   style={{
-                    background: "rgba(255, 255, 255, 0.03)",
-                    padding: "14px 16px",
-                    borderRadius: "14px",
-                    border: "1px solid rgba(255, 255, 255, 0.05)",
+                    background: "#f8fafc",
+                    padding: "12px 14px",
+                    borderRadius: "12px",
+                    border: "1px solid #f1f5f9",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
                     <StatusBadge status={ann.priority || "Normal"} />
-                    <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
+                    <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>
                       {ann.published_at ? new Date(ann.published_at).toLocaleDateString() : "Recent"}
                     </span>
                   </div>
-                  <h4 style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--text-primary)", marginBottom: 4 }}>
+                  <h4 style={{ fontSize: "0.86rem", fontWeight: 600, color: "#0e1726", marginBottom: 3 }}>
                     {ann.title}
                   </h4>
                   <p
                     style={{
                       fontSize: "0.76rem",
-                      color: "var(--text-secondary)",
+                      color: "#475569",
                       lineHeight: 1.4,
                       display: "-webkit-box",
                       WebkitLineClamp: 2,

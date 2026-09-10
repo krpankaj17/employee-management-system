@@ -36,12 +36,12 @@ const PRIMARY_NAVS: PrimaryNav[] = [
   { name: "Salary", href: "/payroll", icon: WalletCards },
   { name: "Projects", href: "/projects", icon: FolderKanban },
   { name: "Reviews", href: "/reviews", icon: Award },
-  { name: "Departments", href: "/departments", icon: Building2 },
+  { name: "Departments", href: "/departments", icon: Building2, adminOrHrOnly: true },
 ];
 
 export function CapsuleNav() {
   const pathname = usePathname();
-  const { role, isHR, isAdmin } = useAuth();
+  const { role, isHR, isAdmin, isEmployee } = useAuth();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
@@ -79,7 +79,7 @@ export function CapsuleNav() {
 
   // Filter primary nav based on role
   const visiblePrimaryNavs = PRIMARY_NAVS.filter((item) => {
-    if (item.adminOrHrOnly && role === "Employee") {
+    if (item.adminOrHrOnly && (role === "Employee" || isEmployee)) {
       return false; // Employees access their personal records in dashboard / profile
     }
     return true;

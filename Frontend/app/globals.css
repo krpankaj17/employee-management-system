@@ -387,40 +387,45 @@ input::-webkit-contacts-auto-fill-button {
   pointer-events: none;
 }
 
-/* Primary Button: Refined vertical lighting with clean inset highlight */
+/* Primary Button: Signature Studio Dark Navy/Black Capsule */
 .btn-primary {
-  background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%);
+  background: #0e1726;
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 2px 6px rgba(79, 70, 229, 0.35);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 9999px;
+  box-shadow: 0 4px 14px rgba(14, 23, 38, 0.18);
+  font-weight: 600;
+  transition: all 160ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(180deg, #6d70ff 0%, #544bf0 100%);
-  border-color: rgba(255, 255, 255, 0.25);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 4px 14px rgba(99, 102, 241, 0.45);
+  background: #1e293b;
+  box-shadow: 0 6px 20px rgba(14, 23, 38, 0.28);
   transform: translateY(-1px);
 }
 
 .btn-primary:active {
   transform: translateY(0) scale(0.98);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 6px rgba(14, 23, 38, 0.2);
 }
 
-/* Secondary Button: Clean slate button with subtle hover elevation */
+/* Secondary Button: Studio White Pill */
 .btn-secondary {
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-primary);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 9999px;
+  color: #111827;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  font-weight: 600;
+  transition: all 160ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-secondary:hover {
-  background: var(--bg-surface-hover);
-  border-color: var(--border-strong);
-  color: var(--text-primary);
+  background: #f4f4f5;
+  border-color: rgba(0, 0, 0, 0.16);
+  color: #0e1726;
   transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
 }
 
 .btn-secondary:active {

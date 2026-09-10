@@ -555,15 +555,21 @@ export default function AttendancePage() {
                     key={item.mode}
                     type="button"
                     onClick={() => setWorkMode(item.mode)}
-                    className="btn btn-sm"
                     style={{
                       flex: 1,
-                      background: workMode === item.mode ? "var(--color-primary-600)" : "var(--bg-surface-elevated)",
-                      color: workMode === item.mode ? "#ffffff" : "var(--text-secondary)",
-                      border: "1px solid var(--border-subtle)",
+                      padding: "8px 12px",
+                      borderRadius: 9999,
+                      fontSize: "0.82rem",
+                      fontWeight: 600,
+                      background: workMode === item.mode ? "#0e1726" : "#f4f4f5",
+                      color: workMode === item.mode ? "#ffffff" : "#4b5563",
+                      border: "1px solid " + (workMode === item.mode ? "#0e1726" : "rgba(0, 0, 0, 0.06)"),
                       display: "flex",
                       alignItems: "center",
+                      justifyContent: "center",
                       gap: 6,
+                      cursor: "pointer",
+                      transition: "all 140ms ease",
                     }}
                   >
                     {item.icon}
@@ -575,32 +581,52 @@ export default function AttendancePage() {
           </div>
 
           {shiftCompleted ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <button
-                disabled
-                className="btn btn-lg"
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div
                 style={{
                   width: "100%",
-                  justifyContent: "center",
-                  fontWeight: 700,
-                  background: "rgba(16, 185, 129, 0.12)",
-                  color: "var(--color-emerald-400)",
-                  border: "1px solid rgba(16, 185, 129, 0.3)",
-                  cursor: "not-allowed",
+                  padding: "14px 20px",
+                  borderRadius: 9999,
+                  fontWeight: 600,
+                  fontSize: "0.92rem",
+                  background: "#f4f4f5",
+                  color: "#3f3f46",
+                  border: "1px solid #e4e4e7",
                   display: "flex",
                   alignItems: "center",
+                  justifyContent: "center",
                   gap: 10,
+                  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
                 }}
               >
-                <CheckCircle2 size={20} />
-                Shift Completed for Today
-              </button>
-              {/* Admin/HR: allow resetting an accidental punch */}
-              {canManual && todayRecordId && (
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: "#16a34a",
+                  }}
+                />
+                <span>Shift Completed for Today</span>
+              </div>
+
+              {/* Only Admin can reset today's attendance */}
+              {role === "Admin" && todayRecordId && (
                 <button
                   type="button"
-                  className="btn btn-sm btn-ghost"
-                  style={{ width: "100%", justifyContent: "center", color: "var(--color-rose-400)", fontSize: "0.78rem", display: "flex", alignItems: "center", gap: 6 }}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "#991b1b",
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    padding: "4px 8px",
+                  }}
                   onClick={() => setIsResetConfirmOpen(true)}
                 >
                   <X size={13} /> Reset Today's Attendance (Admin)
@@ -610,11 +636,28 @@ export default function AttendancePage() {
           ) : (
             <button
               onClick={handlePunch}
-              className={`btn btn-lg ${checkedIn ? "btn-danger" : "btn-success pulse-ring"}`}
-              style={{ width: "100%", justifyContent: "center", fontWeight: 700 }}
+              style={{
+                width: "100%",
+                padding: "14px 28px",
+                borderRadius: 9999,
+                fontWeight: 700,
+                fontSize: "0.95rem",
+                background: checkedIn ? "#b91c1c" : "#0e1726",
+                color: "#ffffff",
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 10,
+                boxShadow: checkedIn
+                  ? "0 4px 14px rgba(185, 28, 28, 0.25)"
+                  : "0 4px 14px rgba(14, 23, 38, 0.2)",
+                transition: "all 160ms cubic-bezier(0.16, 1, 0.3, 1)",
+              }}
             >
-              <Clock size={20} />
-              {checkedIn ? "Check Out & End Shift" : "Check In (Punch Time)"}
+              <Clock size={18} />
+              <span>{checkedIn ? "Check Out & End Shift" : "Check In (Punch Time)"}</span>
             </button>
           )}
         </div>
