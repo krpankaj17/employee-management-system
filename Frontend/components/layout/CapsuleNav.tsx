@@ -30,7 +30,7 @@ interface PrimaryNav {
 
 const PRIMARY_NAVS: PrimaryNav[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "People", href: "/employees", icon: Users, adminOrHrOnly: true },
+  { name: "Employees", href: "/employees", icon: Users, adminOrHrOnly: true },
   { name: "Attendance", href: "/attendance", icon: Clock },
   { name: "Leaves", href: "/leaves", icon: CalendarDays },
   { name: "Salary", href: "/payroll", icon: WalletCards },
