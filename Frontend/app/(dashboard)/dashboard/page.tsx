@@ -613,8 +613,21 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── ROW 1: 4 STUDIO METRIC CARDS ── */}
-      <div className="grid-cols-4">
+      {/* ── MAIN DASHBOARD CONTENT (WITH CINEMATIC REFRESH TRANSITION) ── */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 24,
+          opacity: refreshing ? 0.4 : 1,
+          transform: refreshing ? "scale(0.992)" : "scale(1)",
+          filter: refreshing ? "blur(1.5px)" : "none",
+          transition: "opacity 320ms cubic-bezier(0.16, 1, 0.3, 1), transform 320ms cubic-bezier(0.16, 1, 0.3, 1), filter 320ms cubic-bezier(0.16, 1, 0.3, 1)",
+          pointerEvents: refreshing ? "none" : "auto",
+        }}
+      >
+        {/* ── ROW 1: 4 STUDIO METRIC CARDS ── */}
+        <div className="grid-cols-4">
         {/* Card 1: Total Employees (Admin/HR) OR Employment Status (Employee) */}
         <Link
           href={isEmployee ? "/profile" : "/employees"}
@@ -1503,5 +1516,6 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+  </div>
   );
 }
