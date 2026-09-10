@@ -52,9 +52,11 @@ export default function AnnouncementsPage() {
     is_pinned: false,
   });
 
+  const [totalAnnouncements, setTotalAnnouncements] = useState(0);
+
   useEffect(() => {
     loadAnnouncements();
-  }, [role]);
+  }, [role, currentPage, pageSize]);
 
   // Reset page to 1 on filter changes
   useEffect(() => {
@@ -63,11 +65,16 @@ export default function AnnouncementsPage() {
 
   const loadAnnouncements = async () => {
     try {
-      const list = await api.announcements.list();
-      setAnnouncements(list || []);
+      const res = await api.announcements.list({
+        skip: (currentPage - 1) * pageSize,
+        limit: pageSize,
+      });
+      setAnnouncements(res.items || res || []);
+      setTotalAnnouncements(res.total ?? (res.items || res || []).length);
     } catch (err: any) {
       console.warn("Failed to load announcements:", err);
       setAnnouncements([]);
+      setTotalAnnouncements(0);
     }
   };
 
@@ -158,7 +165,7 @@ export default function AnnouncementsPage() {
     return a.is_pinned ? -1 : 1;
   });
 
-  const pagedItems = sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const pagedItems = sorted;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -382,7 +389,7 @@ export default function AnnouncementsPage() {
       {/* Pagination Controls */}
       <Pagination
         currentPage={currentPage}
-        totalItems={sorted.length}
+        totalItems={totalAnnouncements}
         pageSize={pageSize}
         onPageChange={setCurrentPage}
         onPageSizeChange={setPageSize}

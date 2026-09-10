@@ -31,3 +31,10 @@ class DocumentOut(BaseModel):
     verified_at: str | None = None
     created_at: str | None = None
 
+
+class PaginatedDocuments(BaseModel):
+    total: int
+    skip: int
+    limit: int | None = None
+    items: list[DocumentOut]
+

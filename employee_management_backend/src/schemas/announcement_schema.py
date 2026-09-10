@@ -26,6 +26,13 @@ class AnnouncementOut(BaseModel):
     expires_at: str | None = None
 
 
+class PaginatedAnnouncements(BaseModel):
+    total: int
+    skip: int
+    limit: int | None = None
+    items: list[AnnouncementOut]
+
+
 class NotificationIn(BaseModel):
     title: str = Field(min_length=2, max_length=255)
     message: str = Field(min_length=2)

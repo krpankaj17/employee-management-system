@@ -16,7 +16,7 @@ class EmployeeIn(BaseModel):
         default="male",
         description="Must be one of: male, female, other, prefer_not_to_say",
     )
-    email: str = Field(max_length=255)
+    email: str | None = Field(default=None, max_length=255)
     phone: str | None = Field(default=None, max_length=15)
     joining_date: str | None = Field(default=None, description="Format YYYY-MM-DD")
     employee_status: str = Field(

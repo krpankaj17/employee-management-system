@@ -1,10 +1,17 @@
 # src/models/employee.py
 from datetime import date, datetime
-from typing import cast
+from typing import TYPE_CHECKING, cast
 from sqlalchemy import BigInteger, String, Date, Boolean, DateTime, ForeignKey, Index, func, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship as orm_relationship
 from database import Base
+
+if TYPE_CHECKING:
+    from models.user import User
+    from models.department import Department
+    from models.designation import Designation
+    from models.address import EmployeeAddress
+    from models.payroll import Salary, BankDetail, PayrollRun
 
 
 class Employee(Base):
@@ -46,53 +53,53 @@ class Employee(Base):
     )
 
     # Relationships
-    department = orm_relationship(
+    department: Mapped["Department | None"] = orm_relationship(
         "Department",
         back_populates="employees",
         foreign_keys=[dept_id],
     )
-    designation = orm_relationship(
+    designation: Mapped["Designation | None"] = orm_relationship(
         "Designation",
         back_populates="employees",
         foreign_keys=[designation_id],
     )
-    employee_addresses = orm_relationship(
+    employee_addresses: Mapped[list["EmployeeAddress"]] = orm_relationship(
         "EmployeeAddress",
         back_populates="employee",
         cascade="all, delete-orphan",
     )
-    emergency_contacts = orm_relationship(
+    emergency_contacts: Mapped[list["EmergencyContact"]] = orm_relationship(
         "EmergencyContact",
         back_populates="employee",
         cascade="all, delete-orphan",
     )
-    reporting_manager = orm_relationship(
+    reporting_manager: Mapped["Employee | None"] = orm_relationship(
         "Employee",
         remote_side=[emp_id],
         foreign_keys=[reporting_manager_id],
         back_populates="direct_reports",
     )
-    direct_reports = orm_relationship(
+    direct_reports: Mapped[list["Employee"]] = orm_relationship(
         "Employee",
         foreign_keys=[reporting_manager_id],
         back_populates="reporting_manager",
     )
-    user = orm_relationship(
+    user: Mapped["User | None"] = orm_relationship(
         "User",
         back_populates="employee",
         foreign_keys=[user_id],
     )
-    salaries = orm_relationship(
+    salaries: Mapped[list["Salary"]] = orm_relationship(
         "Salary",
         back_populates="employee",
         cascade="all, delete-orphan",
     )
-    bank_details = orm_relationship(
+    bank_details: Mapped[list["BankDetail"]] = orm_relationship(
         "BankDetail",
         back_populates="employee",
         cascade="all, delete-orphan",
     )
-    payroll_runs = orm_relationship(
+    payroll_runs: Mapped[list["PayrollRun"]] = orm_relationship(
         "PayrollRun",
         back_populates="employee",
         cascade="all, delete-orphan",
@@ -191,7 +198,7 @@ class EmergencyContact(Base):
     )
 
     # Relationships
-    employee = orm_relationship("Employee", back_populates="emergency_contacts")
+    employee: Mapped["Employee"] = orm_relationship("Employee", back_populates="emergency_contacts")
 
     def to_dict(self) -> dict:
         return {

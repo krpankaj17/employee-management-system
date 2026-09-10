@@ -152,8 +152,16 @@ def verify_document(
     return {"ok": True, "document": updated.to_dict()}
 
 
-def get_pending_documents(db: Session) -> dict[str, Any]:
-    """Retrieves all pending documents across the organization."""
-    docs = repo.list_pending_documents(db=db)
-    return {"ok": True, "documents": [d.to_dict() for d in docs]}
+def get_pending_documents(
+    db: Session, skip: int = 0, limit: int | None = None
+) -> dict[str, Any]:
+    """Retrieves all pending documents across the organization with pagination metadata."""
+    docs, total = repo.list_pending_documents(db=db, skip=skip, limit=limit)
+    return {
+        "ok": True,
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+        "items": [d.to_dict() for d in docs],
+    }
 

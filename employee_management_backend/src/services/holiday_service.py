@@ -27,11 +27,12 @@ def create_holiday(payload: HolidayIn, db: Session) -> dict:
         return {"ok": False, "error": "validation", "message": "Invalid date format, expected YYYY-MM-DD"}
 
     date_obj = datetime.date.fromisoformat(payload.date.strip())
+    year_val = payload.year if payload.year is not None else date_obj.year
     holiday = holiday_repo.create_holiday(
         name=payload.name,
         date_val=date_obj,
         holiday_type=payload.holiday_type,
-        year=payload.year,
+        year=year_val,
         is_optional=payload.is_optional,
         applicable_region=payload.applicable_region,
         db=db,

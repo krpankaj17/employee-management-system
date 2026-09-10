@@ -130,7 +130,7 @@ class HolidayIn(BaseModel):
     name: str = Field(min_length=1, max_length=150)
     date: str = Field(description="Format YYYY-MM-DD")
     holiday_type: str = Field(default="company", description="national | regional | company | optional")
-    year: int = Field(ge=2000, le=2100)
+    year: int | None = Field(default=None, ge=2000, le=2100)
     is_optional: bool = Field(default=False)
     applicable_region: str = Field(default="ALL", max_length=100)
 

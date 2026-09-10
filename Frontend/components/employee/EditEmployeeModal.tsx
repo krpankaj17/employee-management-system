@@ -45,6 +45,7 @@ export function EditEmployeeModal({
   const [generalForm, setGeneralForm] = useState({
     first_name: "",
     last_name: "",
+    email: "",
     phone_number: "",
     gender: "Male",
     date_of_birth: "",
@@ -99,6 +100,7 @@ export function EditEmployeeModal({
       setGeneralForm({
         first_name: employee.first_name || "",
         last_name: employee.last_name || "",
+        email: employee.email || "",
         phone_number: employee.phone_number || "",
         gender: employee.gender || "Male",
         date_of_birth: employee.date_of_birth || "",
@@ -242,6 +244,7 @@ export function EditEmployeeModal({
       const employeePayload: Partial<Employee> = {
         first_name: generalForm.first_name.trim(),
         last_name: generalForm.last_name.trim(),
+        email: generalForm.email.trim() || employee.email,
         phone_number: generalForm.phone_number.trim(),
         gender: generalForm.gender as any,
         date_of_birth: generalForm.date_of_birth,
@@ -377,6 +380,17 @@ export function EditEmployeeModal({
 
               <div className="grid-cols-2" style={{ gap: 12 }}>
                 <div className="form-group">
+                  <label className="form-label">Corporate Email *</label>
+                  <input
+                    type="email"
+                    required
+                    className="input-field"
+                    placeholder="name@company.com"
+                    value={generalForm.email}
+                    onChange={(e) => setGeneralForm({ ...generalForm, email: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
                   <label className="form-label">Phone Number</label>
                   <input
                     type="tel"
@@ -386,6 +400,9 @@ export function EditEmployeeModal({
                     onChange={(e) => setGeneralForm({ ...generalForm, phone_number: e.target.value })}
                   />
                 </div>
+              </div>
+
+              <div className="grid-cols-2" style={{ gap: 12 }}>
                 <div className="form-group">
                   <label className="form-label">Gender</label>
                   <select
@@ -398,9 +415,6 @@ export function EditEmployeeModal({
                     <option value="Other">Other</option>
                   </select>
                 </div>
-              </div>
-
-              <div className="grid-cols-2" style={{ gap: 12 }}>
                 <div className="form-group">
                   <label className="form-label">Date of Birth</label>
                   <input
@@ -410,6 +424,9 @@ export function EditEmployeeModal({
                     onChange={(e) => setGeneralForm({ ...generalForm, date_of_birth: e.target.value })}
                   />
                 </div>
+              </div>
+
+              <div className="grid-cols-2" style={{ gap: 12 }}>
                 <div className="form-group">
                   <label className="form-label">Date of Joining</label>
                   <input
@@ -418,6 +435,9 @@ export function EditEmployeeModal({
                     value={generalForm.joining_date}
                     onChange={(e) => setGeneralForm({ ...generalForm, joining_date: e.target.value })}
                   />
+                </div>
+                <div className="form-group">
+                  {/* Visual balance */}
                 </div>
               </div>
 

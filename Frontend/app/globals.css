@@ -29,8 +29,8 @@
 
   /* Typography & Layout Metrics */
   --font-sans: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-display: var(--font-outfit), 'Outfit', sans-serif;
-  --font-mono: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+  --font-display: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
   --sidebar-width: 72px;
   --sidebar-width-collapsed: 72px;
   --sidebar-width-expanded: 250px;
@@ -91,8 +91,8 @@
   --border-focus: #ca8a04;
 
   --text-primary: #111827;
-  --text-secondary: #4b5563;
-  --text-muted: #6b7280;
+  --text-secondary: #374151;
+  --text-muted: #475569;
   --text-inverted: #ffffff;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
@@ -104,13 +104,13 @@
   --shadow-glow-purple: 0 0 20px rgba(234, 179, 8, 0.25);
 
   --badge-success-bg: rgba(16, 185, 129, 0.14);
-  --badge-success-text: #047857;
+  --badge-success-text: #065f46;
   --badge-warning-bg: rgba(245, 158, 11, 0.14);
-  --badge-warning-text: #b45309;
+  --badge-warning-text: #92400e;
   --badge-danger-bg: rgba(244, 63, 94, 0.14);
-  --badge-danger-text: #e11d48;
+  --badge-danger-text: #9f1239;
   --badge-info-bg: rgba(6, 182, 212, 0.14);
-  --badge-info-text: #0284c7;
+  --badge-info-text: #075985;
   --badge-primary-bg: #fef08a;
   --badge-primary-text: #713f12;
 }
@@ -136,21 +136,21 @@
   --border-hover: #eab308;
   --border-focus: #ca8a04;
   --text-primary: #111827;
-  --text-secondary: #4b5563;
-  --text-muted: #6b7280;
+  --text-secondary: #374151;
+  --text-muted: #475569;
   --text-inverted: #ffffff;
 
   /* High-Contrast Tint Overrides for Light Mode (eliminates washed out text) */
   --color-primary-400: #4f46e5;
   --color-primary-500: #4338ca;
-  --color-cyan-400: #0891b2;
-  --color-cyan-500: #0e7490;
-  --color-emerald-400: #059669;
-  --color-emerald-500: #047857;
-  --color-amber-400: #d97706;
-  --color-amber-500: #b45309;
-  --color-rose-400: #e11d48;
-  --color-rose-500: #be123c;
+  --color-cyan-400: #0e7490;
+  --color-cyan-500: #155e75;
+  --color-emerald-400: #047857;
+  --color-emerald-500: #065f46;
+  --color-amber-400: #b45309;
+  --color-amber-500: #92400e;
+  --color-rose-400: #be123c;
+  --color-rose-500: #9f1239;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
@@ -158,15 +158,15 @@
   --shadow-xl: 0 20px 32px -4px rgba(0, 0, 0, 0.1);
 
   --badge-success-bg: rgba(16, 185, 129, 0.12);
-  --badge-success-text: #047857;
+  --badge-success-text: #065f46;
   --badge-warning-bg: rgba(245, 158, 11, 0.12);
-  --badge-warning-text: #b45309;
+  --badge-warning-text: #92400e;
   --badge-danger-bg: rgba(244, 63, 94, 0.12);
-  --badge-danger-text: #e11d48;
+  --badge-danger-text: #9f1239;
   --badge-info-bg: rgba(6, 182, 212, 0.12);
-  --badge-info-text: #0284c7;
+  --badge-info-text: #075985;
   --badge-primary-bg: rgba(99, 102, 241, 0.12);
-  --badge-primary-text: #4f46e5;
+  --badge-primary-text: #3730a3;
 }
 
 /* ==========================================================================
@@ -2529,7 +2529,7 @@ input, textarea {
   border-radius: 9999px;
   font-size: 0.85rem;
   font-weight: 500;
-  color: var(--text-secondary, #64748b);
+  color: var(--text-secondary, #374151);
   text-decoration: none;
   transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
@@ -2600,7 +2600,7 @@ input, textarea {
   border-radius: 9999px;
   font-size: 0.84rem;
   font-weight: 500;
-  color: var(--text-secondary, #64748b);
+  color: var(--text-secondary, #374151);
   transition: all 250ms ease;
   min-width: 110px;
 }

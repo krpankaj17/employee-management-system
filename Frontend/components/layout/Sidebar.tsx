@@ -253,21 +253,7 @@ export function Sidebar() {
     return item;
   });
 
-  // Preload all dashboard section chunks in the background for zero-latency instant transitions
-  useEffect(() => {
-    const prefetchRoutes = () => {
-      visibleItems.forEach((item) => {
-        try {
-          router.prefetch(item.href);
-        } catch (e) {}
-      });
-    };
 
-    if (typeof window !== "undefined") {
-      const timer = setTimeout(prefetchRoutes, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [router, activeRole]);
 
   // Approach B: Silently pre-warm top 2 visited tabs when browser is idle
   useEffect(() => {
@@ -443,6 +429,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              aria-label={item.label}
               prefetch={true}
               onMouseEnter={() => {
                 try { router.prefetch(item.href); } catch (e) {}

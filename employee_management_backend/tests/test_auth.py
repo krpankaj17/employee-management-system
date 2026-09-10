@@ -123,8 +123,10 @@ def test_auth_roles_and_permissions(client: TestClient, admin_headers):
 def test_get_all_users_authenticated_admin(client: TestClient, admin_headers):
     res = client.get("/auth/users", headers=admin_headers)
     assert res.status_code == 200
-    users = res.json()
-    assert isinstance(users, list)
+    data = res.json()
+    assert "items" in data and isinstance(data["items"], list)
+    assert data["total"] > 0
+    users = data["items"]
     assert len(users) > 0
     # Check shape of each user
     user = users[0]
@@ -142,9 +144,12 @@ def test_get_all_users_authenticated_admin(client: TestClient, admin_headers):
 def test_get_all_users_pagination(client: TestClient, admin_headers):
     res = client.get("/auth/users?skip=0&limit=2", headers=admin_headers)
     assert res.status_code == 200
-    users = res.json()
-    assert isinstance(users, list)
-    assert len(users) <= 2
+    data = res.json()
+    assert "items" in data and isinstance(data["items"], list)
+    assert data["skip"] == 0
+    assert data["limit"] == 2
+    assert len(data["items"]) <= 2
+    assert data["total"] > 0
 
 
 def test_get_all_users_unauthenticated(client: TestClient):
@@ -189,7 +194,9 @@ def test_pending_users_and_role_assignment_flow(client: TestClient, admin_header
     # 2. Admin retrieves pending users
     pending_res = client.get("/auth/pending-users", headers=admin_headers)
     assert pending_res.status_code == 200
-    pending_list = pending_res.json()
+    pending_data = pending_res.json()
+    assert "items" in pending_data and "total" in pending_data
+    pending_list = pending_data["items"]
     pending_emails = [u["email"] for u in pending_list]
     assert unique_email in pending_emails
 
@@ -208,7 +215,7 @@ def test_pending_users_and_role_assignment_flow(client: TestClient, admin_header
     # 4. Verify user is no longer in pending list
     pending_res2 = client.get("/auth/pending-users", headers=admin_headers)
     assert pending_res2.status_code == 200
-    pending_emails2 = [u["email"] for u in pending_res2.json()]
+    pending_emails2 = [u["email"] for u in pending_res2.json()["items"]]
     assert unique_email not in pending_emails2
 
     # 5. Check the auto-provisioned Employee record

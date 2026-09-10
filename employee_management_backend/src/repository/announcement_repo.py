@@ -1,6 +1,6 @@
 # src/repository/announcement_repo.py
 import datetime
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func
 from sqlalchemy.orm import Session, joinedload
 from models.announcement import Announcement, Notification, NotificationRecipient
 
@@ -15,26 +15,35 @@ def get_announcement_by_public_id(public_id: str, db: Session) -> Announcement |
     return db.scalar(stmt)
 
 
-def list_active_announcements(dept_id: int | None, db: Session) -> list[Announcement]:
-    """Lists non-expired active announcements for all employees or specific department."""
+def list_active_announcements(
+    dept_id: int | None, db: Session, skip: int = 0, limit: int | None = None
+) -> tuple[list[Announcement], int]:
+    """Lists non-expired active announcements for all employees or specific department with pagination."""
     now = datetime.datetime.now(datetime.timezone.utc)
+    base_filter = [
+        Announcement.is_active.is_(True),
+        or_(Announcement.expires_at.is_(None), Announcement.expires_at > now),
+    ]
+    if dept_id:
+        base_filter.append(or_(Announcement.target_type == "all", Announcement.target_dept_id == dept_id))
+    else:
+        base_filter.append(Announcement.target_type == "all")
+
+    count_stmt = select(func.count(Announcement.announcement_id)).where(*base_filter)
+    total = db.scalar(count_stmt) or 0
+
     stmt = (
         select(Announcement)
         .options(joinedload(Announcement.author), joinedload(Announcement.department))
-        .where(
-            Announcement.is_active.is_(True),
-            or_(Announcement.expires_at.is_(None), Announcement.expires_at > now),
-        )
+        .where(*base_filter)
+        .order_by(Announcement.created_at.desc())
+        .offset(skip)
     )
-    if dept_id:
-        stmt = stmt.where(
-            or_(Announcement.target_type == "all", Announcement.target_dept_id == dept_id)
-        )
-    else:
-        stmt = stmt.where(Announcement.target_type == "all")
+    if limit is not None:
+        stmt = stmt.limit(limit)
 
-    stmt = stmt.order_by(Announcement.created_at.desc())
-    return list(db.scalars(stmt).all())
+    items = list(db.scalars(stmt).all())
+    return items, total
 
 
 def create_announcement(ann: Announcement, db: Session) -> Announcement:
