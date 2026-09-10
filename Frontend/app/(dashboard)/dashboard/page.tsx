@@ -99,8 +99,14 @@ export default function DashboardPage() {
   }, [checkedIn]);
 
   const loadDashboardData = async (isManual = false) => {
-    if (isManual) setRefreshing(true);
-    else setLoading(true);
+    if (isManual) {
+      setRefreshing(true);
+      if (typeof api.invalidateCache === "function") {
+        api.invalidateCache("/dashboard");
+      }
+    } else {
+      setLoading(true);
+    }
 
     const todayDate = new Date();
     const todayStr = todayDate.toISOString().split("T")[0];
@@ -128,7 +134,7 @@ export default function DashboardPage() {
       // ── 1. Fast Consolidated Server-Side Metrics ──────────────────────────
       let summaryData: any = null;
       try {
-        const summaryRes = await api.dashboard.getSummary();
+        const summaryRes = await api.dashboard.getSummary({ bypassCache: isManual });
         if (summaryRes && summaryRes.ok && summaryRes.metrics) {
           summaryData = summaryRes;
         }

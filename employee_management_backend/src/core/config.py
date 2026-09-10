@@ -35,7 +35,12 @@ class Settings(BaseSettings):
     GMAIL_WEBHOOK_URL: str | None = "https://script.google.com/macros/s/AKfycbzHyVF5NqDw-x5k5nZMTaQ5Tn74GLtyPMW_01NjIMA2pHLGG8RjNBG4HiljQqHPRYgv/exec"
     GMAIL_WEBHOOK_SECRET: str = "EMS_SECURE_TOKEN_2026"
     VALKEY_URL: str = "redis://localhost:6379/1"
+    REDIS_URL: str | None = None
+    UPSTASH_REDIS_URL: str | None = None
 
+    @property
+    def effective_redis_url(self) -> str:
+        return self.UPSTASH_REDIS_URL or self.REDIS_URL or self.VALKEY_URL
 
 
 settings = Settings()

@@ -48,20 +48,26 @@ _locks: dict[str, threading.Lock] = {
 }
 _default_lock = threading.Lock()
 
-# Global Valkey Client Pool with resilient connection timeouts for cloud environments
-_pool = redis.ConnectionPool.from_url(
-    settings.VALKEY_URL,
-    decode_responses=True,
-    max_connections=20,
-    socket_timeout=1.0,
-    socket_connect_timeout=2.0,
-)
+# Global Valkey / Upstash Client Pool with resilient connection timeouts for cloud environments
+_redis_url = settings.effective_redis_url
+_pool_kwargs: dict[str, Any] = {
+    "decode_responses": True,
+    "max_connections": 20,
+    "socket_timeout": 1.0,
+    "socket_connect_timeout": 2.0,
+}
+if _redis_url.startswith("rediss://"):
+    import ssl
+    _pool_kwargs["ssl_cert_reqs"] = ssl.CERT_NONE
+
+_pool = redis.ConnectionPool.from_url(_redis_url, **_pool_kwargs)
 _client = redis.Redis(connection_pool=_pool)
 
-# Circuit breaker state for Valkey liveness
+# Circuit breaker state for Valkey/Upstash liveness
 _valkey_is_online = False
 _last_liveness_check = 0.0
-_LIVENESS_CHECK_INTERVAL = 30.0  # seconds between probes when offline
+_probing_in_progress = False
+_LIVENESS_CHECK_INTERVAL = 30.0  # seconds between background probes when offline
 
 # In-memory RAM cache fallback: key -> (expire_timestamp, value)
 _mem_cache: dict[str, tuple[float, Any]] = {}
@@ -70,19 +76,25 @@ _mem_lock = threading.Lock()
 T = TypeVar("T")
 
 
-def _is_valkey_alive() -> bool:
-    """Probes Valkey liveness without blocking the main event loop."""
-    global _valkey_is_online, _last_liveness_check
-    now = time.monotonic()
-    if now - _last_liveness_check < _LIVENESS_CHECK_INTERVAL:
-        return _valkey_is_online
-
-    _last_liveness_check = now
+def _async_probe_liveness() -> None:
+    global _valkey_is_online, _probing_in_progress
     try:
         _client.ping()
         _valkey_is_online = True
     except Exception:
         _valkey_is_online = False
+    finally:
+        _probing_in_progress = False
+
+
+def _is_valkey_alive() -> bool:
+    """Probes Valkey/Upstash liveness asynchronously without blocking API request threads."""
+    global _valkey_is_online, _last_liveness_check, _probing_in_progress
+    now = time.monotonic()
+    if now - _last_liveness_check >= _LIVENESS_CHECK_INTERVAL and not _probing_in_progress:
+        _last_liveness_check = now
+        _probing_in_progress = True
+        threading.Thread(target=_async_probe_liveness, daemon=True).start()
     return _valkey_is_online
 
 
