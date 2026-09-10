@@ -103,9 +103,13 @@ def request_signup_otp(payload: SendOtpIn, db: Session) -> dict:
     db.commit()
 
     utils.log_action("EMAIL_OTP_SENT", f"email={clean_email}")
+    msg = f"A 6-digit verification code has been sent to {clean_email}."
+    if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+        msg = f"[Demo Mode] Verification code: {otp_code} (SMTP not configured in cloud)."
+
     return {
         "ok": True,
-        "message": f"A 6-digit verification code has been sent to {clean_email}.",
+        "message": msg,
         "expires_in_seconds": expires_in_seconds,
         "resend_in_seconds": expires_in_seconds,
         "retry_after": expires_in_seconds,
@@ -421,9 +425,13 @@ def request_password_reset(payload: ForgotPasswordIn, db: Session) -> dict:
     db.commit()
 
     utils.log_action("PASSWORD_RESET_OTP_SENT", f"email={clean_email}")
+    msg = "If an account with this email exists, a 6-digit password reset verification code has been sent."
+    if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+        msg = f"[Demo Mode] Password reset code: {otp_code} (SMTP not configured in cloud)."
+
     return {
         "ok": True,
-        "message": "If an account with this email exists, a 6-digit password reset verification code has been sent.",
+        "message": msg,
         "expires_in_seconds": expires_in_seconds,
         "resend_in_seconds": expires_in_seconds,
         "retry_after": expires_in_seconds,
