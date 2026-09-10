@@ -165,7 +165,7 @@ def seed_all_data():
         for p_name, p_mod in all_permissions:
             p = db.scalar(select(Permission).where(Permission.permission_name == p_name))
             if not p:
-                p = Permission(permission_name=p_name, module=p_mod, description=f"Grants {p_name}")
+                p = Permission(permission_name=p_name, description=f"Grants {p_name} ({p_mod})")
                 db.add(p)
                 db.flush()
             perms_map[p_name] = p
