@@ -37,6 +37,7 @@ export default function DesignDemoPreviewPage() {
       name: "Direction 1: Linear / Raycast Pro",
       tagline: "High-Craft Dark Slate • Precision Density • Indigo & Cyan Accents",
       badge: "Popular with Engineers & Power Users",
+      image: "/demos/demo-linear.jpg",
       desc: "Deep slate zinc (#0B0F19), razor-sharp sub-pixel 1px borders (#1F293D), tabular typography, zero blurry neon blooms, and compact enterprise layout.",
     },
     {
@@ -44,6 +45,7 @@ export default function DesignDemoPreviewPage() {
       name: "Direction 2: Stripe & Rippling White-Glove",
       tagline: "Luminous Modern Light • Royal Sapphire • Executive Readability",
       badge: "Enterprise Standard for HR & Executive Portals",
+      image: "/demos/demo-stripe.jpg",
       desc: "Warm off-white canvas (#F8FAFC), pristine white cards with subtle multi-layer elevation shadows, deep navy headers (#0F172A), and clean corporate typography.",
     },
     {
@@ -51,6 +53,7 @@ export default function DesignDemoPreviewPage() {
       name: "Direction 3: Vercel / Supabase Minimalist",
       tagline: "True Monochrome Obsidian • Hairline Geometric Gridlines • High Contrast",
       badge: "Clean Precision & Zero Clutter",
+      image: "/demos/demo-vercel.jpg",
       desc: "Pure true blacks (#000000), crisp 1px hairline dividers (#222222), monospaced numeric tabular data, and purposeful micro status dots.",
     },
   ];
@@ -347,6 +350,102 @@ export default function DesignDemoPreviewPage() {
               </div>
             );
           })}
+        </div>
+
+        {/* High-Resolution Visual Mockup Showcase */}
+        <div
+          style={{
+            marginTop: 16,
+            borderRadius: 14,
+            overflow: "hidden",
+            border: "1px solid var(--border-subtle)",
+            background: "#080914",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <div
+            style={{
+              padding: "12px 18px",
+              background: "var(--bg-surface-elevated)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderBottom: "1px solid var(--border-subtle)",
+              flexWrap: "wrap",
+              gap: 10,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: "0.86rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                🖼️ High-Fidelity Render: {themes.find((t) => t.id === selectedTheme)?.name}
+              </span>
+              <span style={{ fontSize: "0.72rem", padding: "2px 8px", borderRadius: 4, background: "rgba(99,102,241,0.2)", color: "#818cf8", fontWeight: 600 }}>
+                UI/UX Pro Max Architecture
+              </span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              {themes.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setSelectedTheme(t.id)}
+                  style={{
+                    background: selectedTheme === t.id ? "var(--color-primary-500)" : "transparent",
+                    color: selectedTheme === t.id ? "#fff" : "var(--text-muted)",
+                    border: "none",
+                    padding: "4px 10px",
+                    borderRadius: 6,
+                    fontSize: "0.76rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  {t.id.toUpperCase()}
+                </button>
+              ))}
+              <a
+                href={themes.find((t) => t.id === selectedTheme)?.image}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  fontSize: "0.76rem",
+                  color: "var(--color-cyan-400)",
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  marginLeft: 8,
+                }}
+              >
+                Open Fullscreen <ExternalLink size={12} />
+              </a>
+            </div>
+          </div>
+
+          <div
+            style={{
+              width: "100%",
+              maxHeight: 520,
+              overflow: "hidden",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#05070d",
+            }}
+          >
+            <img
+              src={themes.find((t) => t.id === selectedTheme)?.image}
+              alt={`${selectedTheme} UI Design Mockup`}
+              style={{
+                width: "100%",
+                height: "auto",
+                maxHeight: 520,
+                objectFit: "contain",
+                display: "block",
+              }}
+            />
+          </div>
         </div>
       </div>
 
