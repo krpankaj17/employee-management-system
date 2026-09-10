@@ -3,6 +3,19 @@ import pytest
 from core.cache import get_cached_or_compute, invalidate_cache, invalidate_all, _client
 
 
+def is_valkey_available():
+    try:
+        return bool(_client.ping())
+    except Exception:
+        return False
+
+
+valkey_required = pytest.mark.skipif(
+    not is_valkey_available(),
+    reason="Valkey/Redis server is not running locally"
+)
+
+
 def test_valkey_caching_hit_and_miss():
     invalidate_all()
     call_count = 0
@@ -23,6 +36,7 @@ def test_valkey_caching_hit_and_miss():
     assert call_count == 1  # count did not increase!
 
 
+@valkey_required
 def test_cache_penetration_negative_caching():
     invalidate_all()
     call_count = 0
@@ -65,6 +79,7 @@ def test_cache_eviction_on_invalidation():
     assert call_count == 2
 
 
+@valkey_required
 def test_defensive_deep_copying_prevents_cache_poisoning():
     invalidate_all()
 

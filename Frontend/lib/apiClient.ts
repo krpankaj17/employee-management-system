@@ -298,6 +298,47 @@ export function formatUserFacingErrorMessage(errorBody: any, status: number): st
 }
 
 /**
+ * Single-flight promise lock to prevent concurrent refresh collisions (thundering herd)
+ */
+let activeRefreshPromise: Promise<string | null> | null = null;
+
+async function executeTokenRefresh(): Promise<string | null> {
+  if (activeRefreshPromise) return activeRefreshPromise;
+
+  activeRefreshPromise = (async () => {
+    const refreshToken = typeof window !== "undefined" ? localStorage.getItem(API_CONFIG.STORAGE_KEYS.REFRESH_TOKEN) : null;
+    if (!refreshToken || !isValidJwt(refreshToken)) return null;
+
+    try {
+      const refreshRes = await fetch(`${getBaseUrl()}/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refreshToken, refreshToken: refreshToken }),
+      });
+      if (refreshRes.ok) {
+        const tokenData = await refreshRes.json();
+        const newAccessToken = tokenData.access_token || tokenData.accessToken;
+        const newRefreshToken = tokenData.refresh_token || tokenData.refreshToken;
+        if (newAccessToken && isValidJwt(newAccessToken) && typeof window !== "undefined") {
+          localStorage.setItem(API_CONFIG.STORAGE_KEYS.AUTH_TOKEN, newAccessToken);
+          if (newRefreshToken && isValidJwt(newRefreshToken)) {
+            localStorage.setItem(API_CONFIG.STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
+          }
+          return newAccessToken;
+        }
+      }
+    } catch (e) {
+      console.warn("[EMS Session Refresh] Failed:", e);
+    } finally {
+      activeRefreshPromise = null;
+    }
+    return null;
+  })();
+
+  return activeRefreshPromise;
+}
+
+/**
  * Low-level HTTP fetch helper with token attachment and error normalization
  */
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -370,37 +411,16 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   // Handle automatic session refresh if access token expired (HTTP 401)
   if (response.status === 401 && !endpoint.startsWith("/auth/login") && !endpoint.startsWith("/auth/refresh")) {
-    let refreshed = false;
-    const refreshToken = typeof window !== "undefined" ? localStorage.getItem(API_CONFIG.STORAGE_KEYS.REFRESH_TOKEN) : null;
-    if (refreshToken && isValidJwt(refreshToken)) {
-      try {
-        const refreshRes = await fetch(`${getBaseUrl()}/auth/refresh`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ refresh_token: refreshToken, refreshToken: refreshToken }),
-        });
-        if (refreshRes.ok) {
-          const tokenData = await refreshRes.json();
-          const newAccessToken = tokenData.access_token || tokenData.accessToken;
-          const newRefreshToken = tokenData.refresh_token || tokenData.refreshToken;
-          if (newAccessToken && isValidJwt(newAccessToken) && typeof window !== "undefined") {
-            localStorage.setItem(API_CONFIG.STORAGE_KEYS.AUTH_TOKEN, newAccessToken);
-            if (newRefreshToken && isValidJwt(newRefreshToken)) {
-              localStorage.setItem(API_CONFIG.STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
-            }
-            headers.set("Authorization", `Bearer ${newAccessToken}`);
-            response = await fetch(url, { ...options, headers });
-            if (response.ok) {
-              refreshed = true;
-            }
-          }
-        }
-      } catch (e) {}
-    }
-
-    // If session is unrecoverable (401 and refresh failed or not available)
-    if (!refreshed && response.status === 401) {
-      if (typeof window !== "undefined") {
+    const newAccessToken = await executeTokenRefresh();
+    if (newAccessToken) {
+      headers.set("Authorization", `Bearer ${newAccessToken}`);
+      response = await fetch(url, { ...options, headers });
+    } else {
+      // Surgical kickout: ONLY redirect to /login?session_expired=true if the PRIMARY profile verification
+      // endpoint (/auth/me) itself failed with 401.
+      // Do NOT kick out the user if an auxiliary/sub-resource endpoint (e.g. pending users or payroll) fails.
+      const isPrimaryAuthEndpoint = endpoint.startsWith("/auth/me") || endpoint === "/auth/users/me";
+      if (isPrimaryAuthEndpoint && typeof window !== "undefined" && window.location.pathname !== "/login") {
         const isIntentional =
           sessionStorage.getItem("ems_intentional_logout") === "true" ||
           sessionStorage.getItem("ems_logged_out") === "true";
@@ -410,15 +430,12 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
         localStorage.removeItem(API_CONFIG.STORAGE_KEYS.CURRENT_USER);
         localStorage.removeItem(API_CONFIG.STORAGE_KEYS.ACTIVE_ROLE);
 
-        // If currently on an authenticated dashboard page, redirect smoothly to login
-        if (typeof window.location !== "undefined" && window.location.pathname !== "/login") {
-          if (isIntentional) {
-            window.location.replace("/login");
-          } else {
-            window.location.replace("/login?session_expired=true");
-          }
-          return {} as T;
+        if (isIntentional) {
+          window.location.replace("/login");
+        } else {
+          window.location.replace("/login?session_expired=true");
         }
+        return {} as T;
       }
     }
   }
@@ -2747,6 +2764,50 @@ export const api = {
           severity,
         };
       });
+    },
+  },
+
+  // ── 15. Dashboard Consolidated Summary (`/dashboard/*`) ─────────────────────
+  dashboard: {
+    getSummary: async (): Promise<any> => {
+      if (isMockData()) {
+        const totalEmp = mockData.MOCK_EMPLOYEES.length;
+        const activeEmp = mockData.MOCK_EMPLOYEES.filter((e) => e.employee_status === "active").length;
+        return {
+          ok: true,
+          metrics: {
+            total_employees: totalEmp,
+            active_employees: activeEmp,
+            inactive_employees: totalEmp - activeEmp,
+            departments_count: mockData.MOCK_DEPARTMENTS.length,
+            present_today: 12,
+            on_leave_today: 2,
+            pending_leaves: mockData.MOCK_LEAVE_REQUESTS.filter((l) => l.status === "pending").length,
+            active_projects_count: mockData.MOCK_PROJECTS.filter((p) => p.status === "active").length,
+            pending_approvals: mockData.MOCK_PENDING_USERS.length,
+            payroll_total: 450000,
+            payroll_runs_count: 15,
+            my_net_pay: 85000,
+          },
+          weekly_attendance: [
+            { day: "Mon", dateStr: "2026-09-07", present: 80, total: totalEmp, pct: 94, hours: 8 },
+            { day: "Tue", dateStr: "2026-09-08", present: 82, total: totalEmp, pct: 96, hours: 8 },
+            { day: "Wed", dateStr: "2026-09-09", present: 79, total: totalEmp, pct: 92, hours: 8 },
+            { day: "Thu", dateStr: "2026-09-10", present: 84, total: totalEmp, pct: 98, hours: 8 },
+            { day: "Fri (Today)", dateStr: "2026-09-11", present: 81, total: totalEmp, pct: 95, hours: 8 },
+          ],
+          today_user_punch: {
+            checked_in: false,
+            shift_completed: false,
+            check_in_time: null,
+            check_out_time: null,
+            work_mode: "Office",
+          },
+          recent_projects: mockData.MOCK_PROJECTS.slice(0, 5),
+          recent_announcements: mockData.MOCK_ANNOUNCEMENTS.slice(0, 3),
+        };
+      }
+      return request<any>("/dashboard/summary");
     },
   },
 };

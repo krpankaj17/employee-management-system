@@ -66,8 +66,12 @@ export function Pagination({
 
         {onPageSizeChange && (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Rows per page:</span>
+            <label htmlFor="pagination-page-size" style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+              Rows per page:
+            </label>
             <select
+              id="pagination-page-size"
+              aria-label="Rows per page"
               value={pageSize}
               onChange={(e) => {
                 onPageSizeChange(Number(e.target.value));
@@ -135,6 +139,8 @@ export function Pagination({
                 key={`page-${p}`}
                 type="button"
                 onClick={() => onPageChange(Number(p))}
+                aria-label={`Page ${p}`}
+                aria-current={isCurrent ? "page" : undefined}
                 style={{
                   minWidth: 30,
                   height: 30,

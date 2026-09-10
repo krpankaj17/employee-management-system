@@ -78,8 +78,13 @@ export default function DashboardPage() {
   const [projectCurrentPage, setProjectCurrentPage] = useState(1);
   const [projectPageSize, setProjectPageSize] = useState(5);
 
+  const initialFetchDone = React.useRef(false);
+
   useEffect(() => {
-    loadDashboardData();
+    if (!initialFetchDone.current) {
+      initialFetchDone.current = true;
+      loadDashboardData();
+    }
   }, [role, user]);
 
   // Work time counter when checked in
@@ -120,17 +125,73 @@ export default function DashboardPage() {
     }
 
     try {
+      // ── 1. Fast Consolidated Server-Side Metrics ──────────────────────────
+      let summaryData: any = null;
+      try {
+        const summaryRes = await api.dashboard.getSummary();
+        if (summaryRes && summaryRes.ok && summaryRes.metrics) {
+          summaryData = summaryRes;
+        }
+      } catch (e) {
+        // Fallback to individual requests if summary endpoint is unavailable
+      }
+
+      if (summaryData) {
+        const m = summaryData.metrics;
+        setTotalEmployees(m.total_employees || 0);
+        setActiveEmployees(m.active_employees || 0);
+        setInactiveEmployees(m.inactive_employees || 0);
+        setDepartmentsCount(m.departments_count || 0);
+        setPresentToday(m.present_today || 0);
+        setOnLeaveToday(m.on_leave_today || 0);
+        setPendingLeaves(m.pending_leaves || 0);
+        setActiveProjectsCount(m.active_projects_count || 0);
+        setPendingApprovals(m.pending_approvals || 0);
+        setPayrollTotal(m.payroll_total || 0);
+        setPayrollRunsCount(m.payroll_runs_count || 0);
+        setMyNetPay(m.my_net_pay || 0);
+
+        if (Array.isArray(summaryData.weekly_attendance)) {
+          setWeeklyAttendanceChart(summaryData.weekly_attendance);
+        }
+        if (Array.isArray(summaryData.recent_projects)) {
+          setProjectsList(summaryData.recent_projects);
+        }
+        if (Array.isArray(summaryData.recent_announcements)) {
+          setAnnouncements(summaryData.recent_announcements);
+        }
+
+        const punch = summaryData.today_user_punch;
+        if (punch) {
+          setCheckedIn(Boolean(punch.checked_in));
+          setShiftCompleted(Boolean(punch.shift_completed));
+          if (punch.check_in_time) {
+            const dt = new Date(punch.check_in_time);
+            if (!isNaN(dt.getTime())) {
+              setCheckInTime(dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+              const diffMins = Math.max(0, Math.floor((Date.now() - dt.getTime()) / 60000));
+              setWorkMinutes(diffMins);
+            }
+          }
+        }
+
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
+
+      // ── 2. Fallback Multi-Module Fetch ────────────────────────────────────
       const results = await Promise.allSettled([
-        api.employees.list({ limit: 100 }),
+        api.employees.list({ limit: 20 }),
         api.departments.list(),
-        api.attendance.getRecords({ limit: 100 }),
-        api.leaves.getRequests({ limit: 100 }),
+        api.attendance.getRecords({ limit: 20 }),
+        api.leaves.getRequests({ limit: 20 }),
         api.leaves.getBalances(),
         api.projects.list(),
         api.reviews.list(),
         api.announcements.list(),
         api.auth.listPendingUsers(),
-        api.payroll.getRuns({ limit: 100 }),
+        api.payroll.getRuns({ limit: 20 }),
       ]);
 
       const employees: Employee[] = results[0].status === "fulfilled" ? results[0].value.items || [] : [];
@@ -1363,7 +1424,7 @@ export default function DashboardPage() {
                 >
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
                     <StatusBadge status={ann.priority || "Normal"} />
-                    <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>
+                    <span style={{ fontSize: "0.72rem", color: "#475569", fontWeight: 500 }}>
                       {ann.published_at ? new Date(ann.published_at).toLocaleDateString() : "Recent"}
                     </span>
                   </div>

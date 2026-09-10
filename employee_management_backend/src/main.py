@@ -18,6 +18,7 @@ from routes.review_routes import router as review_router
 from routes.document_routes import router as document_router
 from routes.announcement_routes import router as announcement_router
 from routes.audit_routes import router as audit_router, audit_alias_router
+from routes.dashboard_routes import router as dashboard_router
 
 
 @asynccontextmanager
@@ -126,6 +127,7 @@ app.include_router(document_router)
 app.include_router(announcement_router)
 app.include_router(audit_router)
 app.include_router(audit_alias_router)
+app.include_router(dashboard_router)
 
 
 @app.get("/")
