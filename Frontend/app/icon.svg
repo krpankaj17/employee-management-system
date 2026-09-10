@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="emsGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F46E5"/>
+      <stop offset="50%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#06b6d4" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  
+  <!-- Outer Rounded Squircle -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#emsGrad)" filter="url(#shadow)"/>
+  <!-- Top subtle shine overlay -->
+  <rect x="2" y="2" width="60" height="30" rx="16" fill="url(#glowGrad)"/>
+  
+  <!-- Sleek Modern Team Organization Emblem -->
+  <!-- Central Profile -->
+  <circle cx="32" cy="22" r="6" fill="#ffffff"/>
+  <path d="M20 40C20 33.3726 25.3726 28 32 28C38.6274 28 44 33.3726 44 40V43C44 44.1046 43.1046 45 42 45H22C20.8954 45 20 44.1046 20 43V40Z" fill="#ffffff"/>
+  
+  <!-- Connected Team Members -->
+  <circle cx="16" cy="26" r="3.5" fill="#A5F3FC"/>
+  <path d="M9 39C9 35.134 12.134 32 16 32C17.3 32 18.5 32.35 19.5 33C18.2 34.6 17.3 36.6 17.1 38.8L17 42H10C9.44772 42 9 41.5523 9 41V39Z" fill="#A5F3FC" opacity="0.9"/>
+  
+  <circle cx="48" cy="26" r="3.5" fill="#A5F3FC"/>
+  <path d="M48 32C51.866 32 55 35.134 55 39V41C55 41.5523 54.5523 42 54 42H47L46.9 38.8C46.7 36.6 45.8 34.6 44.5 33C45.5 32.35 46.7 32 48 32Z" fill="#A5F3FC" opacity="0.9"/>
+</svg>
