@@ -12,7 +12,9 @@ def send_otp_email(to_email: str, otp_code: str, expires_in_seconds: int = 150) 
     """Sends a responsive HTML email containing the 6-digit OTP code via SMTP.
     Raises Exception if SMTP delivery fails."""
     if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
-        raise ValueError("SMTP credentials are not configured in settings")
+        logger.warning(f"[DEMO MODE] SMTP credentials not set. Simulated OTP for {to_email}: {otp_code}")
+        print(f"\n[DEMO MODE OTP] Verification code for {to_email}: {otp_code}\n")
+        return
 
     minutes_str = f"{expires_in_seconds // 60}.{int((expires_in_seconds % 60) / 6)}" if expires_in_seconds % 60 != 0 else str(expires_in_seconds // 60)
 
@@ -118,7 +120,9 @@ def send_otp_email(to_email: str, otp_code: str, expires_in_seconds: int = 150) 
 def send_password_reset_otp_email(to_email: str, otp_code: str, expires_in_seconds: int = 150) -> None:
     """Sends a responsive HTML email containing the 6-digit password reset OTP code via SMTP."""
     if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
-        raise ValueError("SMTP credentials are not configured in settings")
+        logger.warning(f"[DEMO MODE] SMTP credentials not set. Simulated Password Reset OTP for {to_email}: {otp_code}")
+        print(f"\n[DEMO MODE OTP] Password Reset code for {to_email}: {otp_code}\n")
+        return
 
     minutes_str = f"{expires_in_seconds // 60}.{int((expires_in_seconds % 60) / 6)}" if expires_in_seconds % 60 != 0 else str(expires_in_seconds // 60)
 
