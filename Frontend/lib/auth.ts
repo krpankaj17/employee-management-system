@@ -13,6 +13,7 @@ import { API_CONFIG, isMockData } from "./config";
 import { MOCK_PERMISSIONS, MOCK_ALL_USERS, MOCK_PENDING_USERS } from "@/data/mockRoles";
 import { useEffect, useState } from "react";
 import { api, createMockJwt } from "./apiClient";
+import { applyTheme, getInitialTheme } from "./theme";
 
 /**
  * Pre-seeded Enterprise Accounts Directory for testing
@@ -248,9 +249,9 @@ export function logoutUser(router?: any): void {
       localStorage.removeItem(API_CONFIG.STORAGE_KEYS.ACTIVE_ROLE);
       localStorage.removeItem(API_CONFIG.STORAGE_KEYS.AUTH_TOKEN);
       localStorage.removeItem(API_CONFIG.STORAGE_KEYS.REFRESH_TOKEN);
-      // Preserve active theme without jarring flip
-      const currentTheme = localStorage.getItem(API_CONFIG.STORAGE_KEYS.THEME) || "dark";
-      document.documentElement.setAttribute("data-theme", currentTheme);
+      // Preserve active theme without jarring flip (defaults to light)
+      const currentTheme = getInitialTheme();
+      applyTheme(currentTheme);
     } catch (e) {}
 
     if (router && typeof router.replace === "function") {
@@ -290,6 +291,7 @@ export async function authenticateWithCredentials(
         if (!isPending && normalized.roles[0]?.role_name) {
           localStorage.setItem(API_CONFIG.STORAGE_KEYS.ACTIVE_ROLE, normalized.roles[0].role_name);
         }
+        applyTheme(getInitialTheme());
         window.dispatchEvent(new Event("ems_auth_changed"));
       }
       return { ok: true, user: normalized, isPending, message: "Authentication successful" };

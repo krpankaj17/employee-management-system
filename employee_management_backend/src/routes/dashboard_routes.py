@@ -46,8 +46,21 @@ def get_dashboard_summary(
         )
     ) or 0
 
-    # 2. Departments count
+    # 2. Departments count & breakdown
     dept_count = db.scalar(select(func.count(Department.dept_id))) or 0
+    dept_records = db.scalars(select(Department).order_by(Department.dept_id.asc())).all()
+    departments_data = [
+        {
+            "public_id": str(d.public_id),
+            "dept_name": d.dept_name,
+            "department_name": d.dept_name,
+            "dept_code": d.dept_code,
+            "department_code": d.dept_code,
+            "employee_count": len([e for e in d.employees if (getattr(e, "employee_status", "") or "").lower() == "active"]) if d.employees else 0,
+            "head_employee_name": f"{d.head_employee.first_name} {d.head_employee.last_name}" if d.head_employee else "Lead Assigned",
+        }
+        for d in dept_records
+    ]
 
     # 3. Today's Attendance
     present_today = db.scalar(
@@ -251,5 +264,6 @@ def get_dashboard_summary(
         "today_user_punch": today_user_punch,
         "recent_projects": recent_projects,
         "recent_announcements": recent_announcements,
+        "departments": departments_data,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }

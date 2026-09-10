@@ -43,12 +43,20 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  localStorage.removeItem('ems_theme_preference');
-                  document.documentElement.setAttribute('data-theme', 'light');
-                  document.documentElement.classList.remove('dark');
-                  document.documentElement.classList.add('light');
-                  document.documentElement.style.backgroundColor = '#f8f8f6';
-                  document.documentElement.style.colorScheme = 'light';
+                  var saved = localStorage.getItem('ems_theme');
+                  var theme = (saved === 'dark' || saved === 'light') ? saved : 'light';
+                  document.documentElement.setAttribute('data-theme', theme);
+                  if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.classList.remove('light');
+                    document.documentElement.style.backgroundColor = '#0f121a';
+                    document.documentElement.style.colorScheme = 'dark';
+                  } else {
+                    document.documentElement.classList.add('light');
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.style.backgroundColor = '#f8f8f6';
+                    document.documentElement.style.colorScheme = 'light';
+                  }
                 } catch (e) {}
 
                 function isBackendConnectionError(err) {
