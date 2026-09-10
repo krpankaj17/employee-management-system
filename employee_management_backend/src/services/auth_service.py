@@ -70,15 +70,21 @@ def request_signup_otp(payload: SendOtpIn, db: Session) -> dict:
     expires_in_seconds = settings.OTP_EXPIRATION_SECONDS  # 150 seconds (2.5 minutes)
 
     # 1. Attempt Email Delivery FIRST (Server Exception rule: no cooldown if dispatch fails)
+    notice_msg = None
     try:
         send_otp_email(to_email=clean_email, otp_code=otp_code, expires_in_seconds=expires_in_seconds)
     except Exception as e:
-        utils.log_action("EMAIL_OTP_FAILED", f"email={clean_email} error={str(e)}")
-        return {
-            "ok": False,
-            "error": "email_failed",
-            "message": f"Unable to deliver verification email: {str(e)}. Please check your email address and try again.",
-        }
+        err_str = str(e)
+        utils.log_action("EMAIL_OTP_FAILED", f"email={clean_email} error={err_str}")
+        if "Network is unreachable" in err_str or "101" in err_str or "timed out" in err_str.lower() or "connection refused" in err_str.lower():
+            logger.warning(f"Outbound SMTP network blocked on host. Providing on-screen verification code: {otp_code}")
+            notice_msg = f"[Notice: Cloud host blocked SMTP port] Verification code: {otp_code}"
+        else:
+            return {
+                "ok": False,
+                "error": "email_failed",
+                "message": f"Unable to deliver verification email: {err_str}. Please check your email address and try again.",
+            }
 
     # 2. Only upon successful dispatch, persist OTP state & start cooldown
     expires_at = now_utc + datetime.timedelta(seconds=expires_in_seconds)
@@ -104,7 +110,9 @@ def request_signup_otp(payload: SendOtpIn, db: Session) -> dict:
 
     utils.log_action("EMAIL_OTP_SENT", f"email={clean_email}")
     msg = f"A 6-digit verification code has been sent to {clean_email}."
-    if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+    if notice_msg:
+        msg = notice_msg
+    elif not settings.RESEND_API_KEY and (not settings.SMTP_USER or not settings.SMTP_PASSWORD):
         msg = f"[Demo Mode] Verification code: {otp_code} (SMTP not configured in cloud)."
 
     return {
@@ -392,15 +400,21 @@ def request_password_reset(payload: ForgotPasswordIn, db: Session) -> dict:
     expires_in_seconds = settings.OTP_EXPIRATION_SECONDS  # 150 seconds (2.5 minutes)
 
     # 1. Attempt Email Delivery FIRST
+    notice_msg = None
     try:
         send_password_reset_otp_email(to_email=clean_email, otp_code=otp_code, expires_in_seconds=expires_in_seconds)
     except Exception as e:
-        utils.log_action("PASSWORD_RESET_OTP_FAILED", f"email={clean_email} error={str(e)}")
-        return {
-            "ok": False,
-            "error": "email_failed",
-            "message": f"Unable to deliver password reset email: {str(e)}. Please check your email address and try again.",
-        }
+        err_str = str(e)
+        utils.log_action("PASSWORD_RESET_OTP_FAILED", f"email={clean_email} error={err_str}")
+        if "Network is unreachable" in err_str or "101" in err_str or "timed out" in err_str.lower() or "connection refused" in err_str.lower():
+            logger.warning(f"Outbound SMTP network blocked on host. Providing on-screen verification code: {otp_code}")
+            notice_msg = f"[Notice: Cloud host blocked SMTP port] Password reset code: {otp_code}"
+        else:
+            return {
+                "ok": False,
+                "error": "email_failed",
+                "message": f"Unable to deliver password reset email: {err_str}. Please check your email address and try again.",
+            }
 
     # 2. Only upon successful dispatch, persist OTP state & start cooldown
     expires_at = now_utc + datetime.timedelta(seconds=expires_in_seconds)
@@ -426,7 +440,9 @@ def request_password_reset(payload: ForgotPasswordIn, db: Session) -> dict:
 
     utils.log_action("PASSWORD_RESET_OTP_SENT", f"email={clean_email}")
     msg = "If an account with this email exists, a 6-digit password reset verification code has been sent."
-    if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+    if notice_msg:
+        msg = notice_msg
+    elif not settings.RESEND_API_KEY and (not settings.SMTP_USER or not settings.SMTP_PASSWORD):
         msg = f"[Demo Mode] Password reset code: {otp_code} (SMTP not configured in cloud)."
 
     return {

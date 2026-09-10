@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     SMTP_FROM_EMAIL: str | None = None
     SMTP_FROM_NAME: str = "Datansh Employee Management"
     OTP_EXPIRATION_SECONDS: int = 150  # 2.5 minutes
+    # HTTP Email Provider (Bypasses cloud provider SMTP firewall blocks)
+    RESEND_API_KEY: str | None = None
     VALKEY_URL: str = "redis://localhost:6379/1"
 
 
