@@ -339,9 +339,57 @@ async function executeTokenRefresh(): Promise<string | null> {
 }
 
 /**
+ * In-Memory Client SWR Cache for sub-millisecond instant page transitions
+ */
+interface ClientCacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
+const clientApiCache = new Map<string, ClientCacheEntry<any>>();
+const CLIENT_CACHE_TTL_MS = 25000; // 25 seconds fresh window
+const REVALIDATE_AFTER_MS = 5000;  // 5 seconds before background revalidation
+
+export function invalidateClientCache(endpointPrefix?: string): void {
+  if (!endpointPrefix) {
+    clientApiCache.clear();
+    return;
+  }
+  const cleanPrefix = endpointPrefix.replace(/^\/+/, "");
+  for (const key of Array.from(clientApiCache.keys())) {
+    if (key.includes(cleanPrefix)) {
+      clientApiCache.delete(key);
+    }
+  }
+}
+
+export interface ClientRequestOptions extends RequestInit {
+  bypassCache?: boolean;
+}
+
+/**
  * Low-level HTTP fetch helper with token attachment and error normalization
  */
-async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+async function request<T>(endpoint: string, options: ClientRequestOptions = {}): Promise<T> {
+  const method = (options.method || "GET").toUpperCase();
+  const isGet = method === "GET";
+  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  const currentBackend = getActiveBackend();
+  const cacheKey = `${currentBackend}:${cleanEndpoint}`;
+
+  // 1. Return from In-Memory SWR Client Cache if fresh (0ms response)
+  if (isGet && !options.bypassCache && clientApiCache.has(cacheKey)) {
+    const cached = clientApiCache.get(cacheKey)!;
+    const age = Date.now() - cached.timestamp;
+    if (age < CLIENT_CACHE_TTL_MS) {
+      // Revalidate in background if older than threshold
+      if (age > REVALIDATE_AFTER_MS) {
+        request<T>(endpoint, { ...options, bypassCache: true }).catch(() => {});
+      }
+      return cached.data as T;
+    }
+  }
+
   let token = typeof window !== "undefined" ? localStorage.getItem(API_CONFIG.STORAGE_KEYS.AUTH_TOKEN) : null;
   
   // Guard against malformed or non-JWT tokens when communicating with live backend servers
@@ -362,9 +410,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const currentBackend = getActiveBackend();
   const base = getBaseUrl().replace(/\/+$/, "");
-  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   const url = `${base}${cleanEndpoint}`;
   let response!: Response;
 
@@ -466,10 +512,27 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   // Support 204 No Content
   if (response.status === 204) {
+    if (!isGet) {
+      const module = cleanEndpoint.split("/")[1] || "";
+      if (module) invalidateClientCache(module);
+      invalidateClientCache("dashboard");
+    }
     return {} as T;
   }
 
-  return response.json();
+  const data = await response.json();
+
+  // Cache successful GET responses
+  if (isGet) {
+    clientApiCache.set(cacheKey, { data, timestamp: Date.now() });
+  } else {
+    // Invalidate related caches upon successful mutations (POST / PUT / PATCH / DELETE)
+    const module = cleanEndpoint.split("/")[1] || "";
+    if (module) invalidateClientCache(module);
+    invalidateClientCache("dashboard");
+  }
+
+  return data;
 }
 
 // ── Project Normalizer ────────────────────────────────────────────────────────
@@ -2769,7 +2832,7 @@ export const api = {
 
   // ── 15. Dashboard Consolidated Summary (`/dashboard/*`) ─────────────────────
   dashboard: {
-    getSummary: async (): Promise<any> => {
+    getSummary: async (options?: { bypassCache?: boolean }): Promise<any> => {
       if (isMockData()) {
         const totalEmp = mockData.MOCK_EMPLOYEES.length;
         const activeEmp = mockData.MOCK_EMPLOYEES.filter((e) => e.employee_status === "active").length;
@@ -2808,7 +2871,8 @@ export const api = {
           departments: mockData.MOCK_DEPARTMENTS,
         };
       }
-      return request<any>("/dashboard/summary");
+      return request<any>("/dashboard/summary", { bypassCache: options?.bypassCache });
     },
   },
+  invalidateCache: invalidateClientCache,
 };
