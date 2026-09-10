@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { Avatar } from "../ui/Avatar";
+import { CapsuleNav } from "./CapsuleNav";
 import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/apiClient";
 import { Announcement } from "@/types/announcement";
@@ -102,7 +103,7 @@ export function Topbar() {
       }}
     >
       {/* Left Area: Sidebar Toggle & Search Bar */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, maxWidth: 420 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, maxWidth: 360 }}>
         <button
           type="button"
           onClick={() => {
@@ -142,6 +143,11 @@ export function Topbar() {
             />
           </div>
         </div>
+      </div>
+
+      {/* Center Area: Floating Studio Capsule Navigation */}
+      <div style={{ display: "flex", justifyContent: "center", flex: 2, minWidth: 0, overflowX: "auto" }}>
+        <CapsuleNav />
       </div>
 
       {/* Right Controls: Notifications, Theme Toggle, User Profile */}
