@@ -9,7 +9,7 @@
  * Normalizes request payloads and response envelopes transparently.
  */
 
-import { API_CONFIG, getBaseUrl, isMockData, getActiveBackend, setActiveBackend, BACKEND_SERVERS, BackendType } from "./config";
+import { API_CONFIG, getBaseUrl, isMockData, getActiveBackend, setActiveBackend, BackendType } from "./config";
 import { Paginated } from "@/types/common";
 import { Employee, EmployeeFilterParams, Address, EmergencyContact } from "@/types/employee";
 import { AttendanceRecord } from "@/types/attendance";

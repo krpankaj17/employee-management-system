@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  BACKEND_SERVERS,
   getBaseUrl,
 } from "@/lib/config";
 import { AlertTriangle, RefreshCw, X, Server } from "lucide-react";
@@ -28,8 +27,6 @@ export function BackendOfflineBanner() {
       window.removeEventListener("ems_backend_offline", handleOffline);
     };
   }, []);
-
-  const currentServer = BACKEND_SERVERS.python;
 
   const handleRetry = async () => {
     setReconnecting(true);
