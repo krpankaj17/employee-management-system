@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  productionBrowserSourceMaps: false,
   async rewrites() {
     const rawUrl =
       process.env.NEXT_PUBLIC_PYTHON_BACKEND_URL ||

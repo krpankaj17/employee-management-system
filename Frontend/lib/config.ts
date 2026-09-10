@@ -1,28 +1,8 @@
 /**
- * Employee Management System - Master Configuration & Dual-Backend Switcher
- * 
- * Supports:
- * 1. "java"   -> Java Spring Boot (http://localhost:8080)
- * 2. "python" -> Python FastAPI (http://localhost:8000)
- * 3. "mock"   -> Standalone in-memory mock demo mode
+ * Employee Management System - Master Configuration
  */
 
 export type BackendType = "java" | "python" | "mock";
-
-export const BACKEND_SERVERS: Record<"java" | "python", { name: string; url: string; port: number; icon: string }> = {
-  java: {
-    name: "Java Spring Boot",
-    url: process.env.NEXT_PUBLIC_JAVA_BACKEND_URL || "http://localhost:8080",
-    port: 8080,
-    icon: "☕",
-  },
-  python: {
-    name: "Python FastAPI",
-    url: process.env.NEXT_PUBLIC_PYTHON_BACKEND_URL || "http://localhost:8000",
-    port: 8000,
-    icon: "🐍",
-  },
-};
 
 export const API_CONFIG = {
   APP_NAME: "Employee Management System",
@@ -39,7 +19,7 @@ export const API_CONFIG = {
   },
 
   get USE_MOCK_DATA(): boolean {
-    return isMockData();
+    return false;
   },
 
   get BASE_URL(): string {
@@ -48,8 +28,7 @@ export const API_CONFIG = {
 };
 
 /**
- * Retrieve the active backend target ("java" | "python" | "mock")
- * Defaults to "python" or "java" if backend mode is preferred, or "mock" if offline.
+ * Retrieve the active backend target (locked to Python FastAPI backend)
  */
 export function getActiveBackend(): BackendType {
   return "python";
@@ -58,13 +37,8 @@ export function getActiveBackend(): BackendType {
 /**
  * Set the active backend target (locked to Python FastAPI backend)
  */
-export function setActiveBackend(target: BackendType): void {
-  if (typeof window !== "undefined") {
-    try {
-      localStorage.setItem(API_CONFIG.STORAGE_KEYS.BACKEND_TARGET, "python");
-      window.dispatchEvent(new CustomEvent("ems_backend_changed", { detail: { target: "python" } }));
-    } catch (e) {}
-  }
+export function setActiveBackend(_target?: BackendType): void {
+  // Dedicated Python backend
 }
 
 /**
@@ -76,13 +50,10 @@ export function isMockData(): boolean {
 
 /**
  * Get active backend base URL (Python FastAPI backend).
- * When running in the browser, routes via the Next.js Reverse Proxy (/api/proxy)
- * to hide the raw Render backend URL and eliminate CORS issues.
- * On the server side (SSR), falls back to the absolute backend URL.
+ * Routes via the Next.js Reverse Proxy (/api/proxy) to keep backend
+ * infrastructure private, hide raw hostnames, and eliminate CORS restrictions.
  */
 export function getBaseUrl(): string {
-  if (typeof window !== "undefined") {
-    return "/api/proxy";
-  }
-  return BACKEND_SERVERS.python.url;
+  return "/api/proxy";
 }
+
