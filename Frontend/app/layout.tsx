@@ -7,8 +7,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#080914",
-  colorScheme: "dark",
+  themeColor: "#f7f5ee",
+  colorScheme: "light",
 };
 
 export default function RootLayout({
@@ -17,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="dark" className="dark" suppressHydrationWarning>
+    <html lang="en" data-theme="light" className="light" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -25,18 +25,18 @@ export default function RootLayout({
               (function() {
                 try {
                   var saved = localStorage.getItem('ems_theme_preference');
-                  var theme = (saved === 'light') ? 'light' : 'dark';
+                  var theme = (saved === 'dark') ? 'dark' : 'light';
                   document.documentElement.setAttribute('data-theme', theme);
-                  if (theme === 'light') {
-                    document.documentElement.classList.remove('dark');
-                    document.documentElement.classList.add('light');
-                    document.documentElement.style.backgroundColor = '#f8fafc';
-                    document.documentElement.style.colorScheme = 'light';
-                  } else {
+                  if (theme === 'dark') {
                     document.documentElement.classList.remove('light');
                     document.documentElement.classList.add('dark');
-                    document.documentElement.style.backgroundColor = '#080914';
+                    document.documentElement.style.backgroundColor = '#0f121a';
                     document.documentElement.style.colorScheme = 'dark';
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.classList.add('light');
+                    document.documentElement.style.backgroundColor = '#f7f5ee';
+                    document.documentElement.style.colorScheme = 'light';
                   }
                 } catch (e) {}
 
