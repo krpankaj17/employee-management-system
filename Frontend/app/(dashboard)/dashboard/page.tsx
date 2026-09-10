@@ -160,6 +160,9 @@ export default function DashboardPage() {
         if (Array.isArray(summaryData.recent_announcements)) {
           setAnnouncements(summaryData.recent_announcements);
         }
+        if (Array.isArray(summaryData.departments)) {
+          setDepartmentsList(summaryData.departments);
+        }
 
         const punch = summaryData.today_user_punch;
         if (punch) {
@@ -577,6 +580,8 @@ export default function DashboardPage() {
           href={isEmployee ? "/profile" : "/employees"}
           className="card card-interactive"
           style={{
+            background: "#ffffff",
+            backgroundColor: "#ffffff",
             padding: "22px 24px",
             display: "flex",
             flexDirection: "column",
@@ -625,6 +630,8 @@ export default function DashboardPage() {
           href="/attendance"
           className="card card-interactive"
           style={{
+            background: "#ffffff",
+            backgroundColor: "#ffffff",
             padding: "22px 24px",
             display: "flex",
             flexDirection: "column",
@@ -673,6 +680,8 @@ export default function DashboardPage() {
           href="/leaves"
           className="card card-interactive"
           style={{
+            background: "#ffffff",
+            backgroundColor: "#ffffff",
             padding: "22px 24px",
             display: "flex",
             flexDirection: "column",
@@ -721,6 +730,8 @@ export default function DashboardPage() {
           href={isEmployee ? "/payroll" : "/employees"}
           className="card card-interactive"
           style={{
+            background: "#ffffff",
+            backgroundColor: "#ffffff",
             padding: "22px 24px",
             display: "flex",
             flexDirection: "column",

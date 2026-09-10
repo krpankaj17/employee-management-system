@@ -24,6 +24,7 @@ import {
   authenticateWithCredentials,
   registerNewUser,
 } from "@/lib/auth";
+import { applyTheme, getInitialTheme } from "@/lib/theme";
 import { Modal } from "@/components/ui/Modal";
 import { api } from "@/lib/apiClient";
 
@@ -60,6 +61,7 @@ export default function LoginPage() {
   // Clean URL query and handle expired session alert
   useEffect(() => {
     if (typeof window !== "undefined") {
+      applyTheme(getInitialTheme());
       const isIntentional =
         sessionStorage.getItem("ems_intentional_logout") === "true" ||
         sessionStorage.getItem("ems_logged_out") === "true";
@@ -200,6 +202,8 @@ export default function LoginPage() {
         setLoginError(authResult.message);
         return;
       }
+
+      applyTheme(getInitialTheme());
 
       if (authResult.isPending) {
         router.push("/onboarding-pending");

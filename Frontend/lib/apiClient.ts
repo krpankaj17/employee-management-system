@@ -2805,6 +2805,7 @@ export const api = {
           },
           recent_projects: mockData.MOCK_PROJECTS.slice(0, 5),
           recent_announcements: mockData.MOCK_ANNOUNCEMENTS.slice(0, 3),
+          departments: mockData.MOCK_DEPARTMENTS,
         };
       }
       return request<any>("/dashboard/summary");

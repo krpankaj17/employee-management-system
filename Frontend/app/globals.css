@@ -284,13 +284,14 @@ input::-webkit-contacts-auto-fill-button {
 /* Interactive Card: Gentle lift + refined accent border */
 .card-interactive {
   cursor: pointer;
+  background: #ffffff;
 }
 
 .card-interactive:hover {
   transform: translateY(-2.5px);
-  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(6, 182, 212, 0.3);
-  border-color: rgba(6, 182, 212, 0.4);
-  background: rgba(25, 29, 52, 0.65);
+  box-shadow: 0 12px 28px -4px rgba(99, 102, 241, 0.15);
+  border-color: var(--color-primary-400, #818cf8);
+  background: #ffffff;
 }
 
 .card-interactive:active {
@@ -309,7 +310,7 @@ input::-webkit-contacts-auto-fill-button {
 [data-theme="light"] .card-interactive:hover {
   transform: translateY(-2.5px);
   box-shadow: 0 12px 28px -4px rgba(99, 102, 241, 0.15);
-  border-color: var(--color-primary-400);
+  border-color: var(--color-primary-400, #818cf8);
   background: #ffffff;
 }
 
