@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { Avatar } from "../ui/Avatar";
-import { BackendSwitcher } from "./BackendSwitcher";
 import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/apiClient";
 import { Announcement } from "@/types/announcement";
@@ -116,9 +115,6 @@ export function Topbar() {
 
       {/* Right Controls: Notifications, Theme Toggle, User Profile */}
       <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 180, justifyContent: "flex-end" }}>
-        {/* Live Backend Target Switcher */}
-        <BackendSwitcher />
-
         {/* Notifications Icon & Popover */}
         <div style={{ position: "relative" }} ref={notifRef}>
           <button

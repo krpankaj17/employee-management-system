@@ -52,25 +52,17 @@ export const API_CONFIG = {
  * Defaults to "python" or "java" if backend mode is preferred, or "mock" if offline.
  */
 export function getActiveBackend(): BackendType {
-  if (typeof window !== "undefined") {
-    try {
-      const stored = localStorage.getItem(API_CONFIG.STORAGE_KEYS.BACKEND_TARGET) as BackendType | null;
-      if (stored && (stored === "java" || stored === "python" || stored === "mock")) {
-        return stored;
-      }
-    } catch (e) {}
-  }
   return "python";
 }
 
 /**
- * Set the active backend target and notify listeners
+ * Set the active backend target (locked to Python FastAPI backend)
  */
 export function setActiveBackend(target: BackendType): void {
   if (typeof window !== "undefined") {
     try {
-      localStorage.setItem(API_CONFIG.STORAGE_KEYS.BACKEND_TARGET, target);
-      window.dispatchEvent(new CustomEvent("ems_backend_changed", { detail: { target } }));
+      localStorage.setItem(API_CONFIG.STORAGE_KEYS.BACKEND_TARGET, "python");
+      window.dispatchEvent(new CustomEvent("ems_backend_changed", { detail: { target: "python" } }));
     } catch (e) {}
   }
 }
@@ -79,15 +71,12 @@ export function setActiveBackend(target: BackendType): void {
  * Check if the active configuration is running in standalone mock mode
  */
 export function isMockData(): boolean {
-  return getActiveBackend() === "mock";
+  return false;
 }
 
 /**
- * Get active backend base URL
+ * Get active backend base URL (Python FastAPI backend)
  */
 export function getBaseUrl(): string {
-  const backend = getActiveBackend();
-  if (backend === "java") return BACKEND_SERVERS.java.url;
-  if (backend === "python") return BACKEND_SERVERS.python.url;
   return BACKEND_SERVERS.python.url;
 }

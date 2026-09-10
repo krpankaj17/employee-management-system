@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
-import { getInitialTheme, toggleTheme, Theme } from "@/lib/theme";
+import { getInitialTheme, toggleTheme, applyTheme, Theme } from "@/lib/theme";
 
 /**
  * ThemeToggle Component
@@ -15,7 +15,7 @@ export function ThemeToggle() {
   useEffect(() => {
     const initial = getInitialTheme();
     setTheme(initial);
-    document.documentElement.setAttribute("data-theme", initial);
+    applyTheme(initial);
     setMounted(true);
 
     const handleThemeChange = (e: any) => {
