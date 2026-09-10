@@ -227,7 +227,7 @@ export function BackendSwitcher() {
                   Python FastAPI
                 </div>
                 <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
-                  http://localhost:8000
+                  {BACKEND_SERVERS.python.url}
                 </div>
               </div>
             </div>
@@ -277,7 +277,7 @@ export function BackendSwitcher() {
                   Java Spring Boot
                 </div>
                 <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
-                  http://localhost:8080
+                  {BACKEND_SERVERS.java.url}
                 </div>
               </div>
             </div>

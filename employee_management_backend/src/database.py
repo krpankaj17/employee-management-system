@@ -22,8 +22,14 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
     raise ValueError(
-        "DATABASE_URL is not set. Please ensure it is defined in your .env file."
+        "DATABASE_URL is not set. Please ensure it is defined in your .env file or environment variables."
     )
+
+# Normalize Supabase / Neon / Render PostgreSQL URL to SQLAlchemy psycopg3 dialect
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
+elif DATABASE_URL.startswith("postgresql://") and not DATABASE_URL.startswith("postgresql+psycopg://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
 
 # Create SQLAlchemy engine
 # pool_pre_ping=True checks connections before using them to prevent stale connection drops
