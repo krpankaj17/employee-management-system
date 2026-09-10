@@ -12,13 +12,13 @@ export type BackendType = "java" | "python" | "mock";
 export const BACKEND_SERVERS: Record<"java" | "python", { name: string; url: string; port: number; icon: string }> = {
   java: {
     name: "Java Spring Boot",
-    url: "http://localhost:8080",
+    url: process.env.NEXT_PUBLIC_JAVA_BACKEND_URL || "http://localhost:8080",
     port: 8080,
     icon: "☕",
   },
   python: {
     name: "Python FastAPI",
-    url: "http://localhost:8000",
+    url: process.env.NEXT_PUBLIC_PYTHON_BACKEND_URL || "http://localhost:8000",
     port: 8000,
     icon: "🐍",
   },

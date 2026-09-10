@@ -31,7 +31,19 @@ async def lifespan(app: FastAPI):
     if db_info["status"] == "connected":
         log_action("DATABASE_CONNECT", f"Connected to {db_info['database']} as {db_info['user']}")
         print(f"[Database] Successfully connected to {db_info['database']} as {db_info['user']}")
-        
+        # Auto-seed initial enterprise data if database is brand new/empty
+        try:
+            from database import SessionLocal
+            from models.user import Role
+            with SessionLocal() as db_sess:
+                if db_sess.query(Role).count() == 0:
+                    print("[DATABASE AUTO-INIT] Empty database detected. Auto-seeding initial enterprise records...")
+                    from utils.reset_and_seed_db import seed_all_data
+                    seed_all_data()
+                    print("[DATABASE AUTO-INIT] Initial database successfully initialized!")
+        except Exception as e:
+            print(f"[DATABASE AUTO-INIT] Notice on auto-seed: {e}")
+
         # Synchronize Role Permissions with business rules
         try:
             from database import SessionLocal
@@ -75,7 +87,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
