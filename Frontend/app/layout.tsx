@@ -24,20 +24,12 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  var saved = localStorage.getItem('ems_theme_preference');
-                  var theme = (saved === 'dark') ? 'dark' : 'light';
-                  document.documentElement.setAttribute('data-theme', theme);
-                  if (theme === 'dark') {
-                    document.documentElement.classList.remove('light');
-                    document.documentElement.classList.add('dark');
-                    document.documentElement.style.backgroundColor = '#0f121a';
-                    document.documentElement.style.colorScheme = 'dark';
-                  } else {
-                    document.documentElement.classList.remove('dark');
-                    document.documentElement.classList.add('light');
-                    document.documentElement.style.backgroundColor = '#f7f5ee';
-                    document.documentElement.style.colorScheme = 'light';
-                  }
+                  localStorage.removeItem('ems_theme_preference');
+                  document.documentElement.setAttribute('data-theme', 'light');
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.classList.add('light');
+                  document.documentElement.style.backgroundColor = '#f8f8f6';
+                  document.documentElement.style.colorScheme = 'light';
                 } catch (e) {}
 
                 function isBackendConnectionError(err) {
