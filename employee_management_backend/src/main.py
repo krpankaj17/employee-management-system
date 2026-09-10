@@ -1,4 +1,5 @@
 # src/main.py
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -77,17 +78,35 @@ async def lifespan(app: FastAPI):
     yield
 
 
+# Security: Hide interactive Swagger/ReDoc API schemas in production
+IS_PRODUCTION = os.getenv("ENVIRONMENT", "production").lower() == "production"
+
 app = FastAPI(
     title="Employee Management System API",
     description="Enterprise API for Employees, RBAC Authentication, Departments, Attendance, Leaves, Payroll, Projects, Reviews, Documents & Announcements",
     version="2.0.0",
     lifespan=lifespan,
+    docs_url=None if IS_PRODUCTION else "/docs",
+    redoc_url=None if IS_PRODUCTION else "/redoc",
+    openapi_url=None if IS_PRODUCTION else "/openapi.json",
 )
+
+allowed_origins = [
+    "https://employee-management-system-gules-two.vercel.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+# Allow custom additional origins via environment variable
+extra_origins = os.getenv("ALLOWED_ORIGINS", "")
+if extra_origins:
+    allowed_origins.extend([o.strip() for o in extra_origins.split(",") if o.strip()])
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"^https:\/\/.*\.vercel\.app$",
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
