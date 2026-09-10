@@ -43,7 +43,6 @@ export default function EmployeesPage() {
   const [search, setSearch] = useState("");
   const [selectedDept, setSelectedDept] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
-  const [selectedSite, setSelectedSite] = useState("");
   const [selectedLifecycle, setSelectedLifecycle] = useState("");
   const [selectedEmpIds, setSelectedEmpIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
@@ -182,25 +181,6 @@ export default function EmployeesPage() {
     setSelectedEmpIds(next);
   };
 
-  // Location Flag Resolver
-  const getLocationBadge = (emp: Employee) => {
-    const address = emp.addresses?.find((a) => a.is_primary) || emp.addresses?.[0];
-    const country = address?.country?.toLowerCase() || "";
-    const city = address?.city || "";
-
-    if (emp.work_mode === "remote") return { flag: "🌐", label: "Remote Global" };
-    if (country.includes("sweden") || city.toLowerCase().includes("stockholm")) return { flag: "🇸🇪", label: city || "Stockholm" };
-    if (country.includes("us") || country.includes("united states") || city.toLowerCase().includes("miami") || city.toLowerCase().includes("york")) return { flag: "🇺🇸", label: city || "Miami" };
-    if (country.includes("uk") || country.includes("united kingdom") || city.toLowerCase().includes("london")) return { flag: "🇬🇧", label: city || "London" };
-    if (country.includes("india") || city.toLowerCase().includes("bangalore") || city.toLowerCase().includes("delhi") || city.toLowerCase().includes("pune")) return { flag: "🇮🇳", label: city || "Bangalore" };
-    if (country.includes("canada") || city.toLowerCase().includes("ottawa") || city.toLowerCase().includes("toronto")) return { flag: "🇨🇦", label: city || "Ottawa" };
-    if (country.includes("brazil") || city.toLowerCase().includes("paulo")) return { flag: "🇧🇷", label: city || "Sao Paulo" };
-    if (country.includes("ukraine") || city.toLowerCase().includes("kyiv")) return { flag: "🇺🇦", label: city || "Kyiv" };
-
-    if (city) return { flag: "📍", label: city };
-    return { flag: "🏢", label: "HQ Campus" };
-  };
-
   // CSV Exporter
   const exportToCSV = () => {
     if (employees.length === 0) return;
@@ -226,23 +206,15 @@ export default function EmployeesPage() {
     document.body.removeChild(link);
   };
 
-  // Client-side filtering for Site and Lifecycle
+  // Client-side filtering for Lifecycle
   const displayedEmployees = useMemo(() => {
     return employees.filter((emp) => {
-      if (selectedSite) {
-        const badge = getLocationBadge(emp);
-        if (selectedSite === "remote" && emp.work_mode !== "remote") return false;
-        if (selectedSite === "sweden" && !badge.label.toLowerCase().includes("stockholm")) return false;
-        if (selectedSite === "us" && !badge.label.toLowerCase().includes("miami")) return false;
-        if (selectedSite === "uk" && !badge.label.toLowerCase().includes("london")) return false;
-        if (selectedSite === "india" && !badge.label.toLowerCase().includes("bangalore")) return false;
-      }
       if (selectedLifecycle) {
         if (String(emp.employment_type).toLowerCase() !== selectedLifecycle.toLowerCase()) return false;
       }
       return true;
     });
-  }, [employees, selectedSite, selectedLifecycle]);
+  }, [employees, selectedLifecycle]);
 
   // Ratio metrics
   const activeCount = employees.filter((e) => String(e.employee_status).toLowerCase() === "active").length;
@@ -288,7 +260,7 @@ export default function EmployeesPage() {
               margin: 0,
             }}
           >
-            {isRestrictedView ? "My Employee Profile" : "People"}
+            {isRestrictedView ? "My Employee Profile" : "Employees"}
           </h1>
           <p
             suppressHydrationWarning
@@ -359,9 +331,9 @@ export default function EmployeesPage() {
       {!isRestrictedView && (
         <div className="ratio-progress-container">
           <div className="ratio-progress-track">
-            {/* Total Personnel */}
+            {/* Total Employees */}
             <div className="ratio-segment" style={{ flex: 1 }}>
-              <span>Total Personnel</span>
+              <span>Total Employees</span>
               <strong className="tabular-figures">{totalItems || employees.length}</strong>
             </div>
 
@@ -377,8 +349,8 @@ export default function EmployeesPage() {
               <strong className="tabular-figures">{onLeavePct}%</strong>
             </div>
 
-            {/* Probationary / Hatched Segment */}
-            <div className="ratio-segment ratio-segment-hatched" style={{ flex: 1 }}>
+            {/* Probationary Segment */}
+            <div className="ratio-segment" style={{ flex: 1 }}>
               <span>In Probation</span>
               <strong className="tabular-figures">{probationaryPct}%</strong>
             </div>
@@ -436,20 +408,6 @@ export default function EmployeesPage() {
             ))}
           </select>
 
-          {/* Office Site / Location Filter Capsule */}
-          <select
-            className="capsule-select-btn"
-            value={selectedSite}
-            onChange={(e) => setSelectedSite(e.target.value)}
-          >
-            <option value="">All Locations</option>
-            <option value="us">🇺🇸 Miami (US)</option>
-            <option value="sweden">🇸🇪 Stockholm</option>
-            <option value="uk">🇬🇧 London</option>
-            <option value="india">🇮🇳 Bangalore</option>
-            <option value="remote">🌐 Remote Global</option>
-          </select>
-
           {/* Lifecycle / Employment Type Filter Capsule */}
           <select
             className="capsule-select-btn"
@@ -476,12 +434,11 @@ export default function EmployeesPage() {
           </select>
 
           {/* Reset Filters */}
-          {(search || selectedDept || selectedSite || selectedLifecycle || selectedStatus) && (
+          {(search || selectedDept || selectedLifecycle || selectedStatus) && (
             <button
               onClick={() => {
                 setSearch("");
                 setSelectedDept("");
-                setSelectedSite("");
                 setSelectedLifecycle("");
                 setSelectedStatus("");
               }}
@@ -517,7 +474,6 @@ export default function EmployeesPage() {
                   <th>Employee Code</th>
                   <th>Job Title</th>
                   <th>Department</th>
-                  <th>Site</th>
                   <th>Start Date</th>
                   <th>Lifecycle</th>
                   <th>Status</th>
@@ -527,16 +483,15 @@ export default function EmployeesPage() {
               <tbody>
                 {displayedEmployees.length === 0 ? (
                   <tr>
-                    <td colSpan={10} style={{ textAlign: "center", padding: "48px 16px" }}>
+                    <td colSpan={9} style={{ textAlign: "center", padding: "48px 16px" }}>
                       <p style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>
-                        No personnel records match your selected filters.
+                        No employee records match your selected filters.
                       </p>
                     </td>
                   </tr>
                 ) : (
                   displayedEmployees.map((emp) => {
                     const isSelected = selectedEmpIds.has(emp.public_id);
-                    const location = getLocationBadge(emp);
                     const isStatusActive = String(emp.employee_status).toLowerCase() === "active";
                     const isStatusLeave = String(emp.employee_status).toLowerCase().includes("leave");
 
@@ -615,14 +570,6 @@ export default function EmployeesPage() {
                                 ?.department_name ||
                               "—"}
                           </span>
-                        </td>
-
-                        {/* Location Site with Country Flag */}
-                        <td>
-                          <div className="location-flag-badge">
-                            <span style={{ fontSize: "1.1rem" }}>{location.flag}</span>
-                            <span style={{ fontWeight: 500 }}>{location.label}</span>
-                          </div>
                         </td>
 
                         {/* Start Date */}
@@ -715,7 +662,6 @@ export default function EmployeesPage() {
         <div className="grid-cols-3">
           {displayedEmployees.map((emp) => {
             const isSelected = selectedEmpIds.has(emp.public_id);
-            const location = getLocationBadge(emp);
             const isStatusActive = String(emp.employee_status).toLowerCase() === "active";
             const isStatusLeave = String(emp.employee_status).toLowerCase().includes("leave");
 
@@ -762,10 +708,6 @@ export default function EmployeesPage() {
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <Building size={14} style={{ color: "var(--text-muted)" }} />
                       <span>{emp.department_name || "—"}</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: "1rem" }}>{location.flag}</span>
-                      <span>{location.label}</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <Mail size={14} style={{ color: "var(--text-muted)" }} />

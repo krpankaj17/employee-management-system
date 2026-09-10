@@ -85,92 +85,72 @@ export default function PayrollPage() {
     });
   };
 
-  const demoSalaryRows = [
-    {
-      id: "emp-1",
-      name: "Amany Tenes",
-      role: "Developer",
-      baseSalary: 520400,
-      bonus: 30.00,
-      deductions: 25.00,
-      netPay: 200400,
-      payoutMethod: "Payout",
-      payoutStatus: "Paid" as const,
-      rawRun: null as PayrollRun | null,
-    },
-    {
-      id: "emp-2",
-      name: "Kent Miammez",
-      role: "Developer",
-      baseSalary: 300000,
-      bonus: 0.00,
-      deductions: 12.00,
-      netPay: 105000,
-      payoutMethod: "Payout",
-      payoutStatus: "Scheduled" as const,
-      rawRun: null as PayrollRun | null,
-    },
-    {
-      id: "emp-3",
-      name: "Horand Jomson",
-      role: "Compilator",
-      baseSalary: 230000,
-      bonus: 20.00,
-      deductions: 4.00,
-      netPay: 96000,
-      payoutMethod: "Payout",
-      payoutStatus: "Paid" as const,
-      rawRun: null as PayrollRun | null,
-    },
-    {
-      id: "emp-4",
-      name: "Rovar Harner",
-      role: "Canar",
-      baseSalary: 300400,
-      bonus: 20.00,
-      deductions: 5.00,
-      netPay: 107000,
-      payoutMethod: "Payout",
-      payoutStatus: "Paid" as const,
-      rawRun: null as PayrollRun | null,
-    },
-    {
-      id: "emp-5",
-      name: "Rovin Fenner",
-      role: "Developer",
-      baseSalary: 220000,
-      bonus: 0.00,
-      deductions: 1.00,
-      netPay: 78000,
-      payoutMethod: "Stripe",
-      payoutStatus: "Scheduled" as const,
-      rawRun: null as PayrollRun | null,
-    },
-    {
-      id: "emp-6",
-      name: "Surian Eanns",
-      role: "Compilator",
-      baseSalary: 280000,
-      bonus: 0.00,
-      deductions: 0.00,
-      netPay: 80000,
-      payoutMethod: "Panon valid",
-      payoutStatus: "Paid" as const,
-      rawRun: null as PayrollRun | null,
-    },
-    {
-      id: "emp-7",
-      name: "Tolea Baria",
-      role: "Executive",
-      baseSalary: 320400,
-      bonus: 20.00,
-      deductions: 1.00,
-      netPay: 65000,
-      payoutMethod: "Payout",
-      payoutStatus: "Scheduled" as const,
-      rawRun: null as PayrollRun | null,
-    },
-  ];
+  // Real backend rows from pay runs, or employees + registered salary structures
+  const salaryRows = useMemo(() => {
+    if (runs && runs.length > 0) {
+      return runs.map((run) => {
+        const empName = run.employee_name || "Employee";
+        const roleName = run.designation_name || "Staff";
+        const isPaid = String(run.payment_status).toLowerCase() === "paid";
+        return {
+          id: run.public_id,
+          name: empName,
+          role: roleName,
+          department: run.department_name || "",
+          baseSalary: Number(run.gross_earnings) || 0,
+          bonus: 0,
+          deductions: Number(run.total_deductions) || 0,
+          netPay: Number(run.net_pay) || 0,
+          payoutMethod: "Direct Deposit",
+          payoutStatus: (isPaid ? "Paid" : "Scheduled") as "Paid" | "Scheduled",
+          rawRun: run,
+        };
+      });
+    }
+
+    if (employees && employees.length > 0) {
+      return employees.map((emp) => {
+        const sal = salaryStructures.find((s) => s.employee_public_id === emp.public_id);
+        const base = sal ? Number(sal.basic_salary) : 50000;
+        const gross = sal?.gross_salary ? Number(sal.gross_salary) : base;
+        const net = sal?.net_salary ? Number(sal.net_salary) : base;
+        const deductions = gross - net;
+        return {
+          id: emp.public_id,
+          name: `${emp.first_name || ""} ${emp.last_name || ""}`.trim() || emp.email || "Employee",
+          role: emp.designation_name || "Team Member",
+          department: emp.department_name || "",
+          baseSalary: base,
+          bonus: 0,
+          deductions: deductions > 0 ? deductions : 0,
+          netPay: net,
+          payoutMethod: "Direct Deposit",
+          payoutStatus: "Scheduled" as const,
+          rawRun: null as PayrollRun | null,
+        };
+      });
+    }
+
+    return [];
+  }, [runs, employees, salaryStructures]);
+
+  // Client-side filtering by Search and Department
+  const filteredSalaryRows = useMemo(() => {
+    return salaryRows.filter((row) => {
+      if (selectedDeptFilter) {
+        if (!row.department.toLowerCase().includes(selectedDeptFilter.toLowerCase())) {
+          return false;
+        }
+      }
+      if (employeeSearch) {
+        const q = employeeSearch.toLowerCase();
+        if (!row.name.toLowerCase().includes(q) && !row.role.toLowerCase().includes(q)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [salaryRows, selectedDeptFilter, employeeSearch]);
 
   useEffect(() => {
     loadPayroll();
@@ -784,7 +764,7 @@ export default function PayrollPage() {
         <div className="salary-metric-pill">
           <span className="pill-label">Total Payroll</span>
           <span className="pill-value tabular-figures">
-            ${(disbursedTotal > 0 ? disbursedTotal : 520400).toLocaleString("en-US")}
+            ${(disbursedTotal > 0 ? disbursedTotal : salaryRows.reduce((sum, r) => sum + r.baseSalary, 0)).toLocaleString("en-US")}
           </span>
         </div>
 
@@ -798,7 +778,7 @@ export default function PayrollPage() {
         <div className="salary-metric-pill">
           <span className="pill-label">Taxes</span>
           <span className="pill-value tabular-figures">
-            ${(pendingTotal > 0 ? pendingTotal : 84200).toLocaleString("en-US")}
+            ${(pendingTotal > 0 ? pendingTotal : salaryRows.reduce((sum, r) => sum + r.deductions, 0)).toLocaleString("en-US")}
           </span>
         </div>
 
@@ -806,7 +786,7 @@ export default function PayrollPage() {
         <div className="salary-metric-pill">
           <span className="pill-label">Disbursements</span>
           <span className="pill-value tabular-figures">
-            {runs.length > 0 ? Math.round((disbursedRuns.length / runs.length) * 100) : 98}%
+            {runs.length > 0 ? Math.round((disbursedRuns.length / runs.length) * 100) : 100}%
           </span>
         </div>
       </div>
@@ -928,12 +908,12 @@ export default function PayrollPage() {
                 <th style={{ width: 44 }}>
                   <input
                     type="checkbox"
-                    checked={selectedRowIds.size === demoSalaryRows.length}
+                    checked={filteredSalaryRows.length > 0 && selectedRowIds.size === filteredSalaryRows.length}
                     onChange={() => {
-                      if (selectedRowIds.size === demoSalaryRows.length) {
+                      if (selectedRowIds.size === filteredSalaryRows.length) {
                         setSelectedRowIds(new Set());
                       } else {
-                        setSelectedRowIds(new Set(demoSalaryRows.map((r) => r.id)));
+                        setSelectedRowIds(new Set(filteredSalaryRows.map((r) => r.id)));
                       }
                     }}
                     style={{ cursor: "pointer", width: 16, height: 16, accentColor: "#111827" }}
@@ -951,80 +931,114 @@ export default function PayrollPage() {
               </tr>
             </thead>
             <tbody>
-              {demoSalaryRows.map((row) => {
-                const isSelected = selectedRowIds.has(row.id);
-                return (
-                  <tr
-                    key={row.id}
-                    className={isSelected ? "row-selected" : ""}
-                    onClick={() => toggleRowSelect(row.id)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <td onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleRowSelect(row.id)}
-                        style={{ cursor: "pointer", width: 16, height: 16, accentColor: "#111827" }}
-                        aria-label={`Select ${row.name}`}
-                      />
-                    </td>
-                    <td>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <Avatar name={row.name} size={32} />
-                        <span style={{ fontWeight: 600, color: "inherit" }}>{row.name}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <div style={{ display: "flex", alignItems: "center", gap: 7, color: "inherit", fontSize: "0.86rem" }}>
-                        <Briefcase size={14} style={{ opacity: 0.65 }} />
-                        <span>{row.role}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span style={{ fontWeight: 700 }} className="tabular-figures">
-                        ${row.baseSalary.toLocaleString("en-US")}
-                      </span>
-                    </td>
-                    <td className="tabular-figures">${row.bonus.toFixed(2)}</td>
-                    <td className="tabular-figures">${row.deductions.toFixed(2)}</td>
-                    <td>
-                      <span style={{ fontWeight: 700 }} className="tabular-figures">
-                        ${row.netPay.toLocaleString("en-US")}
-                      </span>
-                    </td>
-                    <td>{row.payoutMethod}</td>
-                    <td>
-                      <span
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 6,
-                          padding: "3px 10px",
-                          borderRadius: 9999,
-                          fontSize: "0.8rem",
-                          fontWeight: 600,
-                          background:
-                            row.payoutStatus === "Paid"
-                              ? "rgba(16, 185, 129, 0.12)"
-                              : "rgba(245, 158, 11, 0.12)",
-                          color: row.payoutStatus === "Paid" ? "#059669" : "#d97706",
-                        }}
-                      >
-                        <span
-                          style={{
-                            width: 6,
-                            height: 6,
-                            borderRadius: "50%",
-                            background: row.payoutStatus === "Paid" ? "#059669" : "#d97706",
-                          }}
+              {filteredSalaryRows.length === 0 ? (
+                <tr>
+                  <td colSpan={9} style={{ textAlign: "center", padding: "48px 16px" }}>
+                    <p style={{ color: "var(--text-muted)", fontSize: "0.92rem" }}>
+                      No salary records match your current filters.
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                filteredSalaryRows.map((row) => {
+                  const isSelected = selectedRowIds.has(row.id);
+                  return (
+                    <tr
+                      key={row.id}
+                      className={isSelected ? "row-selected" : ""}
+                      onClick={() => toggleRowSelect(row.id)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleRowSelect(row.id)}
+                          style={{ cursor: "pointer", width: 16, height: 16, accentColor: "#111827" }}
+                          aria-label={`Select ${row.name}`}
                         />
-                        <span>{row.payoutStatus}</span>
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
+                      </td>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <Avatar name={row.name} size={32} />
+                          <span style={{ fontWeight: 600, color: "inherit" }}>{row.name}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: 7, color: "inherit", fontSize: "0.86rem" }}>
+                          <Briefcase size={14} style={{ opacity: 0.65 }} />
+                          <span>{row.role}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span style={{ fontWeight: 700 }} className="tabular-figures">
+                          ${row.baseSalary.toLocaleString("en-US")}
+                        </span>
+                      </td>
+                      <td className="tabular-figures">${row.bonus.toFixed(2)}</td>
+                      <td className="tabular-figures">${row.deductions.toFixed(2)}</td>
+                      <td>
+                        <span style={{ fontWeight: 700 }} className="tabular-figures">
+                          ${row.netPay.toLocaleString("en-US")}
+                        </span>
+                      </td>
+                      <td>{row.payoutMethod}</td>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                              padding: "3px 10px",
+                              borderRadius: 9999,
+                              fontSize: "0.8rem",
+                              fontWeight: 600,
+                              background:
+                                row.payoutStatus === "Paid"
+                                  ? "rgba(16, 185, 129, 0.12)"
+                                  : "rgba(245, 158, 11, 0.12)",
+                              color: row.payoutStatus === "Paid" ? "#059669" : "#d97706",
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: "50%",
+                                background: row.payoutStatus === "Paid" ? "#059669" : "#d97706",
+                              }}
+                            />
+                            <span>{row.payoutStatus}</span>
+                          </span>
+
+                          {row.rawRun && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewPayslip(row.rawRun!);
+                              }}
+                              style={{
+                                background: "transparent",
+                                border: "1px solid rgba(0, 0, 0, 0.1)",
+                                borderRadius: 9999,
+                                padding: "2px 8px",
+                                fontSize: "0.75rem",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                color: "var(--text-secondary)",
+                              }}
+                            >
+                              Slip
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

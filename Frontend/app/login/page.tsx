@@ -275,13 +275,6 @@ export default function LoginPage() {
     }
   };
 
-  const quickFill = (userEmail: string, userPass: string) => {
-    setEmail(userEmail);
-    setPassword(userPass);
-    setIsRegisterMode(false);
-    setLoginError(null);
-  };
-
   return (
     <div className="web-auth-page">
       {/* ── Enterprise Website Navigation Bar ── */}
@@ -356,34 +349,6 @@ export default function LoginPage() {
                     Granular role-based access control with complete audit trails and SOC-2 compliant verification.
                   </p>
                 </div>
-              </div>
-            </div>
-
-            {/* 1-Click Quick Fill Demo Bar */}
-            <div className="web-auth-demo-bar">
-              <span className="web-auth-demo-label">Quick Test Sign-In:</span>
-              <div className="web-auth-demo-buttons">
-                <button
-                  type="button"
-                  onClick={() => quickFill("admin@company.com", "Admin@123")}
-                  className="web-auth-demo-btn"
-                >
-                  Admin
-                </button>
-                <button
-                  type="button"
-                  onClick={() => quickFill("hr@company.com", "Hr@123")}
-                  className="web-auth-demo-btn"
-                >
-                  HR Manager
-                </button>
-                <button
-                  type="button"
-                  onClick={() => quickFill("employee@company.com", "Emp@123")}
-                  className="web-auth-demo-btn"
-                >
-                  Employee
-                </button>
               </div>
             </div>
           </div>

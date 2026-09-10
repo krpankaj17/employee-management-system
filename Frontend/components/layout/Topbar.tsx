@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, ChevronDown } from "lucide-react";
+import { LogOut, ChevronDown, CheckSquare, Megaphone, CalendarCheck2, ShieldCheck, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 export function Topbar() {
@@ -28,32 +28,39 @@ export function Topbar() {
     return pathname.startsWith(href);
   };
 
-  // Core backend routes only (no speculative features like Hiring or Devices)
-  const coreNavItems = [
+  // Primary 8 Core Modules (Clean width, no horizontal overflow)
+  const primaryNavItems = [
     { label: "Dashboard", href: "/dashboard" },
-    { label: "People", href: "/employees" },
+    { label: "Employees", href: "/employees" },
     { label: "Attendance", href: "/attendance" },
     { label: "Leaves", href: "/leaves" },
     { label: "Salary", href: "/payroll" },
     { label: "Projects", href: "/projects" },
     { label: "Reviews", href: "/reviews" },
     { label: "Departments", href: "/departments" },
-    ...(isAdmin || isHR ? [{ label: "Approvals", href: "/approvals" }] : []),
-    { label: "Announcements", href: "/announcements" },
-    { label: "Holidays", href: "/holidays" },
   ];
 
-  const adminItems = [
-    { label: "Roles & Governance", href: "/roles" },
-    { label: "Security Audit Logs", href: "/audit-logs" },
+  // Secondary & Governance Modules inside "More ▾"
+  const moreNavItems = [
+    ...(isAdmin || isHR
+      ? [{ label: "Approvals", href: "/approvals", icon: CheckSquare }]
+      : []),
+    { label: "Announcements", href: "/announcements", icon: Megaphone },
+    { label: "Holidays", href: "/holidays", icon: CalendarCheck2 },
+    ...(isAdmin
+      ? [
+          { label: "Roles & Governance", href: "/roles", icon: ShieldCheck },
+          { label: "Security Audit Logs", href: "/audit-logs", icon: ShieldAlert },
+        ]
+      : []),
   ];
 
-  const isAdminMenuActive = adminItems.some((item) => pathname.startsWith(item.href));
+  const isMoreActive = moreNavItems.some((item) => pathname.startsWith(item.href));
 
   return (
     <div className="studio-floating-nav-wrapper">
       <nav className="studio-floating-nav-island" aria-label="Main floating navigation">
-        {coreNavItems.map((item) => {
+        {primaryNavItems.map((item) => {
           const active = isNavActive(item.href);
           return (
             <Link
@@ -67,47 +74,89 @@ export function Topbar() {
           );
         })}
 
-        {/* Admin Governance Dropdown if Admin */}
-        {isAdmin && (
-          <div className="capsule-dropdown-trigger" ref={moreRef} style={{ position: "relative" }}>
-            <button
-              type="button"
-              onClick={() => setIsMoreOpen(!isMoreOpen)}
-              className={`studio-nav-item ${isAdminMenuActive ? "active" : ""}`}
-              style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
-              aria-expanded={isMoreOpen}
+        {/* More ▾ Dropdown for Approvals, Announcements, Holidays, Admin Governance */}
+        <div
+          ref={moreRef}
+          style={{ position: "relative", display: "inline-flex", alignItems: "center" }}
+        >
+          <button
+            type="button"
+            onClick={() => setIsMoreOpen(!isMoreOpen)}
+            className={`studio-nav-item ${isMoreActive ? "active" : ""}`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              background: isMoreOpen ? "rgba(0,0,0,0.05)" : undefined,
+            }}
+            aria-expanded={isMoreOpen}
+          >
+            <span>More</span>
+            <ChevronDown
+              size={13}
+              style={{
+                transform: isMoreOpen ? "rotate(180deg)" : "none",
+                transition: "transform 150ms ease",
+              }}
+            />
+          </button>
+
+          {isMoreOpen && (
+            <div
+              style={{
+                position: "absolute",
+                top: "calc(100% + 8px)",
+                right: 0,
+                minWidth: 210,
+                background: "#ffffff",
+                border: "1px solid rgba(0, 0, 0, 0.08)",
+                borderRadius: 14,
+                boxShadow: "0 14px 34px -4px rgba(0, 0, 0, 0.12), 0 2px 6px -1px rgba(0, 0, 0, 0.04)",
+                padding: "6px",
+                zIndex: 9999,
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+              }}
             >
-              <span>Admin</span>
-              <ChevronDown
-                size={13}
-                style={{
-                  transform: isMoreOpen ? "rotate(180deg)" : "none",
-                  transition: "transform 150ms ease",
-                }}
-              />
-            </button>
+              {moreNavItems.map((item) => {
+                const active = pathname.startsWith(item.href);
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsMoreOpen(false)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "8px 12px",
+                      borderRadius: 8,
+                      fontSize: "0.85rem",
+                      fontWeight: active ? 600 : 500,
+                      color: active ? "#111827" : "#4b5563",
+                      background: active ? "rgba(254, 240, 138, 0.35)" : "transparent",
+                      textDecoration: "none",
+                      transition: "all 140ms ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!active) e.currentTarget.style.background = "#f4f4f5";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!active) e.currentTarget.style.background = "transparent";
+                    }}
+                  >
+                    <Icon size={15} style={{ color: active ? "#ca8a04" : "#6b7280" }} />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
-            {isMoreOpen && (
-              <div className="capsule-dropdown-menu">
-                {adminItems.map((item) => {
-                  const active = pathname.startsWith(item.href);
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setIsMoreOpen(false)}
-                      className={`capsule-dropdown-item ${active ? "active" : ""}`}
-                    >
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Settings Pill */}
+        {/* Settings */}
         <Link
           href="/profile"
           className={`studio-nav-item ${pathname.startsWith("/profile") ? "active" : ""}`}
