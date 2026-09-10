@@ -14,8 +14,8 @@ export function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "dark";
 
   const savedTheme = localStorage.getItem(API_CONFIG.STORAGE_KEYS.THEME) as Theme | null;
-  if (savedTheme === "dark") {
-    return "dark";
+  if (savedTheme === "light" || savedTheme === "dark") {
+    return savedTheme;
   }
 
   return "dark";

@@ -103,42 +103,20 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     isNetworkFailure = true;
   }
 
-  // 1. If active backend connection failed, attempt seamless failover to alternative live backend
+  // If backend connection failed, handle gracefully without crashing UI
   if (isNetworkFailure) {
-    let recovered = false;
-    if (currentBackend === "java" || currentBackend === "python") {
-      const altBackend: BackendType = currentBackend === "java" ? "python" : "java";
-      const altBaseUrl = BACKEND_SERVERS[altBackend]?.url;
-      if (altBaseUrl) {
-        const altUrl = `${altBaseUrl}${endpoint}`;
-        try {
-          const altResponse = await fetch(altUrl, { ...options, headers });
-          // Alternative backend is alive and responded! Automatically switch active backend
-          setActiveBackend(altBackend);
-          response = altResponse;
-          recovered = true;
-          isNetworkFailure = false;
-          console.info(`[Dual-Backend Failover] Switched active backend from ${currentBackend} to ${altBackend} (${altBaseUrl})`);
-        } catch (altErr) {
-          recovered = false;
-        }
-      }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("ems_backend_offline", {
+          detail: {
+            endpoint,
+            url,
+            method: options.method || "GET",
+            message: `Python backend server at ${getBaseUrl()} is currently offline.`,
+          },
+        })
+      );
     }
-
-    // 2. If neither backend responded, handle gracefully without crashing UI
-    if (!recovered) {
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(
-          new CustomEvent("ems_backend_offline", {
-            detail: {
-              endpoint,
-              url,
-              method: options.method || "GET",
-              message: `Backend server at ${getBaseUrl()} is currently offline.`,
-            },
-          })
-        );
-      }
 
       const isReadOperation = !options.method || options.method.toUpperCase() === "GET";
       if (isReadOperation) {
@@ -153,11 +131,10 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
         return fallback as T;
       }
 
-      const offlineErr = new Error(`Failed to connect to backend server at ${getBaseUrl()}. Is the server running?`);
-      (offlineErr as any).isHandled = true;
-      (offlineErr as any).isOffline = true;
-      throw offlineErr;
-    }
+    const offlineErr = new Error(`Failed to connect to backend server at ${getBaseUrl()}. Is the server running?`);
+    (offlineErr as any).isHandled = true;
+    (offlineErr as any).isOffline = true;
+    throw offlineErr;
   }
 
   // Handle automatic session refresh if access token expired (HTTP 401)

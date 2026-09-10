@@ -2,24 +2,18 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  getActiveBackend,
-  setActiveBackend,
   BACKEND_SERVERS,
-  BackendType,
   getBaseUrl,
 } from "@/lib/config";
-import { AlertTriangle, RefreshCw, Zap, X, Server } from "lucide-react";
+import { AlertTriangle, RefreshCw, X, Server } from "lucide-react";
 
 export function BackendOfflineBanner() {
   const [isOffline, setIsOffline] = useState(false);
   const [offlineDetail, setOfflineDetail] = useState<string>("");
-  const [currentBackend, setCurrentBackend] = useState<BackendType>("java");
   const [reconnecting, setReconnecting] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    setCurrentBackend(getActiveBackend());
-
     const handleOffline = (e: any) => {
       setIsOffline(true);
       setDismissed(false);
@@ -28,43 +22,14 @@ export function BackendOfflineBanner() {
       }
     };
 
-    const handleBackendChanged = () => {
-      setCurrentBackend(getActiveBackend());
-      setIsOffline(false);
-      setDismissed(false);
-    };
-
     window.addEventListener("ems_backend_offline", handleOffline);
-    window.addEventListener("ems_backend_changed", handleBackendChanged);
 
     return () => {
       window.removeEventListener("ems_backend_offline", handleOffline);
-      window.removeEventListener("ems_backend_changed", handleBackendChanged);
     };
   }, []);
 
-  const altBackend: "java" | "python" = currentBackend === "java" ? "python" : "java";
-  const currentServer = BACKEND_SERVERS[currentBackend as "java" | "python"] || BACKEND_SERVERS.java;
-  const altServer = BACKEND_SERVERS[altBackend];
-
-  const handleSwitchBackend = async () => {
-    setActiveBackend(altBackend);
-    setCurrentBackend(altBackend);
-    setReconnecting(true);
-    try {
-      const res = await fetch(`${altServer.url}/health`, { method: "GET" }).catch(() =>
-        fetch(`${altServer.url}/`)
-      );
-      if (res && res.ok) {
-        setIsOffline(false);
-        setDismissed(true);
-      }
-    } catch (e) {}
-    setReconnecting(false);
-    if (typeof window !== "undefined") {
-      window.location.reload();
-    }
-  };
+  const currentServer = BACKEND_SERVERS.python;
 
   const handleRetry = async () => {
     setReconnecting(true);
@@ -136,25 +101,6 @@ export function BackendOfflineBanner() {
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <button
-          onClick={handleSwitchBackend}
-          disabled={reconnecting}
-          className="btn btn-secondary btn-sm"
-          style={{
-            fontSize: "0.76rem",
-            padding: "5px 12px",
-            borderColor: "rgba(99, 102, 241, 0.4)",
-            color: "var(--color-primary-300)",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-          }}
-          title={`Switch active target to ${altServer.name}`}
-        >
-          <Zap size={13} style={{ color: "#fbbf24" }} />
-          Switch to {altServer.icon} {altServer.name.split(" ")[0]} ({altServer.port})
-        </button>
-
         <button
           onClick={handleRetry}
           disabled={reconnecting}

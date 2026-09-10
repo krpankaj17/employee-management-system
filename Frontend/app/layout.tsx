@@ -25,16 +25,19 @@ export default function RootLayout({
               (function() {
                 try {
                   var saved = localStorage.getItem('ems_theme_preference');
-                  if (saved === 'light') {
-                    // Recover from all-white UI to sleek dark mode
-                    localStorage.setItem('ems_theme_preference', 'dark');
-                    saved = 'dark';
+                  var theme = (saved === 'light') ? 'light' : 'dark';
+                  document.documentElement.setAttribute('data-theme', theme);
+                  if (theme === 'light') {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.classList.add('light');
+                    document.documentElement.style.backgroundColor = '#f8fafc';
+                    document.documentElement.style.colorScheme = 'light';
+                  } else {
+                    document.documentElement.classList.remove('light');
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.style.backgroundColor = '#080914';
+                    document.documentElement.style.colorScheme = 'dark';
                   }
-                  document.documentElement.setAttribute('data-theme', 'dark');
-                  document.documentElement.classList.remove('light');
-                  document.documentElement.classList.add('dark');
-                  document.documentElement.style.backgroundColor = '#080914';
-                  document.documentElement.style.colorScheme = 'dark';
                 } catch (e) {}
 
                 function isBackendConnectionError(err) {
