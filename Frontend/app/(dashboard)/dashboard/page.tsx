@@ -310,15 +310,11 @@ export default function DashboardPage() {
         const activeLeavesToday = leaveRequests.filter(
           (l) => (l.status || "").toLowerCase() === "approved" && l.start_date <= todayStr && l.end_date >= todayStr
         );
-        setOnLeaveToday(activeLeavesToday.length);
+        const onLeaveFromStatus = employees.filter((e) => (e.employee_status || "").toLowerCase() === "on_leave");
+        const onLeaveEmpIds = new Set(activeLeavesToday.map((l) => l.employee_public_id));
 
-        const pendingLeaveCount = leaveRequests.filter(
-          (l) => (l.status || "").toLowerCase() === "pending"
-        ).length;
-        setPendingLeaves(pendingLeaveCount);
-
-        setEmployeesOnLeave(
-          activeLeavesToday.map((l) => ({
+        const combinedOnLeave = [
+          ...activeLeavesToday.map((l) => ({
             leave_public_id: l.public_id,
             employee_public_id: l.employee_public_id,
             employee_name: l.employee_name || "Employee",
@@ -329,8 +325,30 @@ export default function DashboardPage() {
             end_date: l.end_date,
             total_days: l.total_days || 1,
             reason: l.reason,
-          }))
-        );
+          })),
+          ...onLeaveFromStatus
+            .filter((e) => !onLeaveEmpIds.has(e.public_id))
+            .map((e) => ({
+              leave_public_id: `status-${e.public_id}`,
+              employee_public_id: e.public_id,
+              employee_name: `${e.first_name} ${e.last_name}`.trim(),
+              employee_code: e.employee_code || "EMP",
+              department_name: e.department_name || "General",
+              leave_type_name: "On Leave",
+              start_date: todayStr,
+              end_date: todayStr,
+              total_days: 1,
+              reason: "On Leave",
+            })),
+        ];
+
+        setOnLeaveToday(combinedOnLeave.length);
+        setEmployeesOnLeave(combinedOnLeave);
+
+        const pendingLeaveCount = leaveRequests.filter(
+          (l) => (l.status || "").toLowerCase() === "pending"
+        ).length;
+        setPendingLeaves(pendingLeaveCount);
       }
 
       // Projects
@@ -827,12 +845,78 @@ export default function DashboardPage() {
             </div>
           </div>
           <div>
-            <div style={{ fontSize: isEmployee && myRemainingLeaves > 0 ? "1.6rem" : "2rem", fontWeight: 800, color: "#0e1726", lineHeight: 1.1, letterSpacing: "-0.02em" }}>
-              {isEmployee ? (myRemainingLeaves > 0 ? `${myRemainingLeaves} Days` : myPendingLeaves > 0 ? `${myPendingLeaves} Pending` : "Available") : onLeaveToday}
+            <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+              <div style={{ fontSize: isEmployee && myRemainingLeaves > 0 ? "1.6rem" : "2rem", fontWeight: 800, color: "#0e1726", lineHeight: 1.1, letterSpacing: "-0.02em" }}>
+                {isEmployee ? (myRemainingLeaves > 0 ? `${myRemainingLeaves} Days` : myPendingLeaves > 0 ? `${myPendingLeaves} Pending` : "Available") : onLeaveToday}
+              </div>
+              {!isEmployee && onLeaveToday > 0 && (
+                <span
+                  style={{
+                    fontSize: "0.72rem",
+                    fontWeight: 700,
+                    background: "#fef3c7",
+                    color: "#b45309",
+                    padding: "2px 8px",
+                    borderRadius: "9999px",
+                    border: "1px solid #fde68a",
+                  }}
+                >
+                  {onLeaveToday} Out Today
+                </span>
+              )}
             </div>
+
+            {/* People on leave today preview inside the card (Admin/HR) */}
+            {!isEmployee && employeesOnLeave.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10, marginBottom: 6 }}>
+                {employeesOnLeave.slice(0, 2).map((l, idx) => (
+                  <div
+                    key={l.leave_public_id || idx}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "5px 8px",
+                      background: "#f8fafc",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "8px",
+                      gap: 6,
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                      <Avatar name={l.employee_name} size={18} ring={false} />
+                      <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#0e1726", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {l.employee_name}
+                      </span>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: "0.68rem",
+                        fontWeight: 600,
+                        color: "#b45309",
+                        background: "#fef3c7",
+                        padding: "1px 6px",
+                        borderRadius: "4px",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {l.leave_type_name || "Leave"}
+                    </span>
+                  </div>
+                ))}
+                {employeesOnLeave.length > 2 && (
+                  <div style={{ fontSize: "0.72rem", color: "#64748b", fontWeight: 600, textAlign: "right" }}>
+                    +{employeesOnLeave.length - 2} more team member{employeesOnLeave.length - 2 === 1 ? "" : "s"}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
               <span style={{ fontSize: "0.8rem", color: "#334155" }}>
-                {isEmployee ? (myPendingLeaves > 0 ? `${myPendingLeaves} Pending Approval` : "Annual Time Off Quota") : `${pendingLeaves} Pending Approval`}
+                {isEmployee
+                  ? (myPendingLeaves > 0 ? `${myPendingLeaves} Pending Approval` : "Annual Time Off Quota")
+                  : (onLeaveToday > 0 ? `${pendingLeaves} Pending Approval` : "All active at work")}
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: 2, fontSize: "0.75rem", color: "#0e1726", fontWeight: 600 }}>
                 <span>{isEmployee ? "Request Leave" : "Manage"}</span>
@@ -1310,148 +1394,6 @@ export default function DashboardPage() {
               >
                 <span>Total Units: {departmentsCount}</span>
                 <span style={{ color: "#16a34a", fontWeight: 600 }}>● Active Org Units</span>
-              </div>
-            </div>
-
-            {/* 2. Who is on Leave Today Card (Admin / HR Exclusive) */}
-            <div
-              className="card"
-              style={{
-                padding: "24px 22px",
-                display: "flex",
-                flexDirection: "column",
-                background: "#ffffff",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <Calendar size={18} style={{ color: "#d97706" }} />
-                  <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#0e1726", margin: 0 }}>
-                    On Leave Today
-                  </h3>
-                  {employeesOnLeave.length > 0 && (
-                    <span
-                      style={{
-                        fontSize: "0.72rem",
-                        fontWeight: 700,
-                        background: "#fef3c7",
-                        color: "#b45309",
-                        padding: "2px 8px",
-                        borderRadius: "9999px",
-                      }}
-                    >
-                      {employeesOnLeave.length} Out
-                    </span>
-                  )}
-                </div>
-                <Link
-                  href="/leaves"
-                  style={{
-                    color: "#0e1726",
-                    fontSize: "0.78rem",
-                    fontWeight: 600,
-                    textDecoration: "none",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 3,
-                  }}
-                >
-                  <span>Leave Center</span>
-                  <ArrowUpRight size={12} />
-                </Link>
-              </div>
-
-              <p style={{ fontSize: "0.78rem", color: "#334155", margin: "0 0 16px 0" }}>
-                Team members currently out of office on approved leave
-              </p>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {employeesOnLeave.length === 0 ? (
-                  <div
-                    style={{
-                      textAlign: "center",
-                      padding: "26px 12px",
-                      background: "#f8fafc",
-                      borderRadius: "12px",
-                      border: "1px dashed #e2e8f0",
-                      color: "#64748b",
-                    }}
-                  >
-                    <CheckCircle2 size={22} style={{ color: "#16a34a", margin: "0 auto 6px", opacity: 0.9 }} />
-                    <div style={{ fontWeight: 600, color: "#0e1726", fontSize: "0.84rem", marginBottom: 2 }}>
-                      All Team Members Active
-                    </div>
-                    <p style={{ margin: 0, fontSize: "0.76rem", color: "#64748b" }}>
-                      No employees are on approved leave today.
-                    </p>
-                  </div>
-                ) : (
-                  employeesOnLeave.slice(0, 5).map((l, idx) => (
-                    <div
-                      key={l.leave_public_id || idx}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: "10px 12px",
-                        background: "#f8fafc",
-                        borderRadius: "10px",
-                        border: "1px solid #f1f5f9",
-                        gap: 10,
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-                        <Avatar name={l.employee_name} size={32} ring={false} />
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: "0.84rem", fontWeight: 700, color: "#0e1726", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                            {l.employee_name}
-                          </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.72rem", color: "#64748b" }}>
-                            <span>{l.department_name || "General"}</span>
-                            <span>•</span>
-                            <span style={{ color: "#d97706", fontWeight: 600 }}>{l.leave_type_name || "Time Off"}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div style={{ textAlign: "right", flexShrink: 0 }}>
-                        <span
-                          style={{
-                            fontSize: "0.72rem",
-                            fontWeight: 700,
-                            background: "#fef3c7",
-                            color: "#b45309",
-                            border: "1px solid #fde68a",
-                            padding: "2px 7px",
-                            borderRadius: "6px",
-                            display: "inline-block",
-                          }}
-                        >
-                          {l.total_days} {l.total_days === 1 ? "day" : "days"}
-                        </span>
-                        <div style={{ fontSize: "0.68rem", color: "#94a3b8", marginTop: 2 }}>
-                          until {l.end_date}
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  paddingTop: 14,
-                  borderTop: "1px solid #f1f5f9",
-                  marginTop: 16,
-                  fontSize: "0.76rem",
-                  color: "#334155",
-                }}
-              >
-                <span>{onLeaveToday} Out Today</span>
-                <span style={{ color: "#d97706", fontWeight: 600 }}>● Active Off-Duty</span>
               </div>
             </div>
           </div>

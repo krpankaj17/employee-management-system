@@ -140,6 +140,8 @@ def update_department(public_id: str, payload: DepartmentIn, db: Session) -> dic
         return {"ok": False, "error": "not_found", "message": f"Department with public_id '{public_id}' not found"}
     formatted = _format_department(updated, db=db)
     invalidate_cache("departments")
+    invalidate_cache("employee_lists")
+    invalidate_cache("employee_profiles")
     utils.log_action("DEPARTMENT_UPDATED", f"name={updated.dept_name} public_id={public_id}")
     return {"ok": True, "department": formatted}
 
@@ -151,6 +153,8 @@ def delete_department(public_id: str, db: Session) -> dict:
         return {"ok": False, "error": err_type, "message": error_msg}
 
     invalidate_cache("departments")
+    invalidate_cache("employee_lists")
+    invalidate_cache("employee_profiles")
     utils.log_action("DEPARTMENT_DELETED", f"public_id={public_id}")
     return {"ok": True, "details": f"Department with public_id '{public_id}' deleted"}
 

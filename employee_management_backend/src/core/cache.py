@@ -30,6 +30,10 @@ DOMAIN_TTLS: dict[str, int] = {
     "holidays": 21600,         # 6 Hours
     "employee_profiles": 900,  # 15 Minutes
     "employee_lists": 300,     # 5 Minutes
+    "user_profiles": 900,      # 15 Minutes
+    "user_lists": 300,         # 5 Minutes
+    "roles": 3600,             # 1 Hour
+    "permissions": 3600,       # 1 Hour
 }
 
 DEFAULT_TTL = 300              # 5 Minutes
@@ -45,6 +49,10 @@ _locks: dict[str, threading.Lock] = {
     "holidays": threading.Lock(),
     "employee_profiles": threading.Lock(),
     "employee_lists": threading.Lock(),
+    "user_profiles": threading.Lock(),
+    "user_lists": threading.Lock(),
+    "roles": threading.Lock(),
+    "permissions": threading.Lock(),
 }
 _default_lock = threading.Lock()
 
