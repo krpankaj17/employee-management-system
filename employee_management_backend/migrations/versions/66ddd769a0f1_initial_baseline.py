@@ -99,7 +99,7 @@ def upgrade() -> None:
     op.drop_index(op.f('idx_leave_requests_status'), table_name='leave_requests')
     op.drop_constraint(op.f('leaves_public_id_key'), 'leave_requests', type_='unique')
     op.drop_constraint(op.f('chk_leave_requests_date_range'), 'leave_requests', type_='check')
-    op.drop_constraint(op.f('chk_leave_requests_no_self_approval'), 'leave_requests', type_='check')
+    # NOTE: chk_leave_requests_no_self_approval was removed intentionally (see upgrade)
     op.drop_constraint(op.f('chk_leave_requests_status'), 'leave_requests', type_='check')
     op.drop_constraint(op.f('chk_leave_requests_total_days'), 'leave_requests', type_='check')
     op.alter_column('leave_types', 'name',
@@ -209,7 +209,9 @@ def downgrade() -> None:
                existing_nullable=False)
     op.create_check_constraint(op.f('chk_leave_requests_total_days'), 'leave_requests', 'total_days > 0::numeric')
     op.create_check_constraint(op.f('chk_leave_requests_status'), 'leave_requests', "status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'cancelled'::character varying]::text[])")
-    op.create_check_constraint(op.f('chk_leave_requests_no_self_approval'), 'leave_requests', 'approved_by IS NULL OR approved_by <> employee_id')
+    # NOTE: chk_leave_requests_no_self_approval intentionally removed.
+    # Self-approval policy is now enforced at the application layer only,
+    # because Admins are permitted to approve any leave request, including their own.
     op.create_check_constraint(op.f('chk_leave_requests_date_range'), 'leave_requests', 'end_date >= start_date')
     op.create_unique_constraint(op.f('leaves_public_id_key'), 'leave_requests', ['public_id'], postgresql_nulls_not_distinct=False)
     op.create_index(op.f('idx_leave_requests_status'), 'leave_requests', ['status'], unique=False)

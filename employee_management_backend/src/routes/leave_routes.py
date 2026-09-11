@@ -216,12 +216,48 @@ def process_leave_action(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Approves, rejects, or escalates a leave request. Self-approval is strictly prohibited."""
-    actor_emp_id = current_user.employee.emp_id if current_user.employee else None
+    """Approves, rejects, or escalates a leave request. Self-approval is strictly prohibited for non-admins; Admins can approve for everyone."""
+    if not current_user.employee:
+        from models.employee import Employee
+        from sqlalchemy import select, func
+        raw_name = (current_user.display_name or current_user.email or "Employee").strip()
+        parts = raw_name.split(" ", 1)
+        first_name = parts[0] if parts else "Employee"
+        last_name = parts[1] if len(parts) > 1 else ""
+        max_id = db.scalar(select(func.max(Employee.emp_id))) or 0
+        code = f"EMP-{1000 + max_id + 1}"
+
+        emp = Employee(
+            user_id=int(current_user.user_id),
+            employee_code=code,
+            first_name=first_name,
+            last_name=last_name,
+            email=current_user.email,
+            employee_status="active",
+            employment_type="full_time",
+            is_active=True,
+        )
+        db.add(emp)
+        db.commit()
+        db.refresh(current_user)
+
+    actor_emp_id = int(current_user.employee.emp_id) if current_user.employee else None
     if not actor_emp_id:
         raise HTTPException(status_code=403, detail="Access not granted: Only registered employee profiles can approve leaves.")
 
-    result = leave_service.process_leave_approval(public_id, action_by_emp_id=actor_emp_id, payload=payload, db=db)
+    is_admin = bool(
+        current_user.has_role("Admin")
+        or any(r.role_name == "Admin" for r in (current_user.roles or []))
+        or current_user.has_permission("role:manage")
+    )
+
+    result = leave_service.process_leave_approval(
+        public_id,
+        action_by_emp_id=actor_emp_id,
+        payload=payload,
+        db=db,
+        is_admin=is_admin,
+    )
     if not result["ok"]:
         code_map = {"not_found": 404, "forbidden": 403, "validation": 400}
         code = code_map.get(result["error"], 400)
@@ -236,7 +272,31 @@ def cancel_leave(
     db: Session = Depends(get_db),
 ):
     """Cancels a leave request and refunds balance if previously approved."""
-    actor_emp_id = current_user.employee.emp_id if current_user.employee else 0
+    if not current_user.employee:
+        from models.employee import Employee
+        from sqlalchemy import select, func
+        raw_name = (current_user.display_name or current_user.email or "Employee").strip()
+        parts = raw_name.split(" ", 1)
+        first_name = parts[0] if parts else "Employee"
+        last_name = parts[1] if len(parts) > 1 else ""
+        max_id = db.scalar(select(func.max(Employee.emp_id))) or 0
+        code = f"EMP-{1000 + max_id + 1}"
+
+        emp = Employee(
+            user_id=int(current_user.user_id),
+            employee_code=code,
+            first_name=first_name,
+            last_name=last_name,
+            email=current_user.email,
+            employee_status="active",
+            employment_type="full_time",
+            is_active=True,
+        )
+        db.add(emp)
+        db.commit()
+        db.refresh(current_user)
+
+    actor_emp_id = int(current_user.employee.emp_id) if current_user.employee else 0
     result = leave_service.cancel_leave_request(public_id, action_by_emp_id=actor_emp_id, db=db)
     if not result["ok"]:
         code = 404 if result["error"] == "not_found" else 400

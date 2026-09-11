@@ -162,8 +162,12 @@ public class LeaveController {
         if (currentUser.getEmployeePublicId() == null) {
             throw new ForbiddenException("Only registered employee profiles can approve leaves");
         }
-        // Resolve current employee emp_id
-        LeaveRequestOut result = leaveService.processLeaveApproval(UUID.fromString(publicId), currentUser.getId(), payload);
+        boolean isAdmin = currentUser.getAuthorities().stream().anyMatch(a ->
+                a.getAuthority().equalsIgnoreCase("ROLE_ADMIN") ||
+                a.getAuthority().equalsIgnoreCase("Admin") ||
+                a.getAuthority().equalsIgnoreCase("role:manage")
+        );
+        LeaveRequestOut result = leaveService.processLeaveApproval(UUID.fromString(publicId), currentUser.getId(), payload, isAdmin);
         return ResponseEntity.ok(result);
     }
 

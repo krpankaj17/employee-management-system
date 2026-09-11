@@ -261,10 +261,14 @@ public class LeaveService {
     }
 
     public LeaveRequestOut processLeaveApproval(UUID publicId, Long actorEmpId, LeaveApprovalActionIn payload) {
+        return processLeaveApproval(publicId, actorEmpId, payload, false);
+    }
+
+    public LeaveRequestOut processLeaveApproval(UUID publicId, Long actorEmpId, LeaveApprovalActionIn payload, boolean isAdmin) {
         LeaveRequest leaveRequest = leaveRequestRepository.findByPublicId(publicId)
                 .orElseThrow(() -> new ResourceNotFoundException("Leave request not found"));
 
-        if (leaveRequest.getEmployee().getEmpId().equals(actorEmpId)) {
+        if (!isAdmin && leaveRequest.getEmployee().getEmpId().equals(actorEmpId)) {
             throw new ForbiddenException("Self-approval is strictly prohibited: you cannot approve/reject your own leave request.");
         }
 
