@@ -23,7 +23,7 @@ export function toPaginatedResponse<T>(items: T[], total: number, skip = 0, limi
   return arr;
 }
 import { Employee, EmployeeFilterParams, Address, EmergencyContact } from "@/types/employee";
-import { AttendanceRecord } from "@/types/attendance";
+import { AttendanceRecord, AttendanceSettings } from "@/types/attendance";
 import { LeaveBalance, LeaveRequest, LeaveType } from "@/types/leave";
 import { PayrollRun, PayslipDetail, SalaryStructure, BankDetail, SalaryComponentItem } from "@/types/payroll";
 import { Project, ProjectMember } from "@/types/project";
@@ -2185,6 +2185,39 @@ export const api = {
         limit: 1,
       });
       return res.items?.[0] || null;
+    },
+
+    getSettings: async (): Promise<AttendanceSettings> => {
+      if (isMockData()) {
+        const stored = typeof window !== "undefined" ? localStorage.getItem("ems_mock_shift_settings") : null;
+        if (stored) {
+          try { return JSON.parse(stored); } catch {}
+        }
+        return {
+          shift_start_time: "09:00",
+          shift_end_time: "18:00",
+          grace_period_minutes: 15,
+          auto_checkout_time: "18:00",
+          auto_checkout_enabled: true,
+          work_hours_per_day: 8.0,
+        };
+      }
+      return request<AttendanceSettings>("/attendance/settings");
+    },
+
+    updateSettings: async (payload: Partial<AttendanceSettings>): Promise<AttendanceSettings> => {
+      if (isMockData()) {
+        const current = await api.attendance.getSettings();
+        const updated = { ...current, ...payload };
+        if (typeof window !== "undefined") {
+          localStorage.setItem("ems_mock_shift_settings", JSON.stringify(updated));
+        }
+        return updated;
+      }
+      return request<AttendanceSettings>("/attendance/settings", {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
     },
   },
 

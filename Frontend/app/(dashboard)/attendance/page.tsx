@@ -14,9 +14,10 @@ import {
   Laptop,
   Info,
   X,
+  Sliders,
 } from "lucide-react";
 import { api } from "@/lib/apiClient";
-import { AttendanceRecord, AttendanceSummary } from "@/types/attendance";
+import { AttendanceRecord, AttendanceSummary, AttendanceSettings } from "@/types/attendance";
 import { Employee } from "@/types/employee";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
@@ -86,6 +87,27 @@ export default function AttendancePage() {
   // List of employee names on approved leave today (for company adherence)
   const [employeesOnLeaveToday, setEmployeesOnLeaveToday] = useState<string[]>([]);
 
+  // Shift timing & policy settings
+  const [shiftSettings, setShiftSettings] = useState<AttendanceSettings>({
+    shift_start_time: "09:00",
+    shift_end_time: "18:00",
+    grace_period_minutes: 15,
+    auto_checkout_time: "18:00",
+    auto_checkout_enabled: true,
+    work_hours_per_day: 8.0,
+  });
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [settingsForm, setSettingsForm] = useState<AttendanceSettings>({
+    shift_start_time: "09:00",
+    shift_end_time: "18:00",
+    grace_period_minutes: 15,
+    auto_checkout_time: "18:00",
+    auto_checkout_enabled: true,
+    work_hours_per_day: 8.0,
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+
   // --- Filters for Daily Attendance Logs ---
   const [filterEmployee, setFilterEmployee] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("");
@@ -116,6 +138,7 @@ export default function AttendancePage() {
     setCurrentPage(1);
   };
   const canManual = !isEmployeeRole && (hasPermission("attendance:update") || role === "Admin" || role === "HR_Manager");
+  const canManageShiftPolicy = !isEmployeeRole && (role === "Admin" || role === "HR_Manager" || hasPermission("attendance:update") || hasPermission("attendance:manage"));
 
   // In-page feedback states replacing browser alert() popups
   const [actionFeedback, setActionFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -257,7 +280,7 @@ export default function AttendancePage() {
   const loadAttendance = async () => {
     const todayStr = getLocalTodayStr();
     try {
-      const [res, empRes, leaveRes, balRes] = await Promise.all([
+      const [res, empRes, leaveRes, balRes, settingsRes] = await Promise.all([
         api.attendance
           .getRecords({
             limit: 500,
@@ -274,7 +297,12 @@ export default function AttendancePage() {
         isEmployeeRole
           ? api.leaves.getBalances().catch(() => [])
           : Promise.resolve([]),
+        api.attendance.getSettings().catch(() => null),
       ]);
+
+      if (settingsRes) {
+        setShiftSettings(settingsRes);
+      }
 
       let items: AttendanceRecord[] = res?.items || [];
       if (isEmployeeRole && user?.employee_public_id) {
@@ -512,6 +540,27 @@ export default function AttendancePage() {
     }
   };
 
+  const handleSaveShiftSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSettingsError(null);
+    setSavingSettings(true);
+    try {
+      const updated = await api.attendance.updateSettings(settingsForm);
+      setShiftSettings(updated);
+      setIsSettingsModalOpen(false);
+      setActionFeedback({
+        type: "success",
+        message: `Shift policy updated successfully! Shift: ${formatAttendanceTime(updated.shift_start_time)} – ${formatAttendanceTime(updated.shift_end_time)}, Auto Check-out: ${formatAttendanceTime(updated.auto_checkout_time)}.`,
+      });
+      setTimeout(() => setActionFeedback(null), 6000);
+      await loadAttendance();
+    } catch (err: any) {
+      setSettingsError(err.message || "Failed to update shift policy settings.");
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       {/* Header Bar */}
@@ -527,17 +576,58 @@ export default function AttendancePage() {
           </p>
         </div>
 
-        {canManual && (
-          <button
-            onClick={() => {
-              setFormError(null);
-              setIsManualModalOpen(true);
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          {/* Shift Policy Pill for everyone */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "7px 14px",
+              borderRadius: "9999px",
+              background: "var(--bg-surface-elevated)",
+              border: "1px solid var(--border-subtle)",
+              fontSize: "0.82rem",
+              color: "var(--text-secondary)",
+              fontWeight: 600,
             }}
-            className="btn btn-secondary"
           >
-            <Plus size={16} /> Regularize / Backfill Punch
-          </button>
-        )}
+            <Clock size={14} style={{ color: "var(--color-cyan-400)" }} />
+            <span>
+              Shift: {formatAttendanceTime(shiftSettings.shift_start_time)} – {formatAttendanceTime(shiftSettings.shift_end_time)}
+            </span>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+              ({shiftSettings.grace_period_minutes}m grace)
+            </span>
+          </div>
+
+          {canManageShiftPolicy && (
+            <button
+              type="button"
+              onClick={() => {
+                setSettingsForm(shiftSettings);
+                setSettingsError(null);
+                setIsSettingsModalOpen(true);
+              }}
+              className="btn btn-secondary"
+              style={{ display: "flex", alignItems: "center", gap: 6 }}
+            >
+              <Sliders size={15} /> Shift Policy
+            </button>
+          )}
+
+          {canManual && (
+            <button
+              onClick={() => {
+                setFormError(null);
+                setIsManualModalOpen(true);
+              }}
+              className="btn btn-primary"
+            >
+              <Plus size={16} /> Regularize / Backfill Punch
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Action Feedback Banner (Replaces native browser alerts) */}
@@ -1243,6 +1333,157 @@ export default function AttendancePage() {
         icon="trash"
         isLoading={isResettingPunch}
       />
+
+      {/* Shift Timing Policy Modal (Admin / HR) */}
+      <Modal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        title="Shift Timing & Auto Check-out Policy"
+      >
+        <form onSubmit={handleSaveShiftSettings} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.5, margin: 0 }}>
+            Configure the organization's official shift hours, late arrival grace threshold, and automatic end-of-day checkout rule.
+          </p>
+
+          {settingsError && (
+            <div
+              style={{
+                padding: "10px 14px",
+                borderRadius: "var(--radius-sm)",
+                background: "rgba(239, 68, 68, 0.15)",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+                color: "var(--color-rose-400)",
+                fontSize: "0.84rem",
+              }}
+            >
+              {settingsError}
+            </div>
+          )}
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            {/* Shift Start Time */}
+            <div>
+              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>
+                Shift Start Time *
+              </label>
+              <input
+                type="time"
+                value={settingsForm.shift_start_time}
+                onChange={(e) => setSettingsForm((prev) => ({ ...prev, shift_start_time: e.target.value }))}
+                required
+                className="input-field"
+                style={{ width: "100%", height: 38 }}
+              />
+              <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 4, display: "block" }}>
+                Official start of business shift (e.g. 09:00 or 08:00)
+              </span>
+            </div>
+
+            {/* Shift End Time */}
+            <div>
+              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>
+                Shift End Time *
+              </label>
+              <input
+                type="time"
+                value={settingsForm.shift_end_time}
+                onChange={(e) => setSettingsForm((prev) => ({ ...prev, shift_end_time: e.target.value }))}
+                required
+                className="input-field"
+                style={{ width: "100%", height: 38 }}
+              />
+              <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 4, display: "block" }}>
+                Official end of business shift (e.g. 18:00 or 17:00)
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            {/* Grace Period */}
+            <div>
+              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>
+                Grace Period (Minutes) *
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="180"
+                value={settingsForm.grace_period_minutes}
+                onChange={(e) => setSettingsForm((prev) => ({ ...prev, grace_period_minutes: parseInt(e.target.value, 10) || 0 }))}
+                required
+                className="input-field"
+                style={{ width: "100%", height: 38 }}
+              />
+              <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 4, display: "block" }}>
+                Punches after Start + Grace are flagged as Late
+              </span>
+            </div>
+
+            {/* Auto Check-out Time */}
+            <div>
+              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>
+                Auto Check-Out Time *
+              </label>
+              <input
+                type="time"
+                value={settingsForm.auto_checkout_time}
+                onChange={(e) => setSettingsForm((prev) => ({ ...prev, auto_checkout_time: e.target.value }))}
+                required
+                className="input-field"
+                style={{ width: "100%", height: 38 }}
+              />
+              <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 4, display: "block" }}>
+                Auto-assigned time if an employee forgets to check out
+              </span>
+            </div>
+          </div>
+
+          {/* Auto Checkout Toggle */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "10px 14px",
+              borderRadius: "var(--radius-md)",
+              background: "var(--bg-surface-elevated)",
+              border: "1px solid var(--border-subtle)",
+            }}
+          >
+            <input
+              type="checkbox"
+              id="auto_checkout_enabled"
+              checked={settingsForm.auto_checkout_enabled}
+              onChange={(e) => setSettingsForm((prev) => ({ ...prev, auto_checkout_enabled: e.target.checked }))}
+              style={{ width: 16, height: 16, accentColor: "var(--color-cyan-500)", cursor: "pointer" }}
+            />
+            <label htmlFor="auto_checkout_enabled" style={{ fontSize: "0.84rem", color: "var(--text-primary)", cursor: "pointer", fontWeight: 600 }}>
+              Automatically close unclosed shifts from previous calendar days
+            </label>
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 8 }}>
+            <button
+              type="button"
+              onClick={() => setIsSettingsModalOpen(false)}
+              className="btn btn-secondary"
+              disabled={savingSettings}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={savingSettings}
+              style={{ display: "flex", alignItems: "center", gap: 6 }}
+            >
+              {savingSettings ? "Saving Policy..." : "Save Shift Policy"}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
+

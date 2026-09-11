@@ -37,4 +37,6 @@ from .attendance_services import (
     get_yearly_summary as get_employee_yearly_attendance_summary,
     get_today_attendance_overview,
     auto_close_past_unclosed_check_ins,
+    get_shift_settings,
+    update_shift_settings,
 )

@@ -143,3 +143,30 @@ class Holiday(Base):
             "is_optional": self.is_optional,
             "applicable_region": self.applicable_region,
         }
+
+
+class AttendanceSetting(Base):
+    __tablename__ = "attendance_settings"
+
+    setting_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    shift_start_time: Mapped[str] = mapped_column(String(10), default="09:00")
+    shift_end_time: Mapped[str] = mapped_column(String(10), default="18:00")
+    grace_period_minutes: Mapped[int] = mapped_column(Integer, default=15)
+    auto_checkout_time: Mapped[str] = mapped_column(String(10), default="18:00")
+    auto_checkout_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    work_hours_per_day: Mapped[Decimal] = mapped_column(Numeric(4, 1), default=8.0)
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=text("now()")
+    )
+
+    def to_dict(self) -> dict:
+        return {
+            "shift_start_time": self.shift_start_time or "09:00",
+            "shift_end_time": self.shift_end_time or "18:00",
+            "grace_period_minutes": int(self.grace_period_minutes if self.grace_period_minutes is not None else 15),
+            "auto_checkout_time": self.auto_checkout_time or "18:00",
+            "auto_checkout_enabled": bool(self.auto_checkout_enabled if self.auto_checkout_enabled is not None else True),
+            "work_hours_per_day": float(self.work_hours_per_day if self.work_hours_per_day is not None else 8.0),
+        }
+

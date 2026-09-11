@@ -333,3 +333,76 @@ def delete_by_employee_id(e_id: int, db: Session | None = None) -> int:
         return _execute(db)
     with SessionLocal() as session:
         return _execute(session)
+
+
+DEFAULT_ATTENDANCE_SETTINGS = {
+    "shift_start_time": "09:00",
+    "shift_end_time": "18:00",
+    "grace_period_minutes": 15,
+    "auto_checkout_time": "18:00",
+    "auto_checkout_enabled": True,
+    "work_hours_per_day": 8.0,
+}
+
+
+def get_settings(db: Session | None = None) -> dict:
+    """Returns the company attendance policy settings, initializing default if not present."""
+    from models.attendance import AttendanceSetting
+
+    def _execute(session: Session) -> dict:
+        try:
+            setting = session.query(AttendanceSetting).order_by(AttendanceSetting.setting_id.asc()).first()
+            if not setting:
+                setting = AttendanceSetting(
+                    shift_start_time="09:00",
+                    shift_end_time="18:00",
+                    grace_period_minutes=15,
+                    auto_checkout_time="18:00",
+                    auto_checkout_enabled=True,
+                    work_hours_per_day=8.0,
+                )
+                session.add(setting)
+                session.commit()
+                session.refresh(setting)
+            return setting.to_dict()
+        except Exception:
+            return dict(DEFAULT_ATTENDANCE_SETTINGS)
+
+    if db is not None:
+        return _execute(db)
+    with SessionLocal() as session:
+        return _execute(session)
+
+
+def update_settings(updates: dict, db: Session | None = None) -> dict:
+    """Updates company attendance policy settings."""
+    from models.attendance import AttendanceSetting
+
+    def _execute(session: Session) -> dict:
+        setting = session.query(AttendanceSetting).order_by(AttendanceSetting.setting_id.asc()).first()
+        if not setting:
+            setting = AttendanceSetting()
+            session.add(setting)
+
+        if "shift_start_time" in updates and updates["shift_start_time"]:
+            setting.shift_start_time = str(updates["shift_start_time"]).strip()
+        if "shift_end_time" in updates and updates["shift_end_time"]:
+            setting.shift_end_time = str(updates["shift_end_time"]).strip()
+        if "grace_period_minutes" in updates and updates["grace_period_minutes"] is not None:
+            setting.grace_period_minutes = int(updates["grace_period_minutes"])
+        if "auto_checkout_time" in updates and updates["auto_checkout_time"]:
+            setting.auto_checkout_time = str(updates["auto_checkout_time"]).strip()
+        if "auto_checkout_enabled" in updates and updates["auto_checkout_enabled"] is not None:
+            setting.auto_checkout_enabled = bool(updates["auto_checkout_enabled"])
+        if "work_hours_per_day" in updates and updates["work_hours_per_day"] is not None:
+            setting.work_hours_per_day = float(updates["work_hours_per_day"])
+
+        session.commit()
+        session.refresh(setting)
+        return setting.to_dict()
+
+    if db is not None:
+        return _execute(db)
+    with SessionLocal() as session:
+        return _execute(session)
+

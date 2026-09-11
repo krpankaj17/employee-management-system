@@ -11,24 +11,73 @@ VALID_WORK_MODES = {"in_office", "remote", "field"}
 VALID_STATUSES = {"present", "half_day", "absent", "on_leave", "not_checked_in"}
 TIME_FORMATS = ["%H:%M:%S", "%H:%M"]
 
-# Standard shift start time (09:00 AM), grace threshold (09:15 AM), and standard shift end (06:00 PM)
-STANDARD_SHIFT_START = datetime.time(9, 0, 0)
-GRACE_SHIFT_THRESHOLD = datetime.time(9, 15, 0)
-STANDARD_SHIFT_END = datetime.time(18, 0, 0)
+# Shift timing policy helpers
+def _parse_policy_time(time_str: str, default: datetime.time) -> datetime.time:
+    if not time_str:
+        return default
+    try:
+        parts = str(time_str).strip().split(":")
+        h = int(parts[0])
+        m = int(parts[1]) if len(parts) > 1 else 0
+        s = int(parts[2]) if len(parts) > 2 else 0
+        return datetime.time(h, m, s)
+    except Exception:
+        return default
+
+
+def get_shift_policy_config() -> dict:
+    """Returns the effective shift policy settings with parsed datetime.time objects."""
+    settings = repo.get_settings()
+    start_t = _parse_policy_time(settings.get("shift_start_time"), datetime.time(9, 0, 0))
+    end_t = _parse_policy_time(settings.get("shift_end_time"), datetime.time(18, 0, 0))
+    grace_mins = int(settings.get("grace_period_minutes", 15) or 15)
+    auto_checkout_t = _parse_policy_time(settings.get("auto_checkout_time"), end_t)
+    auto_checkout_enabled = bool(settings.get("auto_checkout_enabled", True))
+
+    # Calculate grace threshold time
+    dt_base = datetime.datetime.combine(datetime.date.min, start_t)
+    grace_threshold_t = (dt_base + datetime.timedelta(minutes=grace_mins)).time()
+
+    return {
+        "raw": settings,
+        "start_time": start_t,
+        "end_time": end_t,
+        "grace_minutes": grace_mins,
+        "grace_threshold": grace_threshold_t,
+        "auto_checkout_time": auto_checkout_t,
+        "auto_checkout_enabled": auto_checkout_enabled,
+    }
+
+
+def get_shift_settings() -> dict:
+    """Returns current shift settings dict."""
+    return repo.get_settings()
+
+
+def update_shift_settings(updates: dict) -> dict:
+    """Updates shift settings and returns updated config."""
+    return repo.update_settings(updates)
 
 
 def auto_close_past_unclosed_check_ins(employee_id=None, before_date_str=None):
-    """Automatically assigns an end-of-shift checkout time (18:00 or check_in + 8 hrs)
-    to any unclosed check-in from a previous calendar day.
+    """Automatically assigns an end-of-shift checkout time
+    to any unclosed check-in from a previous calendar day based on configured shift policy.
     This prevents employees who forgot to check out yesterday from ever being blocked
     from checking in today."""
     try:
+        cfg = get_shift_policy_config()
+        if not cfg["auto_checkout_enabled"]:
+            return []
+
         past_unclosed = repo.get_past_unclosed_check_ins(
             e_id=employee_id,
             before_date_str=before_date_str,
         )
         if not past_unclosed:
             return []
+
+        shift_start_t = cfg["start_time"]
+        auto_checkout_t = cfg["auto_checkout_time"]
 
         closed_records = []
         for rec in past_unclosed:
@@ -50,14 +99,14 @@ def auto_close_past_unclosed_check_ins(employee_id=None, before_date_str=None):
             # Determine check-in timestamp in local timezone anchored to rec_date
             cin_val = rec.get("check_in") or rec.get("check_in_time")
             cin_parsed = _parse_datetime_or_time(cin_val)
-            cin_time = cin_parsed.time() if cin_parsed else STANDARD_SHIFT_START
+            cin_time = cin_parsed.time() if cin_parsed else shift_start_t
             cin_dt = datetime.datetime.combine(rec_date, cin_time, tzinfo=tz)
 
-            shift_end_dt = datetime.datetime.combine(rec_date, STANDARD_SHIFT_END, tzinfo=tz)
+            shift_end_dt = datetime.datetime.combine(rec_date, auto_checkout_t, tzinfo=tz)
 
             # Assign auto checkout timestamp:
-            # If check-in was at least 30 mins before 18:00, use 18:00.
-            # Otherwise (checked in close to/after 18:00), assign check_in + 8 hours or 23:59:59.
+            # If check-in was at least 30 mins before auto checkout time, use auto checkout time.
+            # Otherwise (checked in close to/after auto checkout), assign check_in + 8 hours or 23:59:59.
             if cin_dt < shift_end_dt and (shift_end_dt - cin_dt).total_seconds() >= 1800:
                 cout_dt = shift_end_dt
             else:
@@ -86,7 +135,7 @@ def auto_close_past_unclosed_check_ins(employee_id=None, before_date_str=None):
             if updated:
                 utils.log_action(
                     "ATTENDANCE_AUTO_CHECKOUT",
-                    f"id={rec_id} emp_id={rec_emp_id} date={rec_date_str} in={cin_val} out={cout_iso} total_hours={total_hours}",
+                    f"id={rec_id} emp_id={rec_emp_id} date={rec_date_str} in={cin_val} out={cout_val} total_hours={total_hours}",
                 )
                 closed_records.append(_enrich_record(updated))
 
@@ -206,10 +255,13 @@ def _calculate_hours(check_in_str, check_out_str):
 
 
 def _check_late_arrival(check_in_time):
-    """Determines whether check_in_time is late past 09:15 AM threshold.
+    """Determines whether check_in_time is late past the configured shift start + grace threshold.
     Returns (is_late: bool, late_minutes: int)."""
-    if check_in_time > GRACE_SHIFT_THRESHOLD:
-        dt_start = datetime.datetime.combine(datetime.date.min, STANDARD_SHIFT_START)
+    cfg = get_shift_policy_config()
+    start_t = cfg["start_time"]
+    threshold_t = cfg["grace_threshold"]
+    if check_in_time > threshold_t:
+        dt_start = datetime.datetime.combine(datetime.date.min, start_t)
         dt_in = datetime.datetime.combine(datetime.date.min, check_in_time)
         late_mins = int((dt_in - dt_start).total_seconds() // 60)
         return True, late_mins

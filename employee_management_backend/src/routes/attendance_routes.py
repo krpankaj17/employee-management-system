@@ -8,6 +8,7 @@ from core.permissions import require_permission, get_current_user
 from models.user import User
 from repository import employee_repository as emp_repo
 from repository import department_repo as dept_repo
+from repository import auth_repo
 from services import attendance_services as services
 
 router = APIRouter(prefix="/attendance", tags=["Attendance Management"])
@@ -37,6 +38,8 @@ from schemas.attendance_schema import (
     MonthlyBreakdownItem,
     MonthlyAttendanceSummary,
     YearlyAttendanceSummary,
+    AttendanceSettingsIn,
+    AttendanceSettingsOut,
 )
 
 
@@ -233,3 +236,31 @@ def get_all_attendance(
 def get_today_overview(current_user: User = Depends(get_current_user)):
     """Provides a company-wide attendance status breakdown for today."""
     return services.get_today_attendance_overview()
+
+
+@router.get("/settings", response_model=AttendanceSettingsOut)
+def get_attendance_settings(current_user: User = Depends(get_current_user)):
+    """Retrieves the official shift timing and attendance policy configuration."""
+    return services.get_shift_settings()
+
+
+@router.patch("/settings", response_model=AttendanceSettingsOut)
+@router.put("/settings", response_model=AttendanceSettingsOut)
+def update_attendance_settings(
+    payload: AttendanceSettingsIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Updates company shift timings and auto check-out policy. Restricted to Admin and HR_Manager."""
+    user_roles = auth_repo.get_user_roles(cast(int, current_user.user_id), db=db)
+    if not (
+        "Admin" in user_roles
+        or "HR_Manager" in user_roles
+        or current_user.has_permission("attendance:update")
+        or current_user.has_permission("attendance:manage")
+    ):
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Only Admin or HR Manager can change shift policy timings.",
+        )
+    return services.update_shift_settings(payload.model_dump(exclude_unset=True))

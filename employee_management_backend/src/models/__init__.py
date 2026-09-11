@@ -4,7 +4,7 @@ from .address import Address, EmployeeAddress
 from .designation import Designation
 from .user import User, Role, Permission, RolePermission, UserRole
 from .employee import Employee, EmergencyContact
-from .attendance import Attendance, Holiday
+from .attendance import Attendance, Holiday, AttendanceSetting
 from .leave import LeaveType, LeaveRequest, LeaveApprovalHistory, EmployeeLeaveBalance
 from .payroll import Salary, SalaryComponent, BankDetail, PayrollRun
 from .project import Project, ProjectMember
@@ -28,6 +28,7 @@ __all__ = [
     "EmergencyContact",
     "Attendance",
     "Holiday",
+    "AttendanceSetting",
     "LeaveType",
     "LeaveRequest",
     "LeaveApprovalHistory",
