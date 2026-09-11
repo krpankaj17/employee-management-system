@@ -591,7 +591,7 @@ export default function EmployeesPage() {
                                 background: "currentColor",
                               }}
                             />
-                            <span>{isStatusActive ? "Invited" : isStatusLeave ? "On Leave" : "Inactive"}</span>
+                            <span>{isStatusActive ? "Active" : isStatusLeave ? "On Leave" : "Inactive"}</span>
                           </span>
                         </td>
 
@@ -662,7 +662,7 @@ export default function EmployeesPage() {
                       }`}
                     >
                       <span style={{ width: 6, height: 6, borderRadius: "50%", background: "currentColor" }} />
-                      <span>{isStatusActive ? "Invited" : isStatusLeave ? "On Leave" : "Inactive"}</span>
+                      <span>{isStatusActive ? "Active" : isStatusLeave ? "On Leave" : "Inactive"}</span>
                     </span>
                   </div>
 

@@ -2083,6 +2083,7 @@ export const api = {
           status: effStatus,
           total_hours: r.total_hours != null ? Number(r.total_hours) : r.totalHours != null ? Number(r.totalHours) : undefined,
           notes: r.notes ?? undefined,
+          is_late: Boolean(r.is_late || (r.notes && String(r.notes).includes("[Late Arrival"))),
         };
       };
       return {

@@ -799,10 +799,18 @@ def get_today_attendance_overview():
         auto_close_past_unclosed_check_ins()
     except Exception:
         pass
+    try:
+        from database import SessionLocal
+        from services.employee_services import sync_employee_leave_statuses
+        with SessionLocal() as db_sess:
+            sync_employee_leave_statuses(db_sess)
+    except Exception:
+        pass
+
     today_str = datetime.date.today().isoformat()
     all_employees = [
         e for e in emp_repo.get_all()
-        if _get_emp_field(e, "employee_status") == "active"
+        if _get_emp_field(e, "employee_status") in ("active", "on_leave")
     ]
     today_records = [r for r in repo.get_all() if r.get("date") == today_str]
 
@@ -823,6 +831,7 @@ def get_today_attendance_overview():
         rec = record_by_emp.get(emp_id)
         first_name = _get_emp_field(emp, "first_name", "")
         last_name = _get_emp_field(emp, "last_name", "")
+        emp_status = _get_emp_field(emp, "employee_status", "")
         emp_summary = {
             "employee_id": emp_id,
             "name": f"{first_name} {last_name}".strip(),
@@ -830,9 +839,12 @@ def get_today_attendance_overview():
             "department_id": _get_emp_field(emp, "dept_id"),
         }
         if rec is None:
-            not_checked_in.append(emp_summary)
-        elif rec.get("status") == "on_leave":
-            on_leave.append({**emp_summary, "notes": rec.get("notes")})
+            if emp_status == "on_leave":
+                on_leave.append({**emp_summary, "notes": "On approved leave"})
+            else:
+                not_checked_in.append(emp_summary)
+        elif rec.get("status") == "on_leave" or emp_status == "on_leave":
+            on_leave.append({**emp_summary, "notes": rec.get("notes") or "On approved leave"})
         elif rec.get("check_out") is None:
             checked_in.append({
                 **emp_summary,
