@@ -18,6 +18,7 @@ export interface AttendanceRecord {
   status: "Present" | "Absent" | "Half_Day" | "On_Leave" | "Late";
   total_hours?: number;
   notes?: string;
+  is_late?: boolean;
 }
 
 export interface AttendanceSummary {

@@ -83,6 +83,8 @@ export default function AttendancePage() {
   const [totalItems, setTotalItems] = useState(0);
   // Stores today's attendance record ID (for admin reset)
   const [todayRecordId, setTodayRecordId] = useState<number | string | null>(null);
+  // List of employee names on approved leave today (for company adherence)
+  const [employeesOnLeaveToday, setEmployeesOnLeaveToday] = useState<string[]>([]);
 
   // --- Filters for Daily Attendance Logs ---
   const [filterEmployee, setFilterEmployee] = useState("");
@@ -193,7 +195,7 @@ export default function AttendancePage() {
 
   useEffect(() => {
     loadAttendance();
-  }, [role, isEmployeeRole]);
+  }, [role, isEmployeeRole, user?.employee_public_id]);
 
   // Separate effect: always check TODAY's punch status, independent of pagination
   useEffect(() => {
@@ -255,7 +257,7 @@ export default function AttendancePage() {
   const loadAttendance = async () => {
     const todayStr = getLocalTodayStr();
     try {
-      const [res, empRes] = await Promise.all([
+      const [res, empRes, leaveRes, balRes] = await Promise.all([
         api.attendance
           .getRecords({
             limit: 500,
@@ -263,6 +265,15 @@ export default function AttendancePage() {
           })
           .catch(() => ({ items: [], total: 0 })),
         api.employees.list({ limit: 100 }).catch(() => ({ items: [], total: 0 })),
+        api.leaves
+          .getRequests({
+            limit: 100,
+            employee_public_id: isEmployeeRole && user?.employee_public_id ? user.employee_public_id : undefined,
+          })
+          .catch(() => ({ items: [], total: 0 })),
+        isEmployeeRole
+          ? api.leaves.getBalances().catch(() => [])
+          : Promise.resolve([]),
       ]);
 
       let items: AttendanceRecord[] = res?.items || [];
@@ -312,11 +323,22 @@ export default function AttendancePage() {
       const hoursSum = recordsWithHours.reduce((acc, r) => acc + (r.total_hours || 0), 0);
       const avgHours = recordsWithHours.length > 0 ? parseFloat((hoursSum / recordsWithHours.length).toFixed(1)) : 8.0;
 
+      const isLateRecord = (r: AttendanceRecord) =>
+        (r.status || "").toLowerCase() === "late" ||
+        Boolean(r.is_late) ||
+        (Boolean(r.notes) && String(r.notes).includes("[Late Arrival"));
+
       // Adherence metrics
       if (isEmployeeRole) {
         const myPresent = enrichedRecords.filter((r) => (r.status || "").toLowerCase() === "present" || r.check_in_time).length;
-        const myLate = enrichedRecords.filter((r) => (r.status || "").toLowerCase() === "late" || (r as any).is_late).length;
-        const myLeave = enrichedRecords.filter((r) => (r.status || "").toLowerCase() === "on_leave").length;
+        const myLate = enrichedRecords.filter(isLateRecord).length;
+        const myApprovedReqDays = (leaveRes?.items || [])
+          .filter((l: any) => (l.status || "").toLowerCase() === "approved")
+          .reduce((acc: number, l: any) => acc + (Number(l.total_days) || 1), 0);
+        const myUsedFromBals = (balRes || []).reduce((acc: number, b: any) => acc + (Number(b.used_days ?? b.used_leaves) || 0), 0);
+        const myLeave = Math.max(myApprovedReqDays, myUsedFromBals);
+
+        setEmployeesOnLeaveToday([]);
         setSummary({
           present_count: myPresent,
           absent_count: 0,
@@ -328,8 +350,69 @@ export default function AttendancePage() {
       } else {
         const todayRecords = enrichedRecords.filter((r) => r.date === todayStr);
         const present = todayRecords.filter((r) => (r.status || "").toLowerCase() === "present" || r.check_in_time).length;
-        const late = todayRecords.filter((r) => (r.status || "").toLowerCase() === "late" || (r as any).is_late).length;
-        const onLeave = todayRecords.filter((r) => (r.status || "").toLowerCase() === "on_leave").length;
+        const late = todayRecords.filter(isLateRecord).length;
+
+        // Resolve canonical ID helper to avoid double counting between leaves and employees
+        const getCanonicalId = (item: any): string => {
+          if (item.employee_public_id && localEmpMap.has(item.employee_public_id)) {
+            return item.employee_public_id;
+          }
+          if (item.public_id && localEmpMap.has(item.public_id)) {
+            return item.public_id;
+          }
+          const targetId = item.employee_id ?? item.emp_id ?? item.id;
+          if (targetId != null) {
+            const matched = empList.find((e: any) => e.emp_id === targetId || e.id === targetId || e.employee_id === targetId);
+            if (matched?.public_id) return matched.public_id;
+            return `id-${targetId}`;
+          }
+          return item.employee_public_id || item.public_id || "";
+        };
+
+        const activeLeaveEmpMap = new Map<string, string>(); // canonicalId -> Employee Name
+
+        // 1. From approved leave requests spanning today
+        (leaveRes?.items || []).forEach((l: any) => {
+          const st = (l.status || "").toLowerCase();
+          if (st === "approved" && l.start_date && l.end_date) {
+            if (l.start_date <= todayStr && l.end_date >= todayStr) {
+              const cId = getCanonicalId(l);
+              if (cId) {
+                const matched = localEmpMap.get(cId);
+                const name = l.employee_name || (matched ? `${matched.first_name || ""} ${matched.last_name || ""}`.trim() : "Employee");
+                activeLeaveEmpMap.set(cId, name);
+              }
+            }
+          }
+        });
+
+        // 2. From employees list whose employee_status is on_leave
+        empList.forEach((e: any) => {
+          const st = (e.employee_status || "").toLowerCase();
+          if (st === "on_leave" || st.includes("leave")) {
+            const cId = getCanonicalId(e);
+            if (cId) {
+              const name = `${e.first_name || ""} ${e.last_name || ""}`.trim() || "Employee";
+              activeLeaveEmpMap.set(cId, name);
+            }
+          }
+        });
+
+        // 3. From today's attendance records marked on_leave
+        todayRecords.forEach((r) => {
+          if ((r.status || "").toLowerCase() === "on_leave") {
+            const cId = getCanonicalId(r);
+            if (cId) {
+              const matched = localEmpMap.get(cId);
+              const name = r.employee_name || (matched ? `${matched.first_name || ""} ${matched.last_name || ""}`.trim() : "Employee");
+              activeLeaveEmpMap.set(cId, name);
+            }
+          }
+        });
+
+        const onLeave = activeLeaveEmpMap.size;
+        setEmployeesOnLeaveToday(Array.from(activeLeaveEmpMap.values()));
+
         const totalEmp = empList.length > 0 ? empList.length : (todayRecords.length || 1);
         const absent = Math.max(0, totalEmp - present - onLeave);
 
@@ -694,6 +777,23 @@ export default function AttendancePage() {
               <span style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--color-cyan-400)" }}>
                 {isEmployeeRole ? `${summary?.on_leave_count ?? 0} days` : (summary?.on_leave_count ?? "—")}
               </span>
+              {!isEmployeeRole && employeesOnLeaveToday.length > 0 && (
+                <span
+                  style={{
+                    fontSize: "0.72rem",
+                    color: "var(--text-secondary)",
+                    marginTop: 4,
+                    display: "block",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                  title={employeesOnLeaveToday.join(", ")}
+                >
+                  {employeesOnLeaveToday.slice(0, 2).join(", ")}
+                  {employeesOnLeaveToday.length > 2 ? ` +${employeesOnLeaveToday.length - 2} more` : ""}
+                </span>
+              )}
             </div>
 
             <div style={{ background: "var(--bg-surface-elevated)", padding: 14, borderRadius: "var(--radius-md)", border: "1px solid var(--border-subtle)" }}>
