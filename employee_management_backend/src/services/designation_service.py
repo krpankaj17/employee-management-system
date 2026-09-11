@@ -61,6 +61,8 @@ def update_designation(public_id: str, payload: DesignationIn, db: Session) -> d
     if not updated:
         return {"ok": False, "error": "not_found", "message": f"Designation with public_id '{public_id}' not found"}
     invalidate_cache("designations")
+    invalidate_cache("employee_lists")
+    invalidate_cache("employee_profiles")
     utils.log_action("DESIGNATION_UPDATED", f"title={updated.title} public_id={public_id}")
     return {"ok": True, "designation": updated.to_dict()}
 
@@ -72,5 +74,7 @@ def delete_designation(public_id: str, db: Session) -> dict:
         return {"ok": False, "error": err_type, "message": error_msg}
 
     invalidate_cache("designations")
+    invalidate_cache("employee_lists")
+    invalidate_cache("employee_profiles")
     utils.log_action("DESIGNATION_DELETED", f"public_id={public_id}")
     return {"ok": True, "details": f"Designation with public_id '{public_id}' deleted"}

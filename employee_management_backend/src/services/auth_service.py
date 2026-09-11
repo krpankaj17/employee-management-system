@@ -8,6 +8,7 @@ from sqlalchemy import select, func, delete
 from sqlalchemy.orm import Session
 from core import security
 from core.config import settings
+from core.cache import get_cached_or_compute, invalidate_cache
 from repository import auth_repo
 from models.employee import Employee
 from models.email_verification import EmailVerification
@@ -245,6 +246,8 @@ def signup_user(payload: UserSignupIn, db: Session) -> dict:
     for r in records:
         db.delete(r)
     db.commit()
+
+    invalidate_cache("user_lists")
 
     profile = _build_user_profile(user, db)
     token_data = {
@@ -531,6 +534,7 @@ def reset_password(payload: ResetPasswordIn, db: Session) -> dict:
 
     # Dispatch security alert email
     send_password_changed_alert(clean_email)
+    invalidate_cache("user_profiles", str(user.public_id))
 
     utils.log_action("PASSWORD_RESET_COMPLETED", f"user={user.email}")
     return {
@@ -560,6 +564,7 @@ def change_password(user_public_id: str, payload: ChangePasswordIn, db: Session)
 
     # Dispatch security alert email
     send_password_changed_alert(cast(str, user.email))
+    invalidate_cache("user_profiles", user_public_id)
 
     profile = _build_user_profile(user, db)
     token_data = {
@@ -588,45 +593,62 @@ def change_password(user_public_id: str, payload: ChangePasswordIn, db: Session)
 
 
 def get_user_profile(user_public_id: str, db: Session) -> dict | None:
-    """Retrieves full profile for user."""
-    user = auth_repo.get_user_by_public_id(user_public_id, db=db)
-    if not user:
-        return None
-    return _build_user_profile(user, db)
+    """Retrieves full profile for user with caching under user_profiles."""
+    def _fetch():
+        user = auth_repo.get_user_by_public_id(user_public_id, db=db)
+        if not user:
+            return None
+        return _build_user_profile(user, db)
+
+    return get_cached_or_compute("user_profiles", user_public_id, _fetch)
 
 
 def list_users(db: Session, skip: int = 0, limit: int | None = None) -> dict[str, Any]:
     """Lists all users with their roles, permissions, and profile details with pagination metadata."""
-    users, total = auth_repo.get_all_users(db=db, skip=skip, limit=limit)
-    return {
-        "total": total,
-        "skip": skip,
-        "limit": limit,
-        "items": [_build_user_profile(u, db) for u in users],
-    }
+    def _fetch():
+        users, total = auth_repo.get_all_users(db=db, skip=skip, limit=limit)
+        return {
+            "total": total,
+            "skip": skip,
+            "limit": limit,
+            "items": [_build_user_profile(u, db) for u in users],
+        }
+
+    cache_key = f"list_{skip}_{limit}"
+    return get_cached_or_compute("user_lists", cache_key, _fetch)
 
 
 def list_pending_users(db: Session, skip: int = 0, limit: int | None = None) -> dict[str, Any]:
     """Lists users awaiting role assignment / admin approval with pagination metadata."""
-    pending, total = auth_repo.get_pending_users(db=db, skip=skip, limit=limit)
-    return {
-        "total": total,
-        "skip": skip,
-        "limit": limit,
-        "items": [_build_user_profile(u, db) for u in pending],
-    }
+    def _fetch():
+        pending, total = auth_repo.get_pending_users(db=db, skip=skip, limit=limit)
+        return {
+            "total": total,
+            "skip": skip,
+            "limit": limit,
+            "items": [_build_user_profile(u, db) for u in pending],
+        }
+
+    cache_key = f"pending_{skip}_{limit}"
+    return get_cached_or_compute("user_lists", cache_key, _fetch)
 
 
 def list_roles(db: Session) -> list[dict]:
     """Lists all roles with their assigned permissions."""
-    roles = auth_repo.get_all_roles(db)
-    return [r.to_dict() for r in roles]
+    def _fetch():
+        roles = auth_repo.get_all_roles(db)
+        return [r.to_dict() for r in roles]
+
+    return get_cached_or_compute("roles", "all", _fetch)
 
 
 def list_permissions(db: Session) -> list[dict]:
     """Lists all system permissions."""
-    perms = auth_repo.get_all_permissions(db)
-    return [p.to_dict() for p in perms]
+    def _fetch():
+        perms = auth_repo.get_all_permissions(db)
+        return [p.to_dict() for p in perms]
+
+    return get_cached_or_compute("permissions", "all", _fetch)
 
 
 def assign_roles(user_public_id: str, role_names: list[str], db: Session) -> dict:
@@ -670,6 +692,9 @@ def assign_roles(user_public_id: str, role_names: list[str], db: Session) -> dic
         utils.log_action("EMPLOYEE_AUTO_PROVISIONED", f"user={user.email} emp_code={code}")
 
     updated_profile = _build_user_profile(user, db)
+    invalidate_cache("user_profiles", user_public_id)
+    invalidate_cache("user_lists")
+    invalidate_cache("employee_lists")
     utils.log_action("ROLES_ASSIGNED", f"user={user.email} roles={role_names}")
     return {"ok": True, "user": updated_profile}
 
@@ -703,6 +728,7 @@ def create_role(payload, db: Session) -> dict:
         permission_ids=permission_ids,
         db=db,
     )
+    invalidate_cache("roles")
     utils.log_action("ROLE_CREATED", f"role={clean_name} permissions={payload.permission_names}")
     return {"ok": True, "role": role.to_dict()}
 
@@ -740,6 +766,9 @@ def update_role(identifier: str, payload, db: Session) -> dict:
         permission_ids=permission_ids,
         db=db,
     )
+    invalidate_cache("roles")
+    invalidate_cache("user_profiles")
+    invalidate_cache("user_lists")
     utils.log_action("ROLE_UPDATED", f"role={updated_role.role_name}")
     return {"ok": True, "role": updated_role.to_dict()}
 
@@ -758,6 +787,9 @@ def add_permissions_to_role(identifier: str, permission_names: list[str], db: Se
         permission_ids.append(cast(int, p.permission_id))
 
     updated = auth_repo.add_permissions_to_role(role, permission_ids, db)
+    invalidate_cache("roles")
+    invalidate_cache("user_profiles")
+    invalidate_cache("user_lists")
     utils.log_action("ROLE_PERMISSIONS_ADDED", f"role={role.role_name} added={permission_names}")
     return {"ok": True, "role": updated.to_dict()}
 
@@ -776,6 +808,9 @@ def revoke_permission_from_role(identifier: str, permission_name: str, db: Sessi
         return {"ok": False, "error": "not_found", "message": f"Permission '{permission_name}' not found"}
 
     auth_repo.revoke_permission_from_role(cast(int, role.role_id), cast(int, perm.permission_id), db)
+    invalidate_cache("roles")
+    invalidate_cache("user_profiles")
+    invalidate_cache("user_lists")
     utils.log_action("ROLE_PERMISSION_REVOKED", f"role={role.role_name} revoked={permission_name}")
     refreshed = auth_repo.get_role_by_identifier(identifier, db)
     return {"ok": True, "role": refreshed.to_dict() if refreshed else None}
@@ -791,6 +826,9 @@ def delete_role(identifier: str, db: Session) -> dict:
         return {"ok": False, "error": "validation", "message": "The primary 'Admin' role is protected and cannot be deleted"}
 
     auth_repo.delete_role(role, db)
+    invalidate_cache("roles")
+    invalidate_cache("user_profiles")
+    invalidate_cache("user_lists")
     utils.log_action("ROLE_DELETED", f"role={identifier}")
     return {"ok": True, "message": f"Role '{identifier}' deleted successfully"}
 
@@ -806,6 +844,8 @@ def revoke_user_role(user_public_id: str, role_name: str, db: Session) -> dict:
         return {"ok": False, "error": "not_found", "message": f"Role '{role_name}' not found"}
 
     auth_repo.revoke_role_from_user(cast(int, user.user_id), cast(int, role.role_id), db=db)
+    invalidate_cache("user_profiles", user_public_id)
+    invalidate_cache("user_lists")
     utils.log_action("USER_ROLE_REVOKED", f"user={user.email} role={role_name}")
     updated_profile = _build_user_profile(user, db)
     return {"ok": True, "user": updated_profile}
@@ -846,6 +886,10 @@ def update_user_access(user_public_id: str, payload: UserAccessUpdateIn, db: Ses
 
     db.commit()
     db.refresh(user)
+    invalidate_cache("user_profiles", user_public_id)
+    invalidate_cache("user_lists")
+    invalidate_cache("employee_lists")
+    invalidate_cache("employee_profiles")
     utils.log_action("USER_ACCESS_UPDATED", f"user={user.email} active={user.is_active}")
     return {"ok": True, "user": _build_user_profile(user, db)}
 
@@ -860,6 +904,9 @@ def reject_user(user_public_id: str, db: Session) -> dict:
         db.delete(user.employee)
     db.delete(user)
     db.commit()
+    invalidate_cache("user_profiles", user_public_id)
+    invalidate_cache("user_lists")
+    invalidate_cache("employee_lists")
     utils.log_action("USER_REJECTED", f"user_public_id={user_public_id}")
     return {"ok": True, "message": "User registration rejected and removed successfully."}
 

@@ -136,6 +136,28 @@ def get_dashboard_summary(
             }
             for lr in leave_records
         ]
+
+        # Also include any employees whose employee_status is explicitly 'on_leave'
+        covered_emp_ids = {lr.employee_id for lr in leave_records if lr.employee_id}
+        on_leave_employees = db.scalars(
+            select(Employee).where(func.lower(Employee.employee_status) == "on_leave")
+        ).all()
+        for emp in on_leave_employees:
+            if emp.emp_id not in covered_emp_ids:
+                employees_on_leave.append({
+                    "leave_public_id": f"status-{emp.public_id}",
+                    "employee_public_id": str(emp.public_id),
+                    "employee_name": f"{emp.first_name} {emp.last_name}".strip(),
+                    "employee_code": emp.employee_code,
+                    "department_name": emp.department_name,
+                    "designation_name": emp.designation_name,
+                    "leave_type_name": "On Leave",
+                    "start_date": today_str,
+                    "end_date": today_str,
+                    "total_days": 1.0,
+                    "reason": "On Leave",
+                })
+        on_leave_today = max(on_leave_today, len(employees_on_leave))
     else:
         # Regular Employee: Hide company-wide on-leave count and list completely
         on_leave_today = 0

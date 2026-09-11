@@ -126,8 +126,17 @@ def _resolve_manager_uuid(public_id: str | None, db: Session) -> tuple[int | Non
 
 def get_all_records(skip=0, limit=None, db=None):
     if db is not None:
-        total, items = repo.get_paginated(db=db, skip=skip, limit=limit)
-        return {"total": total, "skip": skip, "limit": limit, "items": items}
+        def _fetch():
+            total, items = repo.get_paginated(db=db, skip=skip, limit=limit)
+            return {
+                "total": total,
+                "skip": skip,
+                "limit": limit,
+                "items": [e.to_dict() if hasattr(e, "to_dict") else e for e in items],
+            }
+        cache_key = f"all_{skip}_{limit}"
+        return get_cached_or_compute("employee_lists", cache_key, _fetch)
+
     data = repo.get_all()
     total = len(data)
     paged = data[skip: skip + limit] if limit is not None else data[skip:]
@@ -154,50 +163,66 @@ def search_records(
 ):
     if db is not None:
         sync_employee_leave_statuses(db)
-        # Resolve UUID query params to internal IDs for DB filtering
-        dept_id = None
-        if department_public_id:
-            dept_id, err = _resolve_department_uuid(department_public_id, db)
-            if err:
-                return {"total": 0, "skip": skip, "limit": limit, "items": []}
 
-        desig_id = None
-        if designation_public_id:
-            desig_id, err = _resolve_designation_uuid(designation_public_id, db)
-            if err:
-                return {"total": 0, "skip": skip, "limit": limit, "items": []}
+        def _fetch():
+            # Resolve UUID query params to internal IDs for DB filtering
+            dept_id = None
+            if department_public_id:
+                dept_id, err = _resolve_department_uuid(department_public_id, db)
+                if err:
+                    return {"total": 0, "skip": skip, "limit": limit, "items": []}
 
-        mgr_id = None
-        if reporting_manager_public_id:
-            mgr_id, err = _resolve_manager_uuid(reporting_manager_public_id, db)
-            if err:
-                return {"total": 0, "skip": skip, "limit": limit, "items": []}
+            desig_id = None
+            if designation_public_id:
+                desig_id, err = _resolve_designation_uuid(designation_public_id, db)
+                if err:
+                    return {"total": 0, "skip": skip, "limit": limit, "items": []}
 
-        total, items = repo.search(
-            db=db,
-            public_id=public_id,
-            email=email,
-            employee_code=employee_code,
-            reporting_manager_id=mgr_id,
-            first_name=first_name,
-            last_name=last_name,
-            dept_id=dept_id,
-            designation_id=desig_id,
-            employee_status=employee_status,
-            employment_type=employment_type,
-            gender=gender,
-            min_joining_date=min_joining_date,
-            max_joining_date=max_joining_date,
-            skip=skip,
-            limit=limit,
+            mgr_id = None
+            if reporting_manager_public_id:
+                mgr_id, err = _resolve_manager_uuid(reporting_manager_public_id, db)
+                if err:
+                    return {"total": 0, "skip": skip, "limit": limit, "items": []}
+
+            total, items = repo.search(
+                db=db,
+                public_id=public_id,
+                email=email,
+                employee_code=employee_code,
+                reporting_manager_id=mgr_id,
+                first_name=first_name,
+                last_name=last_name,
+                dept_id=dept_id,
+                designation_id=desig_id,
+                employee_status=employee_status,
+                employment_type=employment_type,
+                gender=gender,
+                min_joining_date=min_joining_date,
+                max_joining_date=max_joining_date,
+                skip=skip,
+                limit=limit,
+            )
+            utils.log_action(
+                "SEARCH",
+                f"public_id={public_id!r} email={email!r} emp_code={employee_code!r} "
+                f"first_name={first_name!r} last_name={last_name!r} dept_uuid={department_public_id} "
+                f"employee_status={employee_status!r} -> {total} match(es)",
+            )
+            return {
+                "total": total,
+                "skip": skip,
+                "limit": limit,
+                "items": [e.to_dict() if hasattr(e, "to_dict") else e for e in items],
+            }
+
+        cache_key = (
+            f"search:{skip}:{limit}:"
+            f"{public_id or ''}:{email or ''}:{employee_code or ''}:"
+            f"{reporting_manager_public_id or ''}:{first_name or ''}:{last_name or ''}:"
+            f"{department_public_id or ''}:{designation_public_id or ''}:{employee_status or ''}:"
+            f"{employment_type or ''}:{gender or ''}:{min_joining_date or ''}:{max_joining_date or ''}"
         )
-        utils.log_action(
-            "SEARCH",
-            f"public_id={public_id!r} email={email!r} emp_code={employee_code!r} "
-            f"first_name={first_name!r} last_name={last_name!r} dept_uuid={department_public_id} "
-            f"employee_status={employee_status!r} -> {total} match(es)",
-        )
-        return {"total": total, "skip": skip, "limit": limit, "items": items}
+        return get_cached_or_compute("employee_lists", cache_key, _fetch)
 
     # Fallback: in-memory filtering (no DB session)
     data = repo.get_all()
@@ -241,10 +266,8 @@ def get_record_by_id(e_id, db: Session | None = None):
 
 
 def get_record_by_public_id(public_id: str, db: Session):
-    """Looks up an employee by their public UUID."""
-    if db is not None:
-        sync_employee_leave_statuses(db)
-    return repo.get_by_public_id(public_id, db=db)
+    """Looks up an employee by their public UUID with caching under employee_profiles."""
+    return get_employee_full_details(public_id, db=db)
 
 
 def get_record_by_code(code, db=None):
@@ -743,6 +766,9 @@ def admin_setup_employee(public_id: str, payload: AdminEmployeeSetupIn, db: Sess
 
         invalidate_cache("employee_profiles", public_id)
         invalidate_cache("employee_lists")
+        if emp.user and hasattr(emp.user, "public_id"):
+            invalidate_cache("user_profiles", str(emp.user.public_id))
+            invalidate_cache("user_lists")
         full_profile = get_employee_full_details(str(emp.public_id), db=db)
         utils.log_action("ADMIN_SETUP_COMPLETED", f"emp_code={emp.employee_code} public_id={emp.public_id}")
         return {"ok": True, "employee": full_profile}
@@ -868,6 +894,9 @@ def onboard_or_update_my_profile(current_user, payload: EmployeeProfileIn, db: S
         if emp:
             invalidate_cache("employee_profiles", str(emp.public_id))
         invalidate_cache("employee_lists")
+        if current_user and hasattr(current_user, "public_id"):
+            invalidate_cache("user_profiles", str(current_user.public_id))
+            invalidate_cache("user_lists")
 
         full_profile = get_my_full_profile(current_user, db=db)
         utils.log_action("ONBOARD_PROFILE_SAVED", f"user={current_user.email} emp_code={emp.employee_code}")
