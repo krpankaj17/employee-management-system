@@ -182,3 +182,51 @@ def test_leave_lifecycle_flow(
     assert reject_res.status_code == 200
     assert reject_res.json()["status"] == "rejected"
 
+
+def test_admin_can_approve_own_leave(
+    client: TestClient,
+    admin_auth,
+    admin_headers,
+):
+    """Admin users must be able to approve/accept any leave request, including their own."""
+    admin_emp_pid = admin_auth["employee_public_id"]
+    leave_type_name = f"Admin-Leave-{uuid.uuid4().hex[:6]}"
+
+    # 1. Create a leave type as admin
+    type_res = client.post(
+        "/leaves/types",
+        json={"name": leave_type_name, "max_days_per_year": 30, "is_paid": False, "description": "Admin test leave"},
+        headers=admin_headers,
+    )
+    assert type_res.status_code == 201
+    leave_type_pid = type_res.json()["public_id"]
+
+    # 2. Admin submits a leave request for themselves
+    today = datetime.date.today() + datetime.timedelta(days=20)
+    end_date = today + datetime.timedelta(days=1)
+    submit_res = client.post(
+        "/leaves/requests",
+        json={
+            "employee_public_id": admin_emp_pid,
+            "leave_type_public_id": leave_type_pid,
+            "start_date": today.isoformat(),
+            "end_date": end_date.isoformat(),
+            "total_days": 2.0,
+            "reason": "Admin conference attendance",
+        },
+        headers=admin_headers,
+    )
+    assert submit_res.status_code == 201
+    req_pid = submit_res.json()["public_id"]
+    assert submit_res.json()["status"] == "pending"
+
+    # 3. Admin approves their OWN leave request — this must succeed (was previously blocked)
+    action_res = client.post(
+        f"/leaves/requests/{req_pid}/action",
+        json={"action": "approved", "remarks": "Approved by Admin for themselves"},
+        headers=admin_headers,
+    )
+    assert action_res.status_code == 200, (
+        f"Admin should be able to approve their own leave request, got {action_res.status_code}: {action_res.text}"
+    )
+    assert action_res.json()["status"] == "approved"

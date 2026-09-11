@@ -205,9 +205,13 @@ def submit_leave_request(
 
 
 def process_leave_approval(
-    leave_public_id: str, action_by_emp_id: int, payload: LeaveApprovalActionIn, db: Session
+    leave_public_id: str,
+    action_by_emp_id: int,
+    payload: LeaveApprovalActionIn,
+    db: Session,
+    is_admin: bool = False,
 ) -> dict:
-    """Processes manager/HR action (approve, reject, escalate). Prevents self-approval."""
+    """Processes manager/HR action (approve, reject, escalate). Prevents self-approval unless user is an Admin."""
     req = leave_repo.get_leave_request_by_public_id(leave_public_id, db=db)
     if not req:
         return {"ok": False, "error": "not_found", "message": f"Leave request with public_id '{leave_public_id}' not found"}
@@ -215,8 +219,8 @@ def process_leave_approval(
     if req.status != "pending":
         return {"ok": False, "error": "validation", "message": f"Leave request is already '{req.status}' and cannot be modified"}
 
-    # Enforce database check constraint against self-approval
-    if action_by_emp_id == req.employee_id:
+    # Enforce policy against self-approval (Admin is permitted to accept/approve anyone's request, including their own)
+    if action_by_emp_id == req.employee_id and not is_admin:
         return {"ok": False, "error": "forbidden", "message": "Self-approval of leave requests is strictly prohibited by policy"}
 
     action_clean = payload.action.strip().lower()
