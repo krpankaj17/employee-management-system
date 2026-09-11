@@ -12,10 +12,11 @@ from models.user import User, Role, UserRole
 from models.employee import Employee
 from models.department import Department
 from models.attendance import Attendance
-from models.leave import LeaveRequest
+from models.leave import LeaveRequest, EmployeeLeaveBalance
 from models.project import Project
 from models.announcement import Announcement
 from models.payroll import PayrollRun
+from services.employee_services import sync_employee_leave_statuses
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard & Enterprise Analytics"])
 
@@ -30,14 +31,29 @@ def get_dashboard_summary(
     Performs aggregated count queries in a single round-trip, replacing 10+
     heavy paginated API calls from the client.
     """
+    # 0. Sync leave statuses with current date
+    sync_employee_leave_statuses(db)
+
     today = py_date.today()
     today_str = today.isoformat()
+
+    user_roles = [r.role_name for r in current_user.roles]
+    is_admin_or_hr = "Admin" in user_roles or "HR_Manager" in user_roles
+
+    user_emp = current_user.employee
+    my_emp_id = user_emp.emp_id if user_emp else None
+    my_emp_public_id = str(user_emp.public_id) if user_emp else None
 
     # 1. Employee stats
     total_emp = db.scalar(select(func.count(Employee.emp_id))) or 0
     active_emp = db.scalar(
         select(func.count(Employee.emp_id)).where(
             func.lower(Employee.employee_status) == "active"
+        )
+    ) or 0
+    on_leave_emp = db.scalar(
+        select(func.count(Employee.emp_id)).where(
+            func.lower(Employee.employee_status) == "on_leave"
         )
     ) or 0
     inactive_emp = db.scalar(
@@ -56,7 +72,7 @@ def get_dashboard_summary(
             "department_name": d.dept_name,
             "dept_code": d.dept_code,
             "department_code": d.dept_code,
-            "employee_count": len([e for e in d.employees if (getattr(e, "employee_status", "") or "").lower() == "active"]) if d.employees else 0,
+            "employee_count": len([e for e in d.employees if (getattr(e, "employee_status", "") or "").lower() in ("active", "on_leave")]) if d.employees else 0,
             "head_employee_name": f"{d.head_employee.first_name} {d.head_employee.last_name}" if d.head_employee else "Lead Assigned",
         }
         for d in dept_records
@@ -73,20 +89,73 @@ def get_dashboard_summary(
         )
     ) or 0
 
-    # 4. Leaves
-    on_leave_today = db.scalar(
-        select(func.count(LeaveRequest.leave_id)).where(
-            func.lower(LeaveRequest.status) == "approved",
-            LeaveRequest.start_date <= today,
-            LeaveRequest.end_date >= today,
-        )
-    ) or 0
+    # 4. Leaves (Only Admin/HR sees who is on leave and company-wide leave totals; employees see only their own)
+    employees_on_leave = []
+    my_pending_leaves = 0
+    my_remaining_leaves = 0
 
-    pending_leaves = db.scalar(
-        select(func.count(LeaveRequest.leave_id)).where(
-            func.lower(LeaveRequest.status) == "pending"
-        )
-    ) or 0
+    if is_admin_or_hr:
+        on_leave_today = db.scalar(
+            select(func.count(LeaveRequest.leave_id)).where(
+                func.lower(LeaveRequest.status) == "approved",
+                LeaveRequest.start_date <= today,
+                LeaveRequest.end_date >= today,
+            )
+        ) or 0
+
+        pending_leaves = db.scalar(
+            select(func.count(LeaveRequest.leave_id)).where(
+                func.lower(LeaveRequest.status) == "pending"
+            )
+        ) or 0
+
+        # Detailed list of employees currently on leave (Admin/HR only)
+        leave_records = db.scalars(
+            select(LeaveRequest)
+            .where(
+                func.lower(LeaveRequest.status) == "approved",
+                LeaveRequest.start_date <= today,
+                LeaveRequest.end_date >= today,
+            )
+            .order_by(LeaveRequest.start_date.desc())
+        ).all()
+
+        employees_on_leave = [
+            {
+                "leave_public_id": str(lr.public_id),
+                "employee_public_id": str(lr.employee.public_id) if lr.employee else None,
+                "employee_name": f"{lr.employee.first_name} {lr.employee.last_name}" if lr.employee else "Unknown",
+                "employee_code": lr.employee.employee_code if lr.employee else None,
+                "department_name": lr.employee.department_name if lr.employee else None,
+                "designation_name": lr.employee.designation_name if lr.employee else None,
+                "leave_type_name": lr.leave_type.name if lr.leave_type else "Time Off",
+                "start_date": lr.start_date.isoformat() if lr.start_date else "",
+                "end_date": lr.end_date.isoformat() if lr.end_date else "",
+                "total_days": float(lr.total_days or 0),
+                "reason": lr.reason,
+            }
+            for lr in leave_records
+        ]
+    else:
+        # Regular Employee: Hide company-wide on-leave count and list completely
+        on_leave_today = 0
+        pending_leaves = 0
+        employees_on_leave = []
+
+        if my_emp_id:
+            my_pending_leaves = db.scalar(
+                select(func.count(LeaveRequest.leave_id)).where(
+                    LeaveRequest.employee_id == my_emp_id,
+                    func.lower(LeaveRequest.status) == "pending",
+                )
+            ) or 0
+            my_balances = db.scalars(
+                select(EmployeeLeaveBalance).where(
+                    EmployeeLeaveBalance.employee_id == my_emp_id,
+                    EmployeeLeaveBalance.year == today.year,
+                )
+            ).all()
+            my_remaining_leaves = sum((b.total_allocated - b.used_leaves) for b in my_balances)
 
     # 5. Projects
     active_projects = db.scalar(
@@ -96,7 +165,6 @@ def get_dashboard_summary(
     ) or 0
 
     # 6. Pending User Approvals (users without assigned roles)
-    # Users whose user_id is NOT in user_roles
     subq = select(UserRole.user_id).distinct()
     pending_users = db.scalar(
         select(func.count(User.user_id)).where(
@@ -105,16 +173,9 @@ def get_dashboard_summary(
     ) or 0
 
     # 7. Payroll metrics (Admins/HR see enterprise total, employees see personal pay)
-    user_roles = [r.role_name for r in current_user.roles]
-    is_admin_or_hr = "Admin" in user_roles or "HR_Manager" in user_roles
-
     payroll_total = 0.0
     payroll_runs_count = 0
     my_net_pay = 0.0
-
-    user_emp = current_user.employee
-    my_emp_id = user_emp.emp_id if user_emp else None
-    my_emp_public_id = str(user_emp.public_id) if user_emp else None
 
     if is_admin_or_hr:
         payroll_runs_count = db.scalar(select(func.count(PayrollRun.payroll_id))) or 0
@@ -249,17 +310,21 @@ def get_dashboard_summary(
         "metrics": {
             "total_employees": total_emp,
             "active_employees": active_emp,
+            "on_leave_employees": on_leave_emp,
             "inactive_employees": inactive_emp,
             "departments_count": dept_count,
             "present_today": present_today,
             "on_leave_today": on_leave_today,
             "pending_leaves": pending_leaves,
+            "my_pending_leaves": my_pending_leaves,
+            "my_remaining_leaves": my_remaining_leaves,
             "active_projects_count": active_projects,
             "pending_approvals": pending_users,
             "payroll_total": payroll_total,
             "payroll_runs_count": payroll_runs_count,
             "my_net_pay": my_net_pay,
         },
+        "employees_on_leave": employees_on_leave,
         "weekly_attendance": weekly_attendance_chart,
         "today_user_punch": today_user_punch,
         "recent_projects": recent_projects,

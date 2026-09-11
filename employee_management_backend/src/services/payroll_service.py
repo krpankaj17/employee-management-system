@@ -347,8 +347,10 @@ def process_payroll_batch(payload: PayrollProcessIn, db: Session) -> dict[str, A
             return {"ok": False, "error": "not_found", "message": err}
         target_employees = [emp]
     else:
-        # Get all active employees
-        _, target_employees = emp_repo.search(db=db, employee_status="active", limit=1000)
+        # Get all active employees (including those temporarily on approved leave)
+        _, active_emps = emp_repo.search(db=db, employee_status="active", limit=1000)
+        _, leave_emps = emp_repo.search(db=db, employee_status="on_leave", limit=1000)
+        target_employees = active_emps + leave_emps
 
     if not target_employees:
         return {

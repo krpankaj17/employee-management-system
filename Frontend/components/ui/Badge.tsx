@@ -27,9 +27,9 @@ export function StatusBadge({ status, label, showDot = false }: { status: string
 
   if (["active", "present", "approved", "paid", "completed", "verified"].includes(s)) {
     variant = "success";
-  } else if (["pending", "pending_verification", "half_day", "late", "planning", "on_hold", "draft", "warning"].includes(s)) {
+  } else if (["pending", "pending_verification", "half_day", "late", "planning", "on_hold", "draft", "warning", "on_leave", "on leave", "leave"].includes(s)) {
     variant = "warning";
-  } else if (["on_leave", "on leave", "leave", "inactive", "absent", "rejected", "failed", "cancelled", "terminated", "critical", "danger"].includes(s)) {
+  } else if (["inactive", "absent", "rejected", "failed", "cancelled", "terminated", "critical", "danger"].includes(s)) {
     variant = "danger";
   } else if (["submitted", "hybrid", "remote", "office", "info"].includes(s)) {
     variant = "info";

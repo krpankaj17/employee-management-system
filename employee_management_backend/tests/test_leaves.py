@@ -230,3 +230,80 @@ def test_admin_can_approve_own_leave(
         f"Admin should be able to approve their own leave request, got {action_res.status_code}: {action_res.text}"
     )
     assert action_res.json()["status"] == "approved"
+
+
+def test_employee_status_updates_to_on_leave_when_on_leave_today(
+    client: TestClient,
+    admin_auth: dict,
+    employee_auth: dict,
+    admin_headers: dict,
+    employee_headers: dict,
+):
+    """When an employee has an approved leave request covering today, their status must show 'on_leave'."""
+    emp_pid = employee_auth["employee_public_id"]
+    leave_type_name = f"TodayLeave-{uuid.uuid4().hex[:6]}"
+
+    # 1. Create a leave type
+    type_res = client.post(
+        "/leaves/types",
+        json={"name": leave_type_name, "max_days_per_year": 10, "is_paid": False},
+        headers=admin_headers,
+    )
+    assert type_res.status_code == 201
+    leave_type_pid = type_res.json()["public_id"]
+
+    # 2. Check employee status before leave — must be active
+    emp_before = client.get(f"/employees/search?public_id={emp_pid}", headers=admin_headers).json()
+    assert emp_before["items"][0]["employee_status"] == "active"
+
+    # 3. Apply for leave covering TODAY
+    today = datetime.date.today()
+    end_date = today + datetime.timedelta(days=1)
+    submit_res = client.post(
+        "/leaves/requests",
+        json={
+            "employee_public_id": emp_pid,
+            "leave_type_public_id": leave_type_pid,
+            "start_date": today.isoformat(),
+            "end_date": end_date.isoformat(),
+            "total_days": 2.0,
+            "reason": "Out of office today",
+        },
+        headers=employee_headers,
+    )
+    assert submit_res.status_code == 201
+    req_pid = submit_res.json()["public_id"]
+
+    # 4. Approve leave request
+    action_res = client.post(
+        f"/leaves/requests/{req_pid}/action",
+        json={"action": "approved", "remarks": "Approved today"},
+        headers=admin_headers,
+    )
+    assert action_res.status_code == 200
+
+    # 5. Check employee status in search — must be 'on_leave'
+    emp_after = client.get(f"/employees/search?public_id={emp_pid}", headers=admin_headers).json()
+    assert emp_after["items"][0]["employee_status"] == "on_leave"
+
+    # 6. Check dashboard summary as Admin — must show employees_on_leave list with this employee
+    dash_admin = client.get("/dashboard/summary", headers=admin_headers).json()
+    assert dash_admin["metrics"]["on_leave_today"] >= 1
+    on_leave_names = [e["employee_name"] for e in dash_admin["employees_on_leave"]]
+    assert any(emp_pid == e.get("employee_public_id") for e in dash_admin["employees_on_leave"])
+
+    # 7. Check dashboard summary as Employee — must NOT show employees_on_leave and on_leave_today must be 0
+    dash_emp = client.get("/dashboard/summary", headers=employee_headers).json()
+    assert dash_emp["metrics"]["on_leave_today"] == 0
+    assert dash_emp["employees_on_leave"] == []
+
+    # 8. Cancel the leave request — employee status must revert to 'active'
+    cancel_res = client.post(
+        f"/leaves/requests/{req_pid}/cancel",
+        headers=admin_headers,
+    )
+    assert cancel_res.status_code == 200
+
+    emp_reverted = client.get(f"/employees/search?public_id={emp_pid}", headers=admin_headers).json()
+    assert emp_reverted["items"][0]["employee_status"] == "active"
+
