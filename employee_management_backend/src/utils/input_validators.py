@@ -1,6 +1,6 @@
 #input_validators.py
 
-VALID_EMPLOYEE_STATUSES = {"active", "inactive", "on_leave", "terminated"}
+VALID_EMPLOYEE_STATUSES = {"active", "inactive", "on_leave", "terminated", "resigned", "suspended"}
 
 
 def is_empty(value):

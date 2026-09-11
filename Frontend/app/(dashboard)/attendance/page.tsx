@@ -74,6 +74,7 @@ export default function AttendancePage() {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [summary, setSummary] = useState<AttendanceSummary | null>(null);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [checkedIn, setCheckedIn] = useState(false);
   const [shiftCompleted, setShiftCompleted] = useState(false);
   const [workMode, setWorkMode] = useState<"Office" | "Remote" | "Hybrid">("Office");
@@ -279,6 +280,9 @@ export default function AttendancePage() {
 
   const loadAttendance = async () => {
     const todayStr = getLocalTodayStr();
+    if (records.length === 0) {
+      setIsLoadingData(true);
+    }
     try {
       const [res, empRes, leaveRes, balRes, settingsRes] = await Promise.all([
         api.attendance
@@ -309,7 +313,6 @@ export default function AttendancePage() {
         items = items.filter((r) => r.employee_public_id === user.employee_public_id);
       }
       const empList: Employee[] = empRes?.items || [];
-      setEmployees(empList);
 
       // Build local map for immediate enrichment
       const localEmpMap = new Map<string, Employee>();
@@ -339,9 +342,6 @@ export default function AttendancePage() {
         return Number(b.attendance_id || 0) - Number(a.attendance_id || 0);
       });
 
-      setRecords(enrichedRecords);
-      setTotalItems(enrichedRecords.length);
-
       if (empList.length > 0 && !manualForm.employee_public_id) {
         setManualForm((prev) => ({ ...prev, employee_public_id: empList[0].public_id }));
       }
@@ -356,6 +356,9 @@ export default function AttendancePage() {
         Boolean(r.is_late) ||
         (Boolean(r.notes) && String(r.notes).includes("[Late Arrival"));
 
+      let calculatedSummary: AttendanceSummary;
+      let calculatedLeaveEmployees: string[] = [];
+
       // Adherence metrics
       if (isEmployeeRole) {
         const myPresent = enrichedRecords.filter((r) => (r.status || "").toLowerCase() === "present" || r.check_in_time).length;
@@ -366,15 +369,15 @@ export default function AttendancePage() {
         const myUsedFromBals = (balRes || []).reduce((acc: number, b: any) => acc + (Number(b.used_days ?? b.used_leaves) || 0), 0);
         const myLeave = Math.max(myApprovedReqDays, myUsedFromBals);
 
-        setEmployeesOnLeaveToday([]);
-        setSummary({
+        calculatedLeaveEmployees = [];
+        calculatedSummary = {
           present_count: myPresent,
           absent_count: 0,
           late_count: myLate,
           on_leave_count: myLeave,
           total_employees: enrichedRecords.length,
           average_work_hours: avgHours,
-        });
+        };
       } else {
         const todayRecords = enrichedRecords.filter((r) => r.date === todayStr);
         const present = todayRecords.filter((r) => (r.status || "").toLowerCase() === "present" || r.check_in_time).length;
@@ -439,28 +442,33 @@ export default function AttendancePage() {
         });
 
         const onLeave = activeLeaveEmpMap.size;
-        setEmployeesOnLeaveToday(Array.from(activeLeaveEmpMap.values()));
+        calculatedLeaveEmployees = Array.from(activeLeaveEmpMap.values());
 
         const totalEmp = empList.length > 0 ? empList.length : (todayRecords.length || 1);
         const absent = Math.max(0, totalEmp - present - onLeave);
 
-        setSummary({
+        calculatedSummary = {
           present_count: present,
           absent_count: absent,
           late_count: late,
           on_leave_count: onLeave,
           total_employees: totalEmp,
           average_work_hours: avgHours,
-        });
+        };
       }
 
-      // Punch status is now handled by checkTodayPunchStatus() which runs
-      // independently of pagination — do NOT re-derive it here to avoid
-      // false "not checked in" when today's record is on a different page.
+      // Single Atomic State Transition: updates table & adherence in one render pass
+      setEmployees(empList);
+      setRecords(enrichedRecords);
+      setTotalItems(enrichedRecords.length);
+      setEmployeesOnLeaveToday(calculatedLeaveEmployees);
+      setSummary(calculatedSummary);
+      setIsLoadingData(false);
     } catch (err) {
       console.warn("Error loading attendance records:", err);
       setRecords([]);
       setTotalItems(0);
+      setIsLoadingData(false);
     }
   };
 
@@ -846,8 +854,14 @@ export default function AttendancePage() {
               <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "block" }}>
                 {isEmployeeRole ? "Days Present" : "Present Staff"}
               </span>
-              <span style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--color-emerald-400)" }}>
-                {isEmployeeRole ? `${summary?.present_count ?? 0} days` : `${summary?.present_count ?? "—"} / ${summary?.total_employees ?? "—"}`}
+              <span style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--color-emerald-400)", display: "flex", alignItems: "center", minHeight: "2.4rem" }}>
+                {isLoadingData && !summary ? (
+                  <span style={{ display: "inline-block", width: 75, height: 22, borderRadius: 6, background: "var(--bg-surface-hover)", opacity: 0.6 }} />
+                ) : isEmployeeRole ? (
+                  `${summary?.present_count ?? 0} days`
+                ) : (
+                  `${summary?.present_count ?? "—"} / ${summary?.total_employees ?? "—"}`
+                )}
               </span>
             </div>
 
@@ -855,8 +869,14 @@ export default function AttendancePage() {
               <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "block" }}>
                 {isEmployeeRole ? "Late Punches" : "Late Punches"}
               </span>
-              <span style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--color-amber-400)" }}>
-                {isEmployeeRole ? `${summary?.late_count ?? 0} days` : (summary?.late_count ?? "—")}
+              <span style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--color-amber-400)", display: "flex", alignItems: "center", minHeight: "2.4rem" }}>
+                {isLoadingData && !summary ? (
+                  <span style={{ display: "inline-block", width: 50, height: 22, borderRadius: 6, background: "var(--bg-surface-hover)", opacity: 0.6 }} />
+                ) : isEmployeeRole ? (
+                  `${summary?.late_count ?? 0} days`
+                ) : (
+                  summary?.late_count ?? "—"
+                )}
               </span>
             </div>
 
@@ -864,8 +884,14 @@ export default function AttendancePage() {
               <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "block" }}>
                 {isEmployeeRole ? "Approved Leaves" : "On Approved Leave"}
               </span>
-              <span style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--color-cyan-400)" }}>
-                {isEmployeeRole ? `${summary?.on_leave_count ?? 0} days` : (summary?.on_leave_count ?? "—")}
+              <span style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--color-cyan-400)", display: "flex", alignItems: "center", minHeight: "2.4rem" }}>
+                {isLoadingData && !summary ? (
+                  <span style={{ display: "inline-block", width: 50, height: 22, borderRadius: 6, background: "var(--bg-surface-hover)", opacity: 0.6 }} />
+                ) : isEmployeeRole ? (
+                  `${summary?.on_leave_count ?? 0} days`
+                ) : (
+                  summary?.on_leave_count ?? "—"
+                )}
               </span>
               {!isEmployeeRole && employeesOnLeaveToday.length > 0 && (
                 <span
@@ -888,8 +914,14 @@ export default function AttendancePage() {
 
             <div style={{ background: "var(--bg-surface-elevated)", padding: 14, borderRadius: "var(--radius-md)", border: "1px solid var(--border-subtle)" }}>
               <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", display: "block" }}>Avg Hours / Day</span>
-              <span style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--text-primary)" }}>
-                {summary?.average_work_hours != null ? `${summary.average_work_hours}h` : "—"}
+              <span style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--text-primary)", display: "flex", alignItems: "center", minHeight: "2.4rem" }}>
+                {isLoadingData && !summary ? (
+                  <span style={{ display: "inline-block", width: 60, height: 22, borderRadius: 6, background: "var(--bg-surface-hover)", opacity: 0.6 }} />
+                ) : summary?.average_work_hours != null ? (
+                  `${summary.average_work_hours}h`
+                ) : (
+                  "—"
+                )}
               </span>
             </div>
           </div>
@@ -1047,7 +1079,21 @@ export default function AttendancePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedRecords.length === 0 ? (
+                  {isLoadingData && paginatedRecords.length === 0 ? (
+                    Array.from({ length: 5 }).map((_, idx) => (
+                      <tr key={`skel-row-${idx}`}>
+                        <td colSpan={9} style={{ padding: "16px 20px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--bg-surface-hover)", opacity: 0.6 }} />
+                            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+                              <div style={{ width: "25%", height: 14, borderRadius: 4, background: "var(--bg-surface-hover)", opacity: 0.6 }} />
+                              <div style={{ width: "12%", height: 10, borderRadius: 4, background: "var(--bg-surface-hover)", opacity: 0.4 }} />
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : paginatedRecords.length === 0 ? (
                     <tr>
                       <td colSpan={9} style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-muted)" }}>
                         {hasFilters ? "No records match the selected filters." : "No attendance records found."}

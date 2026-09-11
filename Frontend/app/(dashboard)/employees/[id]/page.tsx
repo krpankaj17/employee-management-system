@@ -77,11 +77,11 @@ export default function EmployeeDetailPage() {
     setStatusLoading(true);
     try {
       const isCurrentlyActive = (employee.employee_status || "").toLowerCase() === "active";
-      const nextStatus = isCurrentlyActive ? "suspended" : "active";
+      const nextStatus = isCurrentlyActive ? "inactive" : "active";
       const updated = await api.employees.toggleStatus(employee.public_id, nextStatus);
       setEmployee(updated);
       setIsDeactivateConfirmOpen(false);
-      showToast.success(`Employee lifecycle status updated to ${nextStatus}.`);
+      showToast.success(`Employee status updated to ${nextStatus}.`);
     } catch (e: any) {
       showToast.error(e.message || "Failed to update employee lifecycle status.");
     } finally {
