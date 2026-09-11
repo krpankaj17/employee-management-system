@@ -243,6 +243,16 @@ def process_leave_approval(
             approved_by=action_by_emp_id,
             db=db,
         )
+        # If the approved leave covers today, immediately update employee_status to 'on_leave'
+        today = datetime.date.today()
+        if req.start_date <= today <= req.end_date:
+            emp = emp_repo.get_by_id(req.employee_id, db=db)
+            if emp and emp.employee_status.lower() in ("active", "on_leave"):
+                emp.employee_status = "on_leave"
+                db.flush()
+                invalidate_cache("employee_lists")
+                if hasattr(emp, "public_id") and emp.public_id:
+                    invalidate_cache("employee_profiles", str(emp.public_id))
     elif action_clean == "rejected":
         leave_repo.update_leave_request_status(
             leave_id=req.leave_id,
@@ -292,6 +302,29 @@ def cancel_leave_request(leave_public_id: str, action_by_emp_id: int, db: Sessio
         )
 
     leave_repo.update_leave_request_status(leave_id=req.leave_id, status_val="cancelled", db=db)
+    
+    # If the employee was 'on_leave', check if they have any other approved leave active today
+    emp = emp_repo.get_by_id(req.employee_id, db=db)
+    if emp and emp.employee_status.lower() == "on_leave":
+        from models.leave import LeaveRequest
+        from sqlalchemy import select, func
+        today = datetime.date.today()
+        other_active = db.scalar(
+            select(func.count(LeaveRequest.leave_id)).where(
+                LeaveRequest.employee_id == emp.emp_id,
+                LeaveRequest.leave_id != req.leave_id,
+                func.lower(LeaveRequest.status) == "approved",
+                LeaveRequest.start_date <= today,
+                LeaveRequest.end_date >= today,
+            )
+        ) or 0
+        if other_active == 0:
+            emp.employee_status = "active"
+            db.flush()
+            invalidate_cache("employee_lists")
+            if hasattr(emp, "public_id") and emp.public_id:
+                invalidate_cache("employee_profiles", str(emp.public_id))
+
     leave_repo.add_approval_history(
         leave_id=req.leave_id,
         action_by=action_by_emp_id,

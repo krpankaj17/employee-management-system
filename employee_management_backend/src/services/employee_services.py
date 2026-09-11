@@ -19,6 +19,76 @@ VALID_EMPLOYEE_STATUSES = {"active", "inactive", "on_leave", "terminated", "resi
 VALID_EMPLOYMENT_TYPES = {"full_time", "part_time", "contract", "intern"}
 
 
+def sync_employee_leave_statuses(db: Session) -> None:
+    """
+    Synchronizes employee_status with current active approved leaves.
+    - If an employee has an approved leave spanning today (start_date <= today <= end_date),
+      their employee_status in the DB is set to 'on_leave'.
+    - If an employee is marked 'on_leave' but no longer has an approved leave spanning today,
+      their employee_status reverts back to 'active'.
+    """
+    try:
+        from models.leave import LeaveRequest
+        from sqlalchemy import select, update, func
+        import datetime
+
+        today = datetime.date.today()
+        # Find all employee IDs who currently have an active approved leave today
+        active_leave_emp_ids = list(
+            db.scalars(
+                select(LeaveRequest.employee_id)
+                .where(
+                    func.lower(LeaveRequest.status) == "approved",
+                    LeaveRequest.start_date <= today,
+                    LeaveRequest.end_date >= today,
+                )
+            ).all()
+        )
+
+        updated = False
+        if active_leave_emp_ids:
+            # Mark them as 'on_leave' if currently 'active'
+            res1 = db.execute(
+                update(Employee)
+                .where(
+                    Employee.emp_id.in_(active_leave_emp_ids),
+                    func.lower(Employee.employee_status) == "active",
+                )
+                .values(employee_status="on_leave")
+            )
+            if res1.rowcount and res1.rowcount > 0:
+                updated = True
+
+            # Revert any employee whose status is 'on_leave' but is NOT in active_leave_emp_ids
+            res2 = db.execute(
+                update(Employee)
+                .where(
+                    func.lower(Employee.employee_status) == "on_leave",
+                    Employee.emp_id.not_in(active_leave_emp_ids),
+                )
+                .values(employee_status="active")
+            )
+            if res2.rowcount and res2.rowcount > 0:
+                updated = True
+        else:
+            # No employees on leave today: revert any who might still be marked 'on_leave'
+            res = db.execute(
+                update(Employee)
+                .where(func.lower(Employee.employee_status) == "on_leave")
+                .values(employee_status="active")
+            )
+            if res.rowcount and res.rowcount > 0:
+                updated = True
+
+        if updated:
+            db.commit()
+            invalidate_cache("employee_lists")
+            invalidate_cache("employee_profiles")
+    except Exception as e:
+        db.rollback()
+        utils.log_action("LEAVE_STATUS_SYNC_FAILED", f"error={e}")
+
+
 # ─── UUID → Internal ID Resolution ─────────────────────────────────────────────
 
 def _resolve_department_uuid(public_id: str | None, db: Session) -> tuple[int | None, str | None]:
@@ -83,6 +153,7 @@ def search_records(
     db=None,
 ):
     if db is not None:
+        sync_employee_leave_statuses(db)
         # Resolve UUID query params to internal IDs for DB filtering
         dept_id = None
         if department_public_id:
@@ -171,6 +242,8 @@ def get_record_by_id(e_id, db: Session | None = None):
 
 def get_record_by_public_id(public_id: str, db: Session):
     """Looks up an employee by their public UUID."""
+    if db is not None:
+        sync_employee_leave_statuses(db)
     return repo.get_by_public_id(public_id, db=db)
 
 
@@ -210,27 +283,40 @@ def _validate_employee_payload(
     if utils.is_none(emp_data.last_name) or not emp_data.last_name.strip():
         return {"error": "validation", "message": "Last name cannot be empty"}
 
+    is_update = current_emp_id is not None
+
     # Date of birth checks
     dob_raw = emp_data.date_of_birth
-    if not dob_raw or not utils.is_valid_date(dob_raw):
+    dob_d: datetime.date | None = None
+    if dob_raw and dob_raw.strip():
+        if not utils.is_valid_date(dob_raw):
+            return {"error": "validation", "message": "Invalid date_of_birth, expected format YYYY-MM-DD"}
+        dob_d = datetime.date.fromisoformat(dob_raw.strip())
+        if dob_d >= datetime.date.today():
+            return {"error": "validation", "message": "Date of birth must be in the past"}
+    elif not is_update:
+        # date_of_birth is required when creating a new employee
         return {"error": "validation", "message": "Invalid date_of_birth, expected format YYYY-MM-DD"}
-    dob_d = datetime.date.fromisoformat(dob_raw.strip())
-    if dob_d >= datetime.date.today():
-        return {"error": "validation", "message": "Date of birth must be in the past"}
 
     # Joining date checks
     join_raw = emp_data.joining_date
-    if not join_raw or not utils.is_valid_date(join_raw):
+    join_d: datetime.date | None = None
+    if join_raw and join_raw.strip():
+        if not utils.is_valid_date(join_raw):
+            return {"error": "validation", "message": "Invalid joining_date, expected format YYYY-MM-DD"}
+        join_d = datetime.date.fromisoformat(join_raw.strip())
+    elif not is_update:
+        # joining_date is required when creating a new employee
         return {"error": "validation", "message": "Invalid joining_date, expected format YYYY-MM-DD"}
-    join_d = datetime.date.fromisoformat(join_raw.strip())
 
-    # 18-year minimum age constraint
-    min_joining_age = dob_d.replace(year=dob_d.year + 18)
-    if join_d < min_joining_age:
-        return {
-            "error": "validation",
-            "message": f"Employee must be at least 18 years old on joining date (DOB: {dob_d}, min joining: {min_joining_age})",
-        }
+    # 18-year minimum age constraint (only when both dates are provided)
+    if dob_d is not None and join_d is not None:
+        min_joining_age = dob_d.replace(year=dob_d.year + 18)
+        if join_d < min_joining_age:
+            return {
+                "error": "validation",
+                "message": f"Employee must be at least 18 years old on joining date (DOB: {dob_d}, min joining: {min_joining_age})",
+            }
 
     # Gender check
     gender_raw = emp_data.gender
@@ -474,6 +560,9 @@ def get_my_full_profile(current_user, db: Session) -> dict | None:
 
 def get_employee_full_details(public_id: str, db: Session) -> dict | None:
     """Retrieves full profile for an employee by public UUID, including addresses and emergency contacts."""
+    if db is not None:
+        sync_employee_leave_statuses(db)
+
     def _fetch():
         emp = repo.get_by_public_id(public_id, db=db)
         if not emp:

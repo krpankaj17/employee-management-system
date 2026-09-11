@@ -1226,13 +1226,16 @@ export const api = {
         last_name: payload.last_name,
         email: payload.email,
         phone: payload.phone || payload.phone_number,
-        date_of_birth: payload.date_of_birth,
+        date_of_birth: payload.date_of_birth || undefined,
         gender: payload.gender ? payload.gender.toLowerCase() : undefined,
+        joining_date: payload.joining_date || undefined,
         employee_status: payload.employee_status ? payload.employee_status.toLowerCase() : undefined,
         employment_type: payload.employment_type ? payload.employment_type.toLowerCase() : undefined,
         department_public_id: payload.department_public_id,
         designation_public_id: payload.designation_public_id,
         reporting_manager_public_id: payload.reporting_manager_public_id,
+        is_active: (payload as any).is_active,
+        employee_code: (payload as any).employee_code,
       };
       return request<Employee>(`/employees/${publicId}`, { method: "PUT", body: JSON.stringify(body) });
     },
