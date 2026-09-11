@@ -29,3 +29,13 @@ export interface AttendanceSummary {
   total_employees: number;
   average_work_hours: number;
 }
+
+export interface AttendanceSettings {
+  shift_start_time: string;
+  shift_end_time: string;
+  grace_period_minutes: number;
+  auto_checkout_time: string;
+  auto_checkout_enabled: boolean;
+  work_hours_per_day: number;
+}
+

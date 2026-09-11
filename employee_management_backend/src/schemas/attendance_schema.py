@@ -164,3 +164,24 @@ class PaginatedHolidays(BaseModel):
     skip: int
     limit: int | None
     items: list[HolidayOut]
+
+
+class AttendanceSettingsIn(BaseModel):
+    shift_start_time: str = Field(default="09:00", description="HH:MM format e.g. 09:00 or 08:30")
+    shift_end_time: str = Field(default="18:00", description="HH:MM format e.g. 18:00 or 17:00")
+    grace_period_minutes: int = Field(default=15, ge=0, le=180, description="Grace minutes allowed before punch is marked late")
+    auto_checkout_time: str = Field(default="18:00", description="HH:MM format for automatic checkout of unclosed past shifts")
+    auto_checkout_enabled: bool = Field(default=True, description="Enable automatic checkout for forgotten punches")
+    work_hours_per_day: float = Field(default=8.0, gt=0, le=24, description="Standard work hours in a shift")
+
+
+class AttendanceSettingsOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    shift_start_time: str = "09:00"
+    shift_end_time: str = "18:00"
+    grace_period_minutes: int = 15
+    auto_checkout_time: str = "18:00"
+    auto_checkout_enabled: bool = True
+    work_hours_per_day: float = 8.0
+

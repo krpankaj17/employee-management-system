@@ -345,5 +345,54 @@ def test_auto_checkout_unclosed_yesterday_shift(client: TestClient, admin_header
         client.delete(f"/attendance/records/{record_id}", headers=admin_headers)
 
 
+def test_attendance_settings_flow(client: TestClient, admin_headers, employee_headers):
+    # 1. Authenticated user can read shift settings
+    get_res = client.get("/attendance/settings", headers=employee_headers)
+    assert get_res.status_code == 200
+    data = get_res.json()
+    assert "shift_start_time" in data
+    assert "shift_end_time" in data
+    assert "auto_checkout_time" in data
+
+    # 2. Employee cannot update shift settings (403)
+    patch_forbidden = client.patch(
+        "/attendance/settings",
+        json={"shift_start_time": "08:00", "shift_end_time": "17:00"},
+        headers=employee_headers,
+    )
+    assert patch_forbidden.status_code == 403
+
+    # 3. Admin can update shift settings
+    patch_admin = client.patch(
+        "/attendance/settings",
+        json={
+            "shift_start_time": "08:00",
+            "shift_end_time": "17:00",
+            "grace_period_minutes": 20,
+            "auto_checkout_time": "17:00",
+        },
+        headers=admin_headers,
+    )
+    assert patch_admin.status_code == 200
+    updated = patch_admin.json()
+    assert updated["shift_start_time"] == "08:00"
+    assert updated["shift_end_time"] == "17:00"
+    assert updated["grace_period_minutes"] == 20
+    assert updated["auto_checkout_time"] == "17:00"
+
+    # Restore standard defaults
+    restore_res = client.patch(
+        "/attendance/settings",
+        json={
+            "shift_start_time": "09:00",
+            "shift_end_time": "18:00",
+            "grace_period_minutes": 15,
+            "auto_checkout_time": "18:00",
+        },
+        headers=admin_headers,
+    )
+    assert restore_res.status_code == 200
+
+
 
 
