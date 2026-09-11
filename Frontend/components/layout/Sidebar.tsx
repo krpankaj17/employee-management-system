@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -123,17 +123,26 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 // Prefetch tab dataset into memory cache for instant 0ms transitions
-function prefetchTabData(href: string) {
+function prefetchTabData(href: string, employeePublicId?: string | null, isEmployeeRole?: boolean) {
   try {
     switch (href) {
       case "/employees":
-        api.employees.search({ limit: 10 }).catch(() => {});
+        api.employees.search({ skip: 0, limit: 10 }).catch(() => {});
         api.departments.list().catch(() => {});
+        api.designations.list().catch(() => {});
+        api.dashboard.getSummary().catch(() => {});
         break;
-      case "/attendance":
-        api.attendance.getRecords({ limit: 500 }).catch(() => {});
+      case "/attendance": {
+        const empId = isEmployeeRole && employeePublicId ? employeePublicId : undefined;
+        api.attendance.getRecords({ limit: 500, employee_public_id: empId }).catch(() => {});
         api.employees.list({ limit: 100 }).catch(() => {});
+        api.leaves.getRequests({ limit: 100, employee_public_id: empId }).catch(() => {});
+        if (isEmployeeRole) {
+          api.leaves.getBalances().catch(() => {});
+        }
+        api.attendance.getSettings().catch(() => {});
         break;
+      }
       case "/leaves":
         api.leaves.getBalances().catch(() => {});
         api.leaves.getRequests().catch(() => {});
@@ -166,9 +175,31 @@ function prefetchTabData(href: string) {
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { role, mounted, logout } = useAuth();
+  const { role, user, isEmployee, mounted, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(true);
   const [optimisticPath, setOptimisticPath] = useState<string | null>(null);
+  const hoverTimerRef = useRef<any>(null);
+
+  const handleLinkMouseEnter = (href: string) => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = setTimeout(() => {
+      try { router.prefetch(href); } catch (e) {}
+      prefetchTabData(href, user?.employee_public_id, isEmployee);
+    }, 150);
+  };
+
+  const handleLinkMouseLeave = () => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+  };
+
+  const handleImmediatePrefetch = (href: string) => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    try { router.prefetch(href); } catch (e) {}
+    prefetchTabData(href, user?.employee_public_id, isEmployee);
+  };
 
   // Load saved preference from localStorage
   useEffect(() => {
@@ -431,18 +462,12 @@ export function Sidebar() {
               href={item.href}
               aria-label={item.label}
               prefetch={true}
-              onMouseEnter={() => {
-                try { router.prefetch(item.href); } catch (e) {}
-                prefetchTabData(item.href);
-              }}
-              onFocus={() => {
-                try { router.prefetch(item.href); } catch (e) {}
-                prefetchTabData(item.href);
-              }}
+              onMouseEnter={() => handleLinkMouseEnter(item.href)}
+              onMouseLeave={handleLinkMouseLeave}
+              onFocus={() => handleImmediatePrefetch(item.href)}
               onPointerDown={() => {
                 setOptimisticPath(item.href);
-                try { router.prefetch(item.href); } catch (e) {}
-                prefetchTabData(item.href);
+                handleImmediatePrefetch(item.href);
               }}
               onClick={() => setOptimisticPath(item.href)}
               className={`sidebar-nav-link ${isActive ? "active" : ""}`}

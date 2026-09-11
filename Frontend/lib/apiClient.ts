@@ -378,6 +378,25 @@ export interface ClientRequestOptions extends RequestInit {
   bypassCache?: boolean;
 }
 
+function normalizeEndpointForCache(endpoint: string): string {
+  const clean = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  const qIndex = clean.indexOf("?");
+  if (qIndex === -1) return clean;
+
+  const pathname = clean.substring(0, qIndex);
+  const searchStr = clean.substring(qIndex + 1);
+  const params = new URLSearchParams(searchStr);
+  const sortedEntries = Array.from(params.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  const normalizedParams = new URLSearchParams();
+  for (const [k, v] of sortedEntries) {
+    if (v !== undefined && v !== null && v !== "") {
+      normalizedParams.append(k, v);
+    }
+  }
+  const query = normalizedParams.toString();
+  return query ? `${pathname}?${query}` : pathname;
+}
+
 /**
  * Low-level HTTP fetch helper with token attachment and error normalization
  */
@@ -385,8 +404,9 @@ async function request<T>(endpoint: string, options: ClientRequestOptions = {}):
   const method = (options.method || "GET").toUpperCase();
   const isGet = method === "GET";
   const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  const normalizedEndpoint = normalizeEndpointForCache(cleanEndpoint);
   const currentBackend = getActiveBackend();
-  const cacheKey = `${currentBackend}:${cleanEndpoint}`;
+  const cacheKey = `${currentBackend}:${normalizedEndpoint}`;
 
   // 1. Return from In-Memory SWR Client Cache if fresh (0ms response)
   if (isGet && !options.bypassCache && clientApiCache.has(cacheKey)) {
@@ -1241,17 +1261,23 @@ export const api = {
     },
 
     toggleStatus: async (publicId: string, status: string): Promise<Employee> => {
+      const cleanStatus = status.toLowerCase();
+      const isNowActive = cleanStatus === "active";
       if (isMockData()) {
         const emp = mockData.MOCK_EMPLOYEES.find((e) => e.public_id === publicId);
         if (!emp) throw new Error("Employee not found");
-        emp.employee_status = status as any;
+        emp.employee_status = cleanStatus as any;
+        emp.is_active = isNowActive;
         return emp;
       }
       const existing = await api.employees.getById(publicId);
-      return api.employees.update(publicId, {
+      const res = await api.employees.update(publicId, {
         ...existing,
-        employee_status: status.toLowerCase(),
+        employee_status: cleanStatus,
+        is_active: isNowActive,
       });
+      invalidateClientCache();
+      return res;
     },
 
     adminSetup: async (publicId: string, payload: any) => {

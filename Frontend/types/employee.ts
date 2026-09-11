@@ -53,6 +53,7 @@ export interface Employee {
   aadhar_number?: string;
   work_mode?: "in_office" | "remote" | "field";
   timezone?: string;
+  is_active?: boolean;
   addresses?: Address[];
   emergency_contacts?: EmergencyContact[];
 }

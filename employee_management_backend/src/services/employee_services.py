@@ -15,7 +15,7 @@ from models.user import User
 from schemas.employee_schema import EmployeeIn, EmployeeProfileIn, AdminEmployeeSetupIn
 
 VALID_GENDERS = {"male", "female", "other", "prefer_not_to_say"}
-VALID_EMPLOYEE_STATUSES = {"active", "inactive", "on_leave", "terminated", "resigned"}
+VALID_EMPLOYEE_STATUSES = {"active", "inactive", "on_leave", "terminated", "resigned", "suspended"}
 VALID_EMPLOYMENT_TYPES = {"full_time", "part_time", "contract", "intern"}
 
 
@@ -29,7 +29,7 @@ def sync_employee_leave_statuses(db: Session) -> None:
     """
     try:
         from models.leave import LeaveRequest
-        from sqlalchemy import select, update, func
+        from sqlalchemy import select, update, func, CursorResult
         import datetime
 
         today = datetime.date.today()
@@ -56,7 +56,7 @@ def sync_employee_leave_statuses(db: Session) -> None:
                 )
                 .values(employee_status="on_leave")
             )
-            if res1.rowcount and res1.rowcount > 0:
+            if isinstance(res1, CursorResult) and res1.rowcount > 0:
                 updated = True
 
             # Revert any employee whose status is 'on_leave' but is NOT in active_leave_emp_ids
@@ -68,7 +68,7 @@ def sync_employee_leave_statuses(db: Session) -> None:
                 )
                 .values(employee_status="active")
             )
-            if res2.rowcount and res2.rowcount > 0:
+            if isinstance(res2, CursorResult) and res2.rowcount > 0:
                 updated = True
         else:
             # No employees on leave today: revert any who might still be marked 'on_leave'
@@ -77,7 +77,7 @@ def sync_employee_leave_statuses(db: Session) -> None:
                 .where(func.lower(Employee.employee_status) == "on_leave")
                 .values(employee_status="active")
             )
-            if res.rowcount and res.rowcount > 0:
+            if isinstance(res, CursorResult) and res.rowcount > 0:
                 updated = True
 
         if updated:
@@ -610,6 +610,7 @@ def admin_setup_employee(public_id: str, payload: AdminEmployeeSetupIn, db: Sess
             return {"ok": False, "error": "not_found", "message": f"Employee with public_id '{public_id}' not found"}
 
         emp_internal_id = cast(int, emp.emp_id)
+        emp_user: User | None = emp.user if isinstance(emp.user, User) else None
 
         # 1. Resolve Corporate FK references
         if payload.department_public_id is not None:
@@ -643,6 +644,14 @@ def admin_setup_employee(public_id: str, payload: AdminEmployeeSetupIn, db: Sess
             if stat not in VALID_EMPLOYEE_STATUSES:
                 return {"ok": False, "error": "validation", "message": f"Employee status must be one of {sorted(VALID_EMPLOYEE_STATUSES)}"}
             emp.employee_status = stat
+            if stat in ("inactive", "suspended", "terminated", "resigned"):
+                emp.is_active = False
+                if emp_user:
+                    emp_user.is_active = False
+            elif stat == "active":
+                emp.is_active = True
+                if emp_user:
+                    emp_user.is_active = True
 
         if payload.employment_type:
             etype = payload.employment_type.strip().lower()
@@ -659,6 +668,8 @@ def admin_setup_employee(public_id: str, payload: AdminEmployeeSetupIn, db: Sess
 
         if payload.is_active is not None:
             emp.is_active = payload.is_active
+            if emp_user:
+                emp_user.is_active = payload.is_active
 
         # 3. Optional Personal fields
         if payload.first_name:
@@ -686,8 +697,7 @@ def admin_setup_employee(public_id: str, payload: AdminEmployeeSetupIn, db: Sess
                 return {"ok": False, "error": "validation", "message": "Date of birth must be in the past"}
             emp.date_of_birth = dob_d
 
-        emp_user = emp.user
-        if isinstance(emp_user, User):
+        if emp_user:
             if payload.secondary_email:
                 sec_clean = payload.secondary_email.strip().lower()
                 if not utils.is_valid_email(sec_clean):
@@ -766,8 +776,9 @@ def admin_setup_employee(public_id: str, payload: AdminEmployeeSetupIn, db: Sess
 
         invalidate_cache("employee_profiles", public_id)
         invalidate_cache("employee_lists")
-        if emp.user and hasattr(emp.user, "public_id"):
-            invalidate_cache("user_profiles", str(emp.user.public_id))
+        invalidate_cache("dashboard")
+        if emp_user:
+            invalidate_cache("user_profiles", str(emp_user.public_id))
             invalidate_cache("user_lists")
         full_profile = get_employee_full_details(str(emp.public_id), db=db)
         utils.log_action("ADMIN_SETUP_COMPLETED", f"emp_code={emp.employee_code} public_id={emp.public_id}")

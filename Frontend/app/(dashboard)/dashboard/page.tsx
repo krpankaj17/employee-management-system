@@ -165,7 +165,12 @@ export default function DashboardPage() {
         const m = summaryData.metrics;
         setTotalEmployees(m.total_employees || 0);
         setActiveEmployees(m.active_employees || 0);
-        setInactiveEmployees(m.inactive_employees || 0);
+        const computedInactive = m.inactive_employees ?? Math.max(0, (m.total_employees || 0) - (m.active_employees || 0) - (m.on_leave_today || 0));
+        setInactiveEmployees(computedInactive);
+        setDepartmentsCount(
+          m.departments_count ??
+          (Array.isArray(summaryData.departments) ? summaryData.departments.length : 0)
+        );
         setPresentToday(m.present_today || 0);
 
         if (isEmployee) {
@@ -276,16 +281,16 @@ export default function DashboardPage() {
       const totalEmp = employees.length;
       const activeEmp = employees.filter((e) => {
         const st = (e.employee_status || "").toLowerCase();
-        return st === "active" || (!st.includes("inactive") && !st.includes("terminated") && !st.includes("suspended"));
+        return (st === "active" || (!st.includes("inactive") && !st.includes("terminated") && !st.includes("suspended") && !st.includes("leave"))) && e.is_active !== false;
       }).length;
       const inactiveEmp = employees.filter((e) => {
         const st = (e.employee_status || "").toLowerCase();
-        return st === "inactive" || st === "terminated" || st === "suspended";
+        return st === "inactive" || st === "terminated" || st === "suspended" || st === "resigned" || e.is_active === false;
       }).length;
 
       setTotalEmployees(totalEmp);
       setActiveEmployees(activeEmp);
-      setInactiveEmployees(inactiveEmp);
+      setInactiveEmployees(Math.max(inactiveEmp, totalEmp - activeEmp));
       setDepartmentsCount(departments.length);
 
       // Attendance calculations
@@ -916,7 +921,11 @@ export default function DashboardPage() {
               <span style={{ fontSize: "0.8rem", color: "#334155" }}>
                 {isEmployee
                   ? (myPendingLeaves > 0 ? `${myPendingLeaves} Pending Approval` : "Annual Time Off Quota")
-                  : (onLeaveToday > 0 ? `${pendingLeaves} Pending Approval` : "All active at work")}
+                  : (pendingLeaves > 0
+                    ? `${pendingLeaves} Pending Approval`
+                    : onLeaveToday > 0
+                    ? `${onLeaveToday} Out Today`
+                    : "All active at work")}
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: 2, fontSize: "0.75rem", color: "#0e1726", fontWeight: 600 }}>
                 <span>{isEmployee ? "Request Leave" : "Manage"}</span>
@@ -950,11 +959,11 @@ export default function DashboardPage() {
                 width: 36,
                 height: 36,
                 borderRadius: "50%",
-                background: "#f1f5f9",
+                background: !isEmployee && inactiveEmployees > 0 ? "#fee2e2" : "#f1f5f9",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#0e1726",
+                color: !isEmployee && inactiveEmployees > 0 ? "#dc2626" : "#0e1726",
                 fontWeight: 800,
               }}
             >
@@ -962,15 +971,32 @@ export default function DashboardPage() {
             </div>
           </div>
           <div>
-            <div style={{ fontSize: isEmployee ? "1.5rem" : "2rem", fontWeight: 800, color: "#0e1726", lineHeight: 1.2, letterSpacing: "-0.02em" }}>
-              {isEmployee ? (myNetPay > 0 ? formatPayrollCurrency(myNetPay) : "Payslips Ready") : inactiveEmployees}
+            <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+              <div style={{ fontSize: isEmployee ? "1.5rem" : "2rem", fontWeight: 800, color: "#0e1726", lineHeight: 1.2, letterSpacing: "-0.02em" }}>
+                {isEmployee ? (myNetPay > 0 ? formatPayrollCurrency(myNetPay) : "Payslips Ready") : inactiveEmployees}
+              </div>
+              {!isEmployee && inactiveEmployees > 0 && (
+                <span
+                  style={{
+                    fontSize: "0.72rem",
+                    fontWeight: 700,
+                    background: "#fee2e2",
+                    color: "#dc2626",
+                    padding: "2px 8px",
+                    borderRadius: "9999px",
+                    border: "1px solid #fecaca",
+                  }}
+                >
+                  {inactiveEmployees} Deactivated
+                </span>
+              )}
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
               <span style={{ fontSize: "0.8rem", color: "#334155" }}>
-                {isEmployee ? "Disbursed in INR (₹)" : "Deactivated / Suspended"}
+                {isEmployee ? "Disbursed in INR (₹)" : (inactiveEmployees > 0 ? `${inactiveEmployees} Suspended or Inactive` : "All accounts in active standing")}
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: 2, fontSize: "0.75rem", color: "#0e1726", fontWeight: 600 }}>
-                <span>{isEmployee ? "Payslips" : "Manage"}</span>
+                <span>{isEmployee ? "Payslips" : "Directory"}</span>
                 <ArrowUpRight size={13} />
               </div>
             </div>

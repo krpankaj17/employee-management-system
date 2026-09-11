@@ -60,6 +60,7 @@ export default function EmployeesPage() {
   const [onboardSubmitting, setOnboardSubmitting] = useState(false);
   const [onboardError, setOnboardError] = useState<string | null>(null);
   const [onboardSuccess, setOnboardSuccess] = useState<string | null>(null);
+  const [summaryStats, setSummaryStats] = useState<{ total: number; active: number; on_leave: number; inactive: number } | null>(null);
 
   // New employee form state
   const [newEmp, setNewEmp] = useState({
@@ -96,22 +97,30 @@ export default function EmployeesPage() {
 
   const loadData = async () => {
     try {
-      const res = await api.employees.search({
-        search: search || undefined,
-        department_public_id: selectedDept || undefined,
-        employee_status: selectedStatus || undefined,
-        skip: (currentPage - 1) * pageSize,
-        limit: pageSize,
-      });
-      setEmployees(res.items);
-      setTotalItems(res.total);
-
-      const [depts, desigs] = await Promise.all([
+      const [res, depts, desigs, summaryRes] = await Promise.all([
+        api.employees.search({
+          search: search || undefined,
+          department_public_id: selectedDept || undefined,
+          employee_status: selectedStatus || undefined,
+          skip: (currentPage - 1) * pageSize,
+          limit: pageSize,
+        }),
         api.departments.list().catch(() => []),
         api.designations.list().catch(() => []),
+        api.dashboard.getSummary().catch(() => null),
       ]);
+      setEmployees(res.items || []);
+      setTotalItems(res.total || (res.items ? res.items.length : 0));
       setDepartments(depts);
       setDesignations(desigs);
+      if (summaryRes?.metrics) {
+        setSummaryStats({
+          total: summaryRes.metrics.total_employees ?? res.total,
+          active: summaryRes.metrics.active_employees ?? 0,
+          on_leave: summaryRes.metrics.on_leave_employees ?? 0,
+          inactive: summaryRes.metrics.inactive_employees ?? 0,
+        });
+      }
       if (depts.length > 0 && !newEmp.department_public_id) {
         setNewEmp((prev) => ({ ...prev, department_public_id: depts[0].public_id }));
       }
@@ -218,7 +227,8 @@ export default function EmployeesPage() {
     });
   }, [employees, selectedLifecycle]);
 
-  // Ratio metrics
+  // Ratio / summary metrics - direct count numbers
+  const isFiltering = Boolean(search || selectedDept || selectedStatus);
   const activeCount = employees.filter((e) => String(e.employee_status).toLowerCase() === "active").length;
   const onLeaveCount = employees.filter((e) => String(e.employee_status).toLowerCase().includes("leave")).length;
   const inactiveCount = employees.filter((e) => {
@@ -226,9 +236,10 @@ export default function EmployeesPage() {
     return s === "inactive" || s === "terminated" || s === "suspended" || s === "resigned";
   }).length;
 
-  const activePct = employees.length > 0 ? Math.round((activeCount / employees.length) * 100) : 0;
-  const onLeavePct = employees.length > 0 ? Math.round((onLeaveCount / employees.length) * 100) : 0;
-  const inactivePct = employees.length > 0 ? Math.round((inactiveCount / employees.length) * 100) : 0;
+  const displayTotal = isFiltering ? (totalItems || employees.length) : (summaryStats?.total ?? totalItems ?? employees.length);
+  const displayActive = isFiltering ? activeCount : (summaryStats?.active ?? activeCount);
+  const displayOnLeave = isFiltering ? onLeaveCount : (summaryStats?.on_leave ?? onLeaveCount);
+  const displayInactive = isFiltering ? inactiveCount : (summaryStats?.inactive ?? inactiveCount);
 
   if (role === "Employee") {
     return (
@@ -333,25 +344,25 @@ export default function EmployeesPage() {
             {/* Total Employees */}
             <div className="ratio-segment" style={{ flex: 1 }}>
               <span>Total Employees</span>
-              <strong className="tabular-figures">{totalItems || employees.length}</strong>
+              <strong className="tabular-figures">{displayTotal}</strong>
             </div>
 
             {/* Active / Hired Staff in Signature Light Pastel Butter-Yellow Pill */}
             <div className="ratio-segment ratio-segment-hired-light" style={{ flex: 2 }}>
               <span>Hired / Active</span>
-              <strong className="tabular-figures">{activePct}%</strong>
+              <strong className="tabular-figures">{displayActive}</strong>
             </div>
 
             {/* On Leave Segment */}
             <div className="ratio-segment" style={{ flex: 1 }}>
               <span>On Leave</span>
-              <strong className="tabular-figures">{onLeavePct}%</strong>
+              <strong className="tabular-figures">{displayOnLeave}</strong>
             </div>
 
             {/* Inactive Users Segment */}
             <div className="ratio-segment" style={{ flex: 1 }}>
               <span>Inactive Users</span>
-              <strong className="tabular-figures">{inactivePct}%</strong>
+              <strong className="tabular-figures">{displayInactive}</strong>
             </div>
           </div>
         </div>

@@ -37,8 +37,11 @@ def get_dashboard_summary(
     today = py_date.today()
     today_str = today.isoformat()
 
-    user_roles = [r.role_name for r in current_user.roles]
-    is_admin_or_hr = "Admin" in user_roles or "HR_Manager" in user_roles
+    user_roles_lower = [r.role_name.lower().strip() for r in current_user.roles]
+    is_admin_or_hr = (
+        any(r in user_roles_lower for r in ("admin", "hr_manager", "hr", "department_head", "project_lead", "project_manager", "manager"))
+        or getattr(current_user, "is_superuser", False)
+    )
 
     user_emp = current_user.employee
     my_emp_id = user_emp.emp_id if user_emp else None
@@ -48,7 +51,8 @@ def get_dashboard_summary(
     total_emp = db.scalar(select(func.count(Employee.emp_id))) or 0
     active_emp = db.scalar(
         select(func.count(Employee.emp_id)).where(
-            func.lower(Employee.employee_status) == "active"
+            func.lower(Employee.employee_status) == "active",
+            Employee.is_active == True,
         )
     ) or 0
     on_leave_emp = db.scalar(
@@ -58,9 +62,19 @@ def get_dashboard_summary(
     ) or 0
     inactive_emp = db.scalar(
         select(func.count(Employee.emp_id)).where(
-            func.lower(Employee.employee_status).in_(["inactive", "terminated", "suspended"])
+            or_(
+                func.lower(Employee.employee_status).in_(["inactive", "terminated", "suspended", "resigned"]),
+                Employee.is_active == False,
+            )
         )
     ) or 0
+
+    inactive_users_count = db.scalar(
+        select(func.count(User.user_id)).where(User.is_active == False)
+    ) or 0
+    inactive_emp = max(inactive_emp, inactive_users_count)
+    if total_emp > (active_emp + on_leave_emp):
+        inactive_emp = max(inactive_emp, total_emp - active_emp - on_leave_emp)
 
     # 2. Departments count & breakdown
     dept_count = db.scalar(select(func.count(Department.dept_id))) or 0
