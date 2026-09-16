@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     )
 
     DATABASE_URL: str = "postgresql+psycopg://postgres:root@localhost:5432/employee_management"
-    JWT_SECRET_KEY: str = "REMOVED_JWT_SECRET"
+    JWT_SECRET_KEY: str = "change-this-jwt-secret-in-production-via-env"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30     # 30 days
@@ -32,8 +32,8 @@ class Settings(BaseSettings):
     # HTTP Email Provider (Bypasses cloud provider SMTP firewall blocks)
     RESEND_API_KEY: str | None = None
     # Google Apps Script Email Relay (Sends from Gmail over HTTPS port 443 to any recipient)
-    GMAIL_WEBHOOK_URL: str | None = "https://script.google.com/macros/s/AKfycbzHyVF5NqDw-x5k5nZMTaQ5Tn74GLtyPMW_01NjIMA2pHLGG8RjNBG4HiljQqHPRYgv/exec"
-    GMAIL_WEBHOOK_SECRET: str = "REMOVED_TOKEN"
+    GMAIL_WEBHOOK_URL: str | None = None
+    GMAIL_WEBHOOK_SECRET: str | None = None
     VALKEY_URL: str = "redis://localhost:6379/1"
     REDIS_URL: str | None = None
     UPSTASH_REDIS_URL: str | None = None

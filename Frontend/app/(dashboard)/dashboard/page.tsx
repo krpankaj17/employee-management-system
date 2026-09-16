@@ -128,7 +128,7 @@ export default function DashboardPage() {
     }
 
     const todayDate = new Date();
-    const todayStr = todayDate.toISOString().split("T")[0];
+    const todayStr = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, "0")}-${String(todayDate.getDate()).padStart(2, "0")}`;
 
     // Generate Monday-Friday of current week
     const currentDay = todayDate.getDay();
@@ -173,12 +173,15 @@ export default function DashboardPage() {
         );
         setPresentToday(m.present_today || 0);
 
+        setOnLeaveToday(m.on_leave_today || 0);
+        if (Array.isArray(summaryData.employees_on_leave)) {
+          setEmployeesOnLeave(summaryData.employees_on_leave);
+        }
+
         if (isEmployee) {
-          setOnLeaveToday(0);
           setPendingLeaves(m.my_pending_leaves || 0);
           setMyPendingLeaves(m.my_pending_leaves || 0);
           setMyRemainingLeaves(m.my_remaining_leaves || 0);
-          setEmployeesOnLeave([]);
           // Optionally fetch fresh leave balance quota
           api.leaves.getBalances().then((bals: any) => {
             const list = Array.isArray(bals) ? bals : bals?.items || [];
@@ -188,11 +191,7 @@ export default function DashboardPage() {
             }
           }).catch(() => {});
         } else {
-          setOnLeaveToday(m.on_leave_today || 0);
           setPendingLeaves(m.pending_leaves || 0);
-          if (Array.isArray(summaryData.employees_on_leave)) {
-            setEmployeesOnLeave(summaryData.employees_on_leave);
-          }
         }
 
         setActiveProjectsCount(m.active_projects_count || 0);
@@ -239,25 +238,27 @@ export default function DashboardPage() {
 
       // ── 2. Fallback Multi-Module Fetch ────────────────────────────────────
       const results = await Promise.allSettled([
-        api.employees.list({ limit: 20 }),
+        api.employees.list({ limit: 100 }),
         api.departments.list(),
-        api.attendance.getRecords({ limit: 20 }),
-        api.leaves.getRequests({ limit: 20 }),
+        api.attendance.getRecords({ limit: 100 }),
+        api.leaves.getRequests({ status_filter: "approved", limit: 100 }),
         api.leaves.getBalances(),
         api.projects.list(),
         api.reviews.list(),
         api.announcements.list(),
         api.auth.listPendingUsers(),
-        api.payroll.getRuns({ limit: 20 }),
+        api.payroll.getRuns({ limit: 100 }),
+        api.employees.search({ employee_status: "on_leave", limit: 50 }),
       ]);
 
       const employees: Employee[] = results[0].status === "fulfilled" ? results[0].value.items || [] : [];
       const departments: Department[] = results[1].status === "fulfilled" ? results[1].value || [] : [];
       const attendanceRecords: AttendanceRecord[] = results[2].status === "fulfilled" ? results[2].value.items || [] : [];
-      const leaveRequests: LeaveRequest[] = results[3].status === "fulfilled" ? results[3].value.items || [] : [];
+      const approvedLeaveRequests: LeaveRequest[] = results[3].status === "fulfilled" ? results[3].value.items || [] : [];
       const projects: Project[] = results[5].status === "fulfilled" ? results[5].value || [] : [];
       const rawAnnouncements: Announcement[] = results[7].status === "fulfilled" ? results[7].value || [] : [];
       const pendingUsers = results[8].status === "fulfilled" ? results[8].value || [] : [];
+      const onLeaveEmployeesResult: Employee[] = results[10]?.status === "fulfilled" ? results[10].value.items || [] : [];
 
       // Payroll calculation
       const payrollRes = results[9].status === "fulfilled" ? results[9].value : null;
@@ -278,7 +279,7 @@ export default function DashboardPage() {
       setProjectsList(projects);
 
       // Enterprise calculations
-      const totalEmp = employees.length;
+      const totalEmp = results[0].status === "fulfilled" && results[0].value.total ? results[0].value.total : employees.length;
       const activeEmp = employees.filter((e) => {
         const st = (e.employee_status || "").toLowerCase();
         return (st === "active" || (!st.includes("inactive") && !st.includes("terminated") && !st.includes("suspended") && !st.includes("leave"))) && e.is_active !== false;
@@ -289,7 +290,7 @@ export default function DashboardPage() {
       }).length;
 
       setTotalEmployees(totalEmp);
-      setActiveEmployees(activeEmp);
+      setActiveEmployees(totalEmp > employees.length ? Math.max(0, totalEmp - inactiveEmp - onLeaveEmployeesResult.length) : activeEmp);
       setInactiveEmployees(Math.max(inactiveEmp, totalEmp - activeEmp));
       setDepartmentsCount(departments.length);
 
@@ -301,10 +302,47 @@ export default function DashboardPage() {
       setPresentToday(presentCount);
 
       // Leave calculations
+      const activeLeavesToday = approvedLeaveRequests.filter(
+        (l) => (l.status || "").toLowerCase() === "approved" && l.start_date <= todayStr && l.end_date >= todayStr
+      );
+      const onLeaveFromStatus = employees.filter((e) => (e.employee_status || "").toLowerCase() === "on_leave")
+        .concat(onLeaveEmployeesResult.filter(e => !employees.some(existing => existing.public_id === e.public_id)));
+      const onLeaveEmpIds = new Set(activeLeavesToday.map((l) => l.employee_public_id));
+
+      const combinedOnLeave = [
+        ...activeLeavesToday.map((l) => ({
+          leave_public_id: l.public_id,
+          employee_public_id: l.employee_public_id,
+          employee_name: l.employee_name || "Employee",
+          employee_code: (l as any).employee_code || "EMP",
+          department_name: (l as any).department_name || "General",
+          leave_type_name: l.leave_type_name || "Time Off",
+          start_date: l.start_date,
+          end_date: l.end_date,
+          total_days: l.total_days || 1,
+          reason: l.reason,
+        })),
+        ...onLeaveFromStatus
+          .filter((e) => !onLeaveEmpIds.has(e.public_id))
+          .map((e) => ({
+            leave_public_id: `status-${e.public_id}`,
+            employee_public_id: e.public_id,
+            employee_name: `${e.first_name} ${e.last_name}`.trim(),
+            employee_code: e.employee_code || "EMP",
+            department_name: e.department_name || "General",
+            leave_type_name: "On Leave",
+            start_date: todayStr,
+            end_date: todayStr,
+            total_days: 1,
+            reason: "On Leave",
+          })),
+      ];
+
+      setOnLeaveToday(combinedOnLeave.length);
+      setEmployeesOnLeave(combinedOnLeave);
+
       if (isEmployee) {
-        setOnLeaveToday(0);
-        setEmployeesOnLeave([]);
-        const myPending = leaveRequests.filter((l) => (l.status || "").toLowerCase() === "pending").length;
+        const myPending = approvedLeaveRequests.filter((l) => (l.status || "").toLowerCase() === "pending").length;
         setPendingLeaves(myPending);
         setMyPendingLeaves(myPending);
         const balancesRes: any = results[4].status === "fulfilled" ? results[4].value || [] : [];
@@ -312,45 +350,7 @@ export default function DashboardPage() {
         const rem = balsList.reduce((acc: number, b: any) => acc + (Number(b.remaining_days ?? b.remaining_leaves) || 0), 0);
         setMyRemainingLeaves(rem);
       } else {
-        const activeLeavesToday = leaveRequests.filter(
-          (l) => (l.status || "").toLowerCase() === "approved" && l.start_date <= todayStr && l.end_date >= todayStr
-        );
-        const onLeaveFromStatus = employees.filter((e) => (e.employee_status || "").toLowerCase() === "on_leave");
-        const onLeaveEmpIds = new Set(activeLeavesToday.map((l) => l.employee_public_id));
-
-        const combinedOnLeave = [
-          ...activeLeavesToday.map((l) => ({
-            leave_public_id: l.public_id,
-            employee_public_id: l.employee_public_id,
-            employee_name: l.employee_name || "Employee",
-            employee_code: (l as any).employee_code || "EMP",
-            department_name: (l as any).department_name || "General",
-            leave_type_name: l.leave_type_name || "Time Off",
-            start_date: l.start_date,
-            end_date: l.end_date,
-            total_days: l.total_days || 1,
-            reason: l.reason,
-          })),
-          ...onLeaveFromStatus
-            .filter((e) => !onLeaveEmpIds.has(e.public_id))
-            .map((e) => ({
-              leave_public_id: `status-${e.public_id}`,
-              employee_public_id: e.public_id,
-              employee_name: `${e.first_name} ${e.last_name}`.trim(),
-              employee_code: e.employee_code || "EMP",
-              department_name: e.department_name || "General",
-              leave_type_name: "On Leave",
-              start_date: todayStr,
-              end_date: todayStr,
-              total_days: 1,
-              reason: "On Leave",
-            })),
-        ];
-
-        setOnLeaveToday(combinedOnLeave.length);
-        setEmployeesOnLeave(combinedOnLeave);
-
-        const pendingLeaveCount = leaveRequests.filter(
+        const pendingLeaveCount = approvedLeaveRequests.filter(
           (l) => (l.status || "").toLowerCase() === "pending"
         ).length;
         setPendingLeaves(pendingLeaveCount);

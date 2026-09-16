@@ -2,9 +2,9 @@
 from datetime import date as py_date, datetime, timezone, timedelta
 from decimal import Decimal
 from typing import cast
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy import func, select, or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from database import get_db
 from core.permissions import get_current_user
@@ -23,6 +23,7 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard & Enterprise Analytics"
 
 @router.get("/summary")
 def get_dashboard_summary(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -37,9 +38,11 @@ def get_dashboard_summary(
     today = py_date.today()
     today_str = today.isoformat()
 
+    active_role_header = (request.headers.get("x-active-role") or "").lower().strip()
     user_roles_lower = [r.role_name.lower().strip() for r in current_user.roles]
     is_admin_or_hr = (
         any(r in user_roles_lower for r in ("admin", "hr_manager", "hr", "department_head", "project_lead", "project_manager", "manager"))
+        or active_role_header in ("admin", "hr_manager", "hr", "department_head", "project_lead", "project_manager", "manager")
         or getattr(current_user, "is_superuser", False)
     )
 
@@ -103,10 +106,10 @@ def get_dashboard_summary(
         )
     ) or 0
 
-    # 4. Leaves (Only Admin/HR sees who is on leave and company-wide leave totals; employees see only their own)
+    # 4. Leaves & Out-of-Office metrics (Admin/HR sees company-wide on-leave count and list; regular employees see 0 / personal quota)
     employees_on_leave = []
-    my_pending_leaves = 0
-    my_remaining_leaves = 0
+    on_leave_today = 0
+    pending_leaves = 0
 
     if is_admin_or_hr:
         on_leave_today = db.scalar(
@@ -123,9 +126,14 @@ def get_dashboard_summary(
             )
         ) or 0
 
-        # Detailed list of employees currently on leave (Admin/HR only)
+        # Detailed list of employees currently on leave
         leave_records = db.scalars(
             select(LeaveRequest)
+            .options(
+                joinedload(LeaveRequest.employee).joinedload(Employee.department),
+                joinedload(LeaveRequest.employee).joinedload(Employee.designation),
+                joinedload(LeaveRequest.leave_type),
+            )
             .where(
                 func.lower(LeaveRequest.status) == "approved",
                 LeaveRequest.start_date <= today,
@@ -154,7 +162,12 @@ def get_dashboard_summary(
         # Also include any employees whose employee_status is explicitly 'on_leave'
         covered_emp_ids = {lr.employee_id for lr in leave_records if lr.employee_id}
         on_leave_employees = db.scalars(
-            select(Employee).where(func.lower(Employee.employee_status) == "on_leave")
+            select(Employee)
+            .options(
+                joinedload(Employee.department),
+                joinedload(Employee.designation),
+            )
+            .where(func.lower(Employee.employee_status) == "on_leave")
         ).all()
         for emp in on_leave_employees:
             if emp.emp_id not in covered_emp_ids:
@@ -172,26 +185,24 @@ def get_dashboard_summary(
                     "reason": "On Leave",
                 })
         on_leave_today = max(on_leave_today, len(employees_on_leave))
-    else:
-        # Regular Employee: Hide company-wide on-leave count and list completely
-        on_leave_today = 0
-        pending_leaves = 0
-        employees_on_leave = []
 
-        if my_emp_id:
-            my_pending_leaves = db.scalar(
-                select(func.count(LeaveRequest.leave_id)).where(
-                    LeaveRequest.employee_id == my_emp_id,
-                    func.lower(LeaveRequest.status) == "pending",
-                )
-            ) or 0
-            my_balances = db.scalars(
-                select(EmployeeLeaveBalance).where(
-                    EmployeeLeaveBalance.employee_id == my_emp_id,
-                    EmployeeLeaveBalance.year == today.year,
-                )
-            ).all()
-            my_remaining_leaves = sum((b.total_allocated - b.used_leaves) for b in my_balances)
+    # User personal leave balances & personal pending requests
+    my_pending_leaves = 0
+    my_remaining_leaves = 0
+    if my_emp_id:
+        my_pending_leaves = db.scalar(
+            select(func.count(LeaveRequest.leave_id)).where(
+                LeaveRequest.employee_id == my_emp_id,
+                func.lower(LeaveRequest.status) == "pending",
+            )
+        ) or 0
+        my_balances = db.scalars(
+            select(EmployeeLeaveBalance).where(
+                EmployeeLeaveBalance.employee_id == my_emp_id,
+                EmployeeLeaveBalance.year == today.year,
+            )
+        ).all()
+        my_remaining_leaves = sum((b.total_allocated - b.used_leaves) for b in my_balances)
 
     # 5. Projects
     active_projects = db.scalar(

@@ -370,7 +370,7 @@ spring.jpa.show-sql=false
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 
 # JWT Configuration
-app.jwt.secret=REMOVED_JWT_SECRET
+app.jwt.secret=${JWT_SECRET:your_64_char_hex_secret_here}
 app.jwt.access-expiration-ms=3600000
 app.jwt.refresh-expiration-ms=604800000
 ```

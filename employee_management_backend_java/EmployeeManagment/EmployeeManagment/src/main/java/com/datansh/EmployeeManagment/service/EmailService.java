@@ -16,7 +16,7 @@ public class EmailService {
     @Autowired(required = false)
     private JavaMailSender mailSender;
 
-    @Value("${app.mail.from-email:REMOVED_EMAIL}")
+    @Value("${app.mail.from-email:noreply@company.com}")
     private String fromEmail;
 
     @Value("${app.mail.from-name:Datansh Employee Management}")

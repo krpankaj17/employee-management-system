@@ -217,6 +217,35 @@ export default function AttendancePage() {
     return filteredRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   }, [filteredRecords, currentPage, pageSize]);
 
+  // Pre-populate company adherence stats immediately from dashboard summary (0ms from SWR cache)
+  useEffect(() => {
+    if (!isEmployeeRole) {
+      api.dashboard.getSummary().then((dashSummary: any) => {
+        if (dashSummary?.metrics) {
+          const m = dashSummary.metrics;
+          const present = Number(m.present_today ?? 0);
+          const onLeave = Number(m.on_leave_today ?? 0);
+          const total = Number(m.total_employees ?? 0);
+          const absent = Math.max(0, total - present - onLeave);
+          setSummary((prev) => prev ?? {
+            present_count: present,
+            absent_count: absent,
+            late_count: 0,
+            on_leave_count: onLeave,
+            total_employees: total,
+            average_work_hours: 8.0,
+          });
+          if (Array.isArray(dashSummary.employees_on_leave) && dashSummary.employees_on_leave.length > 0) {
+            const names = dashSummary.employees_on_leave
+              .map((e: any) => e.employee_name)
+              .filter(Boolean);
+            setEmployeesOnLeaveToday((prev) => (prev.length === 0 ? names : prev));
+          }
+        }
+      }).catch(() => {});
+    }
+  }, [isEmployeeRole]);
+
   useEffect(() => {
     loadAttendance();
   }, [role, isEmployeeRole, user?.employee_public_id]);
@@ -287,14 +316,14 @@ export default function AttendancePage() {
       const [res, empRes, leaveRes, balRes, settingsRes] = await Promise.all([
         api.attendance
           .getRecords({
-            limit: 500,
+            limit: 100,
             employee_public_id: isEmployeeRole && user?.employee_public_id ? user.employee_public_id : undefined,
           })
           .catch(() => ({ items: [], total: 0 })),
-        api.employees.list({ limit: 100 }).catch(() => ({ items: [], total: 0 })),
+        api.employees.list({ limit: 50 }).catch(() => ({ items: [], total: 0 })),
         api.leaves
           .getRequests({
-            limit: 100,
+            limit: 50,
             employee_public_id: isEmployeeRole && user?.employee_public_id ? user.employee_public_id : undefined,
           })
           .catch(() => ({ items: [], total: 0 })),

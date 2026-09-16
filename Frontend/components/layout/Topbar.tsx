@@ -5,13 +5,15 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, ChevronDown, CheckSquare, Megaphone, CalendarCheck2, ShieldCheck, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { prefetchTabData } from "@/lib/prefetch";
 
 export function Topbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isHR, isAdmin, isEmployee, logout, mounted } = useAuth();
+  const { user, isHR, isAdmin, isEmployee, isPendingOnboarding, logout, mounted } = useAuth();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
+  const hoverTimerRef = useRef<any>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -20,8 +22,31 @@ export function Topbar() {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    };
   }, []);
+
+  const handleLinkMouseEnter = (href: string) => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = setTimeout(() => {
+      try { router.prefetch(href); } catch (e) {}
+      prefetchTabData(href, user?.employee_public_id, isEmployee);
+    }, 70);
+  };
+
+  const handleLinkMouseLeave = () => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+  };
+
+  // If role is not assigned, completely suppress the floating navigation island
+  if (isPendingOnboarding) {
+    return null;
+  }
 
   const isNavActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -68,6 +93,8 @@ export function Topbar() {
               href={item.href}
               className={`studio-nav-item ${active ? "active" : ""}`}
               aria-current={active ? "page" : undefined}
+              onMouseEnter={() => handleLinkMouseEnter(item.href)}
+              onMouseLeave={handleLinkMouseLeave}
             >
               {item.label}
             </Link>
@@ -127,6 +154,8 @@ export function Topbar() {
                     key={item.href}
                     href={item.href}
                     onClick={() => setIsMoreOpen(false)}
+                    onMouseEnter={() => handleLinkMouseEnter(item.href)}
+                    onMouseLeave={handleLinkMouseLeave}
                     style={{
                       display: "flex",
                       alignItems: "center",
@@ -139,12 +168,6 @@ export function Topbar() {
                       background: active ? "rgba(254, 240, 138, 0.35)" : "transparent",
                       textDecoration: "none",
                       transition: "all 140ms ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!active) e.currentTarget.style.background = "#f4f4f5";
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!active) e.currentTarget.style.background = "transparent";
                     }}
                   >
                     <Icon size={15} style={{ color: active ? "#ca8a04" : "#6b7280" }} />
@@ -161,6 +184,8 @@ export function Topbar() {
           href="/profile"
           className={`studio-nav-item ${pathname.startsWith("/profile") ? "active" : ""}`}
           aria-label="Account Settings"
+          onMouseEnter={() => handleLinkMouseEnter("/profile")}
+          onMouseLeave={handleLinkMouseLeave}
         >
           Settings
         </Link>

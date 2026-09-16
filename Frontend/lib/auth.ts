@@ -16,82 +16,40 @@ import { api, createMockJwt } from "./apiClient";
 import { applyTheme, getInitialTheme } from "./theme";
 
 /**
- * Pre-seeded Enterprise Accounts Directory for testing
- * Covers both mock demo accounts and real PostgreSQL seed accounts!
+ * Pre-seeded Enterprise Accounts Directory for testing (demo only, no credentials)
  */
-export const MOCK_USER_CREDENTIALS: {
+export const MOCK_DEMO_ACCOUNTS: {
   email: string;
-  password: string;
   role: UserRole;
   name: string;
   designation: string;
-  isDbAccount?: boolean;
 }[] = [
-  // Real Database Accounts (PostgreSQL)
   {
-    email: "admin@company.com",
-    password: "REMOVED_PASSWORD",
-    role: "Admin",
-    name: "System Administrator",
-    designation: "Enterprise Super Admin (DB)",
-    isDbAccount: true,
-  },
-  {
-    email: "test.hr@company.com",
-    password: "REMOVED_PASSWORD",
-    role: "HR_Manager",
-    name: "HR Manager",
-    designation: "People Operations Lead (DB)",
-    isDbAccount: true,
-  },
-  {
-    email: "test.manager@company.com",
-    password: "REMOVED_PASSWORD",
-    role: "Department_Head",
-    name: "Engineering Head",
-    designation: "Department Head (DB)",
-    isDbAccount: true,
-  },
-  {
-    email: "test.emp@company.com",
-    password: "REMOVED_PASSWORD",
-    role: "Employee",
-    name: "Test Employee",
-    designation: "Software Engineer (DB)",
-    isDbAccount: true,
-  },
-  // Standalone Mock Demo Accounts
-  {
-    email: "arjun.sharma@company.in",
-    password: "REMOVED_PASSWORD",
+    email: "admin@company.in",
     role: "Admin",
     name: "Arjun Sharma",
     designation: "VP of Engineering & Super Admin",
   },
   {
-    email: "priya.mehta@company.in",
-    password: "REMOVED_PASSWORD",
+    email: "hr@company.in",
     role: "HR_Manager",
     name: "Priya Mehta",
     designation: "Head of People Operations",
   },
   {
-    email: "sneha.iyer@company.in",
-    password: "REMOVED_PASSWORD",
+    email: "dept@company.in",
     role: "Department_Head",
     name: "Sneha Iyer",
     designation: "Engineering Department Head",
   },
   {
-    email: "rohan.verma@company.in",
-    password: "REMOVED_PASSWORD",
+    email: "lead@company.in",
     role: "Project_Manager",
     name: "Rohan Verma",
     designation: "Senior Project Delivery Manager",
   },
   {
-    email: "vikram.malhotra@company.in",
-    password: "REMOVED_PASSWORD",
+    email: "employee@company.in",
     role: "Employee",
     name: "Vikram Malhotra",
     designation: "Software Engineer (Self-Service)",
@@ -176,6 +134,14 @@ export function getActiveUser(): UserProfile {
 export function getActiveRole(): UserRole {
   if (typeof window !== "undefined") {
     try {
+      const storedUser = localStorage.getItem(API_CONFIG.STORAGE_KEYS.CURRENT_USER);
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser);
+        if (!parsed.roles || (Array.isArray(parsed.roles) && parsed.roles.length === 0)) {
+          localStorage.removeItem(API_CONFIG.STORAGE_KEYS.ACTIVE_ROLE);
+          return "" as any;
+        }
+      }
       const explicit = localStorage.getItem(API_CONFIG.STORAGE_KEYS.ACTIVE_ROLE) as UserRole;
       if (explicit && ["Admin", "HR_Manager", "Department_Head", "Project_Manager", "Employee"].includes(explicit)) {
         return explicit;
@@ -193,6 +159,9 @@ export function getActiveRole(): UserRole {
       if (roleNames.includes(p)) return p;
     }
     return roleNames[0] || SSR_DEFAULT_ROLE;
+  }
+  if (user && user.public_id !== "usr-guest" && (!user.roles || user.roles.length === 0)) {
+    return "" as any;
   }
   return SSR_DEFAULT_ROLE;
 }
@@ -301,8 +270,8 @@ export async function authenticateWithCredentials(
   }
 
   // ── 2. Mock Standalone Mode ──────────────────────────────────────────────────
-  const seeded = MOCK_USER_CREDENTIALS.find(
-    (c) => c.email.toLowerCase() === trimmedEmail && c.password === password
+  const seeded = MOCK_DEMO_ACCOUNTS.find(
+    (c) => c.email.toLowerCase() === trimmedEmail
   );
 
   if (seeded) {
@@ -317,14 +286,14 @@ export async function authenticateWithCredentials(
     return { ok: true, user, isPending: false, message: "Authentication successful" };
   }
 
-  // Dynamic registered users in localStorage
+  // Dynamic registered users in localStorage (mock mode only - no passwords stored)
   if (typeof window !== "undefined") {
     try {
       const dynamicUsersRaw = localStorage.getItem("ems_registered_users");
       if (dynamicUsersRaw) {
-        const dynamicUsers: { email: string; password: string; user: UserProfile }[] = JSON.parse(dynamicUsersRaw);
+        const dynamicUsers: { email: string; user: UserProfile }[] = JSON.parse(dynamicUsersRaw);
         const match = dynamicUsers.find(
-          (u) => u.email.toLowerCase() === trimmedEmail && u.password === password
+          (u) => u.email.toLowerCase() === trimmedEmail
         );
         if (match) {
           const isPending = !match.user.roles || match.user.roles.length === 0;
@@ -368,7 +337,7 @@ export async function registerNewUser(
     }
   }
 
-  // Mock standalone registration
+  // Mock standalone registration (never store plaintext passwords)
   const publicId = `usr-reg-${Date.now()}`;
   const newUser: UserProfile = {
     public_id: publicId,
@@ -386,12 +355,12 @@ export async function registerNewUser(
     try {
       const raw = localStorage.getItem("ems_registered_users");
       const list = raw ? JSON.parse(raw) : [];
-      list.push({ email: newUser.email, password, user: newUser });
+      list.push({ email: newUser.email, user: newUser });
       localStorage.setItem("ems_registered_users", JSON.stringify(list));
 
       const rawPending = localStorage.getItem("ems_pending_users");
       const pendingList = rawPending ? JSON.parse(rawPending) : [];
-      pendingList.push({ email: newUser.email, password, user: newUser });
+      pendingList.push({ email: newUser.email, user: newUser });
       localStorage.setItem("ems_pending_users", JSON.stringify(pendingList));
     } catch (e) {}
   }
@@ -414,6 +383,8 @@ export async function syncCurrentUser(): Promise<UserProfile | null> {
       if (normalized.roles && normalized.roles.length > 0) {
         const primary = typeof normalized.roles[0] === "string" ? normalized.roles[0] : (normalized.roles[0]?.role_name || "Employee");
         localStorage.setItem(API_CONFIG.STORAGE_KEYS.ACTIVE_ROLE, primary);
+      } else {
+        localStorage.removeItem(API_CONFIG.STORAGE_KEYS.ACTIVE_ROLE);
       }
       window.dispatchEvent(new Event("ems_auth_changed"));
       return normalized;
@@ -467,14 +438,14 @@ export function useAuth() {
   }, []);
 
   const isPending = !user?.roles || user.roles.length === 0;
-  const isAdmin = role === "Admin" || (user?.roles?.some((r: any) => (typeof r === "string" ? r : r?.role_name) === "Admin") ?? false);
-  const isHR = isAdmin || role === "HR_Manager" || (user?.roles?.some((r: any) => (typeof r === "string" ? r : r?.role_name) === "HR_Manager") ?? false);
+  const isAdmin = !isPending && (role === "Admin" || (user?.roles?.some((r: any) => (typeof r === "string" ? r : r?.role_name) === "Admin") ?? false));
+  const isHR = !isPending && (isAdmin || role === "HR_Manager" || (user?.roles?.some((r: any) => (typeof r === "string" ? r : r?.role_name) === "HR_Manager") ?? false));
 
   return {
     role,
     user,
     mounted,
-    isEmployee: role === "Employee" && !isAdmin && !isHR,
+    isEmployee: !isPending && role === "Employee" && !isAdmin && !isHR,
     isAdmin,
     isHR,
     isPendingOnboarding: isPending,

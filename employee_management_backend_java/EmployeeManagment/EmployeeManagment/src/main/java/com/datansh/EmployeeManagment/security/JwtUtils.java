@@ -14,7 +14,7 @@ import java.util.UUID;
 @Component
 public class JwtUtils {
 
-    @Value("${app.jwt.secret:REMOVED_JWT_SECRET}")
+    @Value("${app.jwt.secret:}")
     private String jwtSecret;
 
     @Value("${app.jwt.access-expiration-ms:3600000}")

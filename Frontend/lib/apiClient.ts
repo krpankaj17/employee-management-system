@@ -440,6 +440,10 @@ async function request<T>(endpoint: string, options: ClientRequestOptions = {}):
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
   }
+  const activeRole = typeof window !== "undefined" ? localStorage.getItem(API_CONFIG.STORAGE_KEYS.ACTIVE_ROLE) : null;
+  if (activeRole) {
+    headers.set("X-Active-Role", activeRole);
+  }
 
   const base = getBaseUrl().replace(/\/+$/, "");
   const url = `${base}${cleanEndpoint}`;

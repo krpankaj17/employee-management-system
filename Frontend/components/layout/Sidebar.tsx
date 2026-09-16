@@ -122,55 +122,7 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-// Prefetch tab dataset into memory cache for instant 0ms transitions
-function prefetchTabData(href: string, employeePublicId?: string | null, isEmployeeRole?: boolean) {
-  try {
-    switch (href) {
-      case "/employees":
-        api.employees.search({ skip: 0, limit: 10 }).catch(() => {});
-        api.departments.list().catch(() => {});
-        api.designations.list().catch(() => {});
-        api.dashboard.getSummary().catch(() => {});
-        break;
-      case "/attendance": {
-        const empId = isEmployeeRole && employeePublicId ? employeePublicId : undefined;
-        api.attendance.getRecords({ limit: 500, employee_public_id: empId }).catch(() => {});
-        api.employees.list({ limit: 100 }).catch(() => {});
-        api.leaves.getRequests({ limit: 100, employee_public_id: empId }).catch(() => {});
-        if (isEmployeeRole) {
-          api.leaves.getBalances().catch(() => {});
-        }
-        api.attendance.getSettings().catch(() => {});
-        break;
-      }
-      case "/leaves":
-        api.leaves.getBalances().catch(() => {});
-        api.leaves.getRequests().catch(() => {});
-        api.leaves.listTypes().catch(() => {});
-        break;
-      case "/projects":
-        api.projects.list().catch(() => {});
-        break;
-      case "/departments":
-        api.departments.list().catch(() => {});
-        api.departments.listDesignations().catch(() => {});
-        break;
-      case "/roles":
-        api.auth.listRolesDetailed().catch(() => {});
-        api.auth.listPermissions().catch(() => {});
-        break;
-      case "/approvals":
-        api.auth.listPendingUsers().catch(() => {});
-        break;
-      case "/announcements":
-        api.announcements.list().catch(() => {});
-        break;
-      case "/holidays":
-        api.holidays.list().catch(() => {});
-        break;
-    }
-  } catch (e) {}
-}
+import { prefetchTabData } from "@/lib/prefetch";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -185,7 +137,7 @@ export function Sidebar() {
     hoverTimerRef.current = setTimeout(() => {
       try { router.prefetch(href); } catch (e) {}
       prefetchTabData(href, user?.employee_public_id, isEmployee);
-    }, 150);
+    }, 70);
   };
 
   const handleLinkMouseLeave = () => {
@@ -294,10 +246,10 @@ export function Sidebar() {
       prefetchTabData("/attendance");
     };
     if ("requestIdleCallback" in window) {
-      const id = (window as any).requestIdleCallback(warmIdle, { timeout: 3000 });
+      const id = (window as any).requestIdleCallback(warmIdle, { timeout: 500 });
       return () => (window as any).cancelIdleCallback(id);
     } else {
-      const timer = setTimeout(warmIdle, 2500);
+      const timer = setTimeout(warmIdle, 400);
       return () => clearTimeout(timer);
     }
   }, [activeRole]);
